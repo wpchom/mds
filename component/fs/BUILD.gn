@@ -1,0 +1,21 @@
+declare_args() {
+  mds_component_fs_large_size = false
+}
+
+config("mds_component_fs_config") {
+  include_dirs = [ "./" ]
+}
+
+source_set("mds_component_fs") {
+  deps = [ "../../kernel:mds_kernel" ]
+
+  sources = [ "mds_fs.c" ]
+
+  defines = []
+
+  if (mds_component_fs_large_size) {
+    defines += [ "MDS_FILESYSTEM_WITH_LARGE=1" ]
+  }
+
+  public_configs = [ ":mds_component_fs_config" ]
+}

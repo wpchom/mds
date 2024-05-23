@@ -1,0 +1,31 @@
+declare_args() {
+  driver_chip_interrupt_without_irq = false
+}
+
+pkggroup("mds") {
+  deps = [ ":device" ]
+}
+
+pkggroup("chip/stm32h7xx_hal_driver") {
+  deps = [ ":stm32h7xx_hal_driver_ll" ]
+}
+
+config("chip_stm32h7xx_config") {
+  include_dirs = [ "inc/" ]
+  defines = []
+  if (defined(driver_chip_interrupt_without_irq) &&
+      driver_chip_interrupt_without_irq) {
+    defines += [ "CHIP_INTERRUPT_WITHOUT_IRQ=1" ]
+  }
+}
+
+source_set("chip_stm32h7xx_driver") {
+  sources = [ "src/startup_stm32h7xx.c" ]
+
+  public_configs = [ ":chip_stm32h7xx_config" ]
+
+  public_deps = [
+    ":chip/stm32h7xx_hal_driver",
+    ":mds",
+  ]
+}

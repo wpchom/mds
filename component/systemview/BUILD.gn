@@ -1,0 +1,25 @@
+declare_args() {
+  mds_systemview_trace_ipc = true
+  mds_systemview_trace_mem = true
+}
+
+pkggroup("utils/systemview") {
+  deps = [ ":systemview" ]
+}
+
+source_set("mds_component_systemview") {
+  sources = [ "mds_systemview.c" ]
+
+  defines = []
+
+  if (defined(mds_systemview_trace_ipc) && mds_systemview_trace_ipc) {
+    defines += [ "MDS_SYSTEMVIEW_TRACE_IPC" ]
+  }
+  if (defined(mds_systemview_trace_mem) && mds_systemview_trace_mem) {
+    defines += [ "MDS_SYSTEMVIEW_TRACE_MEM" ]
+  }
+
+  deps = [ "../../kernel/:mds_kernel" ]
+
+  public_deps = [ ":utils/systemview" ]
+}

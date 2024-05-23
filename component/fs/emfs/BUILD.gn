@@ -1,0 +1,16 @@
+pkggroup("mds_device") {
+  package = "mds"
+  deps = [ ":device" ]
+}
+
+config("mds_component_fs_emfs_config") {
+  include_dirs = [ "./" ]
+}
+
+source_set("mds_component_fs_emfs") {
+  sources = [ "emfs.c" ]
+
+  public_configs = [ ":mds_component_fs_emfs_config" ]
+
+  public_deps = [ ":mds_device" ]
+}
