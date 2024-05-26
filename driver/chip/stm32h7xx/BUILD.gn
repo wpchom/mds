@@ -2,10 +2,6 @@ declare_args() {
   chip_stm32h7xx_without_interrupt = false
 }
 
-pkggroup("mds") {
-  deps = [ ":device" ]
-}
-
 pkggroup("chip/stm32h7xx") {
   deps = [ "stm32h7xx_hal_driver/:stm32h7xx_hal_driver_ll" ]
 }
@@ -26,6 +22,6 @@ source_set("chip_stm32h7xx_driver") {
 
   public_deps = [
     ":chip/stm32h7xx",
-    ":mds",
+    "../../../device:mds_device",
   ]
 }

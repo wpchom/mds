@@ -1,7 +1,3 @@
-pkggroup("mds") {
-  deps = [ ":device" ]
-}
-
 config("mds_component_fs_emfs_config") {
   include_dirs = [ "./" ]
 }
@@ -11,5 +7,5 @@ source_set("mds_component_fs_emfs") {
 
   public_configs = [ ":mds_component_fs_emfs_config" ]
 
-  public_deps = [ ":mds" ]
+  public_deps = [ "../../../device:mds_device" ]
 }

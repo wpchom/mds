@@ -2,10 +2,6 @@ declare_args() {
   # chip_gd32vf103_without_interrupt = false
 }
 
-pkggroup("mds") {
-  deps = [ ":device" ]
-}
-
 pkggroup("chip/gd32vf103") {
   deps = [ ":gd32vf103_firmware" ]
 }
@@ -22,6 +18,6 @@ source_set("chip_gd32vf103_driver") {
 
   public_deps = [
     ":chip/gd32vf103",
-    ":mds",
+    "${mds_sys_dir}/device:mds_device",
   ]
 }

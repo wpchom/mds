@@ -3,8 +3,8 @@ declare_args() {
   mds_systemview_trace_mem = true
 }
 
-pkggroup("utils/systemview") {
-  deps = [ ":systemview" ]
+pkggroup("utils/segger_systemview") {
+  deps = [ ":segger_systemview" ]
 }
 
 source_set("mds_component_systemview") {
@@ -21,5 +21,5 @@ source_set("mds_component_systemview") {
 
   deps = [ "../../kernel/:mds_kernel" ]
 
-  public_deps = [ ":utils/systemview" ]
+  public_deps = [ ":utils/segger_systemview" ]
 }

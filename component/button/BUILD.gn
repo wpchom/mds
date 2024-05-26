@@ -1,7 +1,3 @@
-pkggroup("mds") {
-  deps = [ ":kernel" ]
-}
-
 config("mds_component_button_config") {
   include_dirs = [ "./" ]
 }
@@ -11,5 +7,5 @@ source_set("mds_component_button") {
 
   public_configs = [ ":mds_component_button_config" ]
 
-  public_deps = [ ":mds" ]
+  public_deps = [ "../../kernel:mds_kernel" ]
 }

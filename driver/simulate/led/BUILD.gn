@@ -1,7 +1,3 @@
-pkggroup("mds") {
-  deps = [ ":device" ]
-}
-
 config("mds_driver_simulate_led_config") {
   include_dirs = [ "./" ]
 }
@@ -11,5 +7,5 @@ source_set("mds_driver_simulate_led") {
 
   public_configs = [ ":mds_driver_simulate_led_config" ]
 
-  public_deps = [ ":mds" ]
+  public_deps = [ "${mds_sys_dir}/device:mds_device" ]
 }
