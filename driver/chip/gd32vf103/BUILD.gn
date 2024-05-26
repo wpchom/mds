@@ -1,12 +1,12 @@
 declare_args() {
-  # chip_gd32vf103_vector_without_interrupt = false
+  # chip_gd32vf103_without_interrupt = false
 }
 
 pkggroup("mds") {
   deps = [ ":device" ]
 }
 
-pkggroup("chip/gd32vf103_firmware") {
+pkggroup("chip/gd32vf103") {
   deps = [ ":gd32vf103_firmware" ]
 }
 
@@ -21,7 +21,7 @@ source_set("chip_gd32vf103_driver") {
   public_configs = [ ":chip_gd32vf103_config" ]
 
   public_deps = [
-    ":chip/gd32vf103_firmware",
+    ":chip/gd32vf103",
     ":mds",
   ]
 }

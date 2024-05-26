@@ -1,0 +1,31 @@
+declare_args() {
+  chip_stm32f1xx_without_interrupt = false
+}
+
+pkggroup("mds") {
+  deps = [ ":device" ]
+}
+
+pkggroup("chip/stm32f1xx") {
+  deps = [ "stm32f1xx_hal_driver/:stm32f1xx_hal_driver_ll" ]
+}
+
+config("chip_stm32f1xx_config") {
+  include_dirs = [ "inc/" ]
+  defines = []
+  if (defined(chip_stm32f1xx_without_interrupt) &&
+      chip_stm32f1xx_without_interrupt) {
+    defines += [ "CHIP_STM32f1XX_WITHOUT_INTERRUPT=1" ]
+  }
+}
+
+source_set("chip_stm32f1xx_driver") {
+  sources = [ "src/startup_stm32f1xx.c" ]
+
+  public_configs = [ ":chip_stm32f1xx_config" ]
+
+  public_deps = [
+    ":chip/stm32f1xx",
+    ":mds",
+  ]
+}

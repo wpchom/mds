@@ -3,8 +3,7 @@ declare_args() {
   mds_component_lpc_statistic = false
 }
 
-pkggroup("mds_kernel") {
-  package = "mds"
+pkggroup("mds") {
   deps = [ ":kernel" ]
 }
 
@@ -25,5 +24,5 @@ source_set("mds_component_lpc") {
 
   public_configs = [ ":mds_component_lpc_config" ]
 
-  public_deps = [ ":mds_kernel" ]
+  public_deps = [ ":mds" ]
 }

@@ -1,21 +1,21 @@
 declare_args() {
-  driver_chip_interrupt_without_irq = false
+  chip_stm32h7xx_without_interrupt = false
 }
 
 pkggroup("mds") {
   deps = [ ":device" ]
 }
 
-pkggroup("chip/stm32h7xx_hal_driver") {
-  deps = [ ":stm32h7xx_hal_driver_ll" ]
+pkggroup("chip/stm32h7xx") {
+  deps = [ "stm32h7xx_hal_driver/:stm32h7xx_hal_driver_ll" ]
 }
 
 config("chip_stm32h7xx_config") {
   include_dirs = [ "inc/" ]
   defines = []
-  if (defined(driver_chip_interrupt_without_irq) &&
-      driver_chip_interrupt_without_irq) {
-    defines += [ "CHIP_INTERRUPT_WITHOUT_IRQ=1" ]
+  if (defined(chip_stm32h7xx_without_interrupt) &&
+      chip_stm32h7xx_without_interrupt) {
+    defines += [ "CHIP_STM32H7XX_WITHOUT_INTERRUPT=1" ]
   }
 }
 
@@ -25,7 +25,7 @@ source_set("chip_stm32h7xx_driver") {
   public_configs = [ ":chip_stm32h7xx_config" ]
 
   public_deps = [
-    ":chip/stm32h7xx_hal_driver",
+    ":chip/stm32h7xx",
     ":mds",
   ]
 }

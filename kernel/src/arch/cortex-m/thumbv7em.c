@@ -27,7 +27,7 @@ MDS_HOOK_INIT(INTERRUPT_EXIT, MDS_Item_t irq);
 #endif
 
 #ifndef MDS_INTERRUPT_IRQ_NUMS
-#define MDS_INTERRUPT_IRQ_NUMS 128
+#define MDS_INTERRUPT_IRQ_NUMS 0
 #endif
 
 struct SCB_Typedef {
@@ -168,6 +168,7 @@ inline void MDS_CoreIdleSleep(void)
 }
 
 /* CoreInterrupt ----------------------------------------------------------- */
+#if defined(MDS_INTERRUPT_IRQ_NUMS) && (MDS_INTERRUPT_IRQ_NUMS > 0)
 static __attribute__((section(".mds.isr"))) struct {
     MDS_IsrHandler_t handler;
     MDS_Arg_t *arg;
@@ -175,8 +176,6 @@ static __attribute__((section(".mds.isr"))) struct {
 
 void InterruptHandler(uintptr_t ipsr)
 {
-    MDS_LOG_I("[ISR] ipsr:%d", ipsr);
-
     MDS_HOOK_CALL(INTERRUPT_ENTER, ipsr);
 
     if ((ipsr < ARRAY_SIZE(g_mds_isr)) && (g_mds_isr[ipsr].handler != NULL)) {
@@ -200,6 +199,7 @@ MDS_Err_t MDS_CoreInterruptRequestRegister(MDS_Item_t irq, MDS_IsrHandler_t hand
 
     return (MDS_ERANGE);
 }
+#endif
 
 inline MDS_Item_t MDS_CoreInterruptCurrent(void)
 {

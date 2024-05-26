@@ -1,5 +1,4 @@
-pkggroup("mds_device") {
-  package = "mds"
+pkggroup("mds") {
   deps = [ ":device" ]
 }
 
@@ -12,5 +11,5 @@ source_set("mds_component_fs_emfs") {
 
   public_configs = [ ":mds_component_fs_emfs_config" ]
 
-  public_deps = [ ":mds_device" ]
+  public_deps = [ ":mds" ]
 }

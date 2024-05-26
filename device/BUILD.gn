@@ -1,5 +1,4 @@
-pkggroup("mds_kernel") {
-  package = "mds"
+pkggroup("mds") {
   deps = [ ":kernel" ]
 }
 
@@ -26,5 +25,5 @@ source_set("mds_device") {
 
   public_configs = [ ":mds_device_config" ]
 
-  public_deps = [ ":mds_kernel" ]
+  public_deps = [ ":mds" ]
 }
