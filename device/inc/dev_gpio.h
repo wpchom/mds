@@ -39,38 +39,23 @@ typedef enum DEV_GPIO_Type {
     DEV_GPIO_TYPE_OD,
 } DEV_GPIO_Type_t;
 
-/*
- * Mean | EVENT | INTTERUPT | High | Low | Rising | Falling |
- * Bit  |     5 |         4 |    3 |   2 |      1 |       0 |
- */
-typedef enum DEV_GPIO_Exti {
-    DEV_EXTI_DISABLE = 0x00U,
-
-    DEV_EXTI_MODE_EVT = 0x20U,
-    DEV_EXTI_MODE_INT = 0x10U,
-    DEV_EXTI_TRIG_RISING = 0x02U,
-    DEV_EXTI_TRIG_FALLING = 0x01U,
-
-    DEV_EXTI_INT_RISING = DEV_EXTI_MODE_INT | DEV_EXTI_TRIG_RISING,
-    DEV_EXTI_INT_FALLING = DEV_EXTI_MODE_INT | DEV_EXTI_TRIG_FALLING,
-    DEV_EXTI_INT_BOTH = DEV_EXTI_MODE_INT | DEV_EXTI_TRIG_RISING | DEV_EXTI_TRIG_FALLING,
-    DEV_EXTI_EVT_RISING = DEV_EXTI_MODE_EVT | DEV_EXTI_TRIG_RISING,
-    DEV_EXTI_EVT_FALLING = DEV_EXTI_MODE_EVT | DEV_EXTI_TRIG_FALLING,
-    DEV_EXTI_EVT_BOTH = DEV_EXTI_MODE_EVT | DEV_EXTI_TRIG_RISING | DEV_EXTI_TRIG_FALLING,
-    DEV_EXTI_INT_EVT_RISING = DEV_EXTI_MODE_INT | DEV_EXTI_MODE_EVT | DEV_EXTI_TRIG_RISING,
-    DEV_EXTI_INT_EVT_FALLING = DEV_EXTI_MODE_INT | DEV_EXTI_MODE_EVT | DEV_EXTI_TRIG_FALLING,
-    DEV_EXTI_INT_EVT_BOTH = DEV_EXTI_MODE_INT | DEV_EXTI_MODE_EVT | DEV_EXTI_TRIG_RISING | DEV_EXTI_TRIG_FALLING,
-} DEV_GPIO_Exti_t;
+typedef enum DEV_GPIO_Interrupt {
+    DEV_GPIO_INT_DISABLE = 0x00U,
+    DEV_GPIO_INT_FALLING = 0x01U,
+    DEV_GPIO_INT_RISING = 0x02U,
+    DEV_GPIO_INT_BOTH = 0x03U,
+} DEV_GPIO_Interrupt_t;
 
 typedef struct DEV_GPIO_Config {
     MDS_Mask_t initVal;
-    DEV_GPIO_Mode_t mode : 8;
-    DEV_GPIO_Type_t type : 8;
-    uint16_t alternate;
+    uint8_t alternate;
+    DEV_GPIO_Interrupt_t interrupt : 8;
+    DEV_GPIO_Mode_t mode           : 8;
+    DEV_GPIO_Type_t type           : 8;
 } DEV_GPIO_Config_t;
 
 enum DEV_GPIO_Cmd {
-    DEV_GPIO_CMD_TOGGLE = MDS_DEVICE_CMD_DRIVER,
+    DEV_GPIO_CMD_PIN_TOGGLE = MDS_DEVICE_CMD_DRIVER,
 };
 
 typedef struct DEV_GPIO_Module DEV_GPIO_Module_t;
@@ -79,9 +64,8 @@ typedef struct DEV_GPIO_Pin DEV_GPIO_Pin_t;
 typedef struct DEV_GPIO_Driver {
     MDS_Err_t (*control)(const DEV_GPIO_Module_t *gpio, MDS_Item_t cmd, MDS_Arg_t *arg);
     MDS_Err_t (*config)(const DEV_GPIO_Pin_t *pin, const DEV_GPIO_Config_t *config);
-    MDS_Err_t (*exti)(const DEV_GPIO_Pin_t *pin, DEV_GPIO_Exti_t config);
     MDS_Mask_t (*read)(const DEV_GPIO_Pin_t *pin);
-    MDS_Err_t (*write)(const DEV_GPIO_Pin_t *pin, MDS_Mask_t mask);
+    void (*write)(const DEV_GPIO_Pin_t *pin, MDS_Mask_t val);
 } DEV_GPIO_Driver_t;
 
 struct DEV_GPIO_Module {
@@ -122,15 +106,14 @@ extern DEV_GPIO_Pin_t *DEV_GPIO_PinCreate(const char *name, DEV_GPIO_Module_t *g
 extern MDS_Err_t DEV_GPIO_PinDestroy(DEV_GPIO_Pin_t *pin);
 
 extern MDS_Err_t DEV_GPIO_PinConfig(DEV_GPIO_Pin_t *pin, const DEV_GPIO_Config_t *config);
-extern MDS_Err_t DEV_GPIO_PinExtiConfig(DEV_GPIO_Pin_t *pin, DEV_GPIO_Exti_t config);
-extern void DEV_GPIO_PinExtiCallback(DEV_GPIO_Pin_t *pin, void (*callback)(const DEV_GPIO_Pin_t *, MDS_Arg_t *),
-                                     MDS_Arg_t *arg);
-extern MDS_Err_t DEV_GPIO_PinToggle(DEV_GPIO_Pin_t *pin);
+extern void DEV_GPIO_PinInterruptCallback(DEV_GPIO_Pin_t *pin, void (*callback)(const DEV_GPIO_Pin_t *, MDS_Arg_t *),
+                                          MDS_Arg_t *arg);
 extern MDS_Mask_t DEV_GPIO_PinRead(const DEV_GPIO_Pin_t *pin);
-extern MDS_Err_t DEV_GPIO_PinWrite(DEV_GPIO_Pin_t *pin, MDS_Mask_t val);
-extern MDS_Err_t DEV_GPIO_PinLow(DEV_GPIO_Pin_t *pin);
-extern MDS_Err_t DEV_GPIO_PinHigh(DEV_GPIO_Pin_t *pin);
-extern MDS_Err_t DEV_GPIO_PinActive(DEV_GPIO_Pin_t *pin, bool actived);
+extern void DEV_GPIO_PinWrite(DEV_GPIO_Pin_t *pin, MDS_Mask_t val);
+extern void DEV_GPIO_PinToggle(DEV_GPIO_Pin_t *pin);
+extern void DEV_GPIO_PinLow(DEV_GPIO_Pin_t *pin);
+extern void DEV_GPIO_PinHigh(DEV_GPIO_Pin_t *pin);
+extern void DEV_GPIO_PinActive(DEV_GPIO_Pin_t *pin, bool actived);
 extern bool DEV_GPIO_PinIsActived(const DEV_GPIO_Pin_t *pin);
 
 #ifdef __cplusplus

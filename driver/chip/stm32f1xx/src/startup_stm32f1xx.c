@@ -1,3 +1,11 @@
+/**
+ * @copyright   Copyright (c) 2024 Pchom & licensed under Mulan PSL v2
+ * @file        startup_stm32f1xx.c
+ * @brief       stm32f1xx startup source
+ * @date        2024-05-30
+ */
+
+/* Include ----------------------------------------------------------------- */
 /** @addtogroup Startup_Include
  * @{
  */
@@ -38,6 +46,7 @@
  * @}
  */
 
+/* Function ---------------------------------------------------------------- */
 __attribute__((weak, naked, noreturn)) void _start(void)
 {
     __asm volatile("bl     main");

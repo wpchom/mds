@@ -3,7 +3,7 @@ declare_args() {
 }
 
 pkggroup("chip/stm32f1xx") {
-  deps = [ "stm32f1xx_hal_driver/:stm32f1xx_hal_driver_ll" ]
+  deps = [ "stm32f1xx_hal_driver/:stm32f1xx_hal_driver" ]
 }
 
 config("chip_stm32f1xx_config") {
