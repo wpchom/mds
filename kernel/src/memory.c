@@ -25,7 +25,7 @@ typedef struct MemHeapNode {
 } MemHeapNode_t;
 
 /* Define ------------------------------------------------------------------ */
-#if (defined(MDS_DEBUG_MEMORY) && (MDS_DEBUG_MEMORY != 0))
+#if (defined(MDS_DEBUG_MEMORY) && (MDS_DEBUG_MEMORY > 0))
 #define MDS_MEMORY_PRINT(fmt, ...) MDS_LOG_D("[MEMORY]" fmt, ##__VA_ARGS__)
 #else
 #define MDS_MEMORY_PRINT(fmt, ...)

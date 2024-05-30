@@ -13,7 +13,7 @@
 #include "mds_dev.h"
 
 /* Define ------------------------------------------------------------------ */
-#if (defined(MDS_DEBUG_DEVICE) && (MDS_DEBUG_DEVICE != 0))
+#if (defined(MDS_DEBUG_DEVICE) && (MDS_DEBUG_DEVICE > 0))
 #define MDS_DEVICE_PRINT(fmt, ...) MDS_LOG_D("[DEVICE]" fmt, ##__VA_ARGS__)
 #else
 #define MDS_DEVICE_PRINT(fmt, ...)

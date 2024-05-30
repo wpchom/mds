@@ -16,7 +16,7 @@
 MDS_HOOK_INIT(SCHEDULER_SWITCH, MDS_Thread_t *toThread, MDS_Thread_t *fromThread);
 
 /* Define ------------------------------------------------------------------ */
-#if (defined(MDS_DEBUG_SCHEDULER) && (MDS_DEBUG_SCHEDULER != 0))
+#if (defined(MDS_DEBUG_SCHEDULER) && (MDS_DEBUG_SCHEDULER > 0))
 #define MDS_SCHEDULER_PRINT(fmt, ...) MDS_LOG_D("[SCHEDULER]" fmt, ##__VA_ARGS__)
 #else
 #define MDS_SCHEDULER_PRINT(fmt, ...)

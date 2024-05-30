@@ -1,4 +1,5 @@
 declare_args() {
+  mds_systemview_trace_isr = false
   mds_systemview_trace_ipc = true
   mds_systemview_trace_mem = true
 }
@@ -12,11 +13,14 @@ source_set("mds_component_systemview") {
 
   defines = []
 
+  if (defined(mds_systemview_trace_isr) && mds_systemview_trace_isr) {
+    defines += [ "MDS_SYSTEMVIEW_TRACE_ISR=1" ]
+  }
   if (defined(mds_systemview_trace_ipc) && mds_systemview_trace_ipc) {
-    defines += [ "MDS_SYSTEMVIEW_TRACE_IPC" ]
+    defines += [ "MDS_SYSTEMVIEW_TRACE_IPC=1" ]
   }
   if (defined(mds_systemview_trace_mem) && mds_systemview_trace_mem) {
-    defines += [ "MDS_SYSTEMVIEW_TRACE_MEM" ]
+    defines += [ "MDS_SYSTEMVIEW_TRACE_MEM=1" ]
   }
 
   deps = [ "../../kernel/:mds_kernel" ]

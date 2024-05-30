@@ -24,7 +24,7 @@
 #endif
 
 /* Function ---------------------------------------------------------------- */
-size_t MDS_LOG_CompressStruct(MDS_LOG_Compress_t *log, size_t level, const char *fmt, size_t cnt, va_list ap)
+size_t MDS_LOG_CompressStructVa(MDS_LOG_Compress_t *log, size_t level, const char *fmt, size_t cnt, va_list ap)
 {
     MDS_ASSERT(log != NULL);
 
@@ -46,10 +46,22 @@ size_t MDS_LOG_CompressStruct(MDS_LOG_Compress_t *log, size_t level, const char 
     log->timestamp = MDS_TIME_GetTimeStamp(NULL);
 
     for (size_t idx = 0; idx < cnt; idx++) {
-        log->args[idx] = MDS_LOG_COMPRESS_ARG_FIX(va_arg(ap, uint32_t));
+        uint32_t val = va_arg(ap, uint32_t);
+        log->args[idx] = MDS_LOG_COMPRESS_ARG_FIX(val);
     }
 
     return (sizeof(MDS_LOG_Compress_t) - (sizeof(uint32_t) * (MDS_LOG_COMPRESS_ARGS_MAX + cnt)));
+}
+
+size_t MDS_LOG_CompressSturctPrint(MDS_LOG_Compress_t *log, size_t level, const char *fmt, size_t cnt, ...)
+{
+    va_list ap;
+
+    va_start(ap, cnt);
+    size_t len = MDS_LOG_CompressStructVa(log, level, fmt, cnt, ap);
+    va_end(ap);
+
+    return (len);
 }
 
 __attribute__((weak)) void MDS_LOG_VaPrintf(size_t level, const char *fmt, size_t cnt, va_list ap)

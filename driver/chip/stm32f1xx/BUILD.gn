@@ -16,7 +16,10 @@ config("chip_stm32f1xx_config") {
 }
 
 source_set("chip_stm32f1xx_driver") {
-  sources = [ "src/startup_stm32f1xx.c" ]
+  sources = [
+    "src/drv_gpio.c",
+    "src/startup_stm32f1xx.c",
+  ]
 
   public_configs = [ ":chip_stm32f1xx_config" ]
 

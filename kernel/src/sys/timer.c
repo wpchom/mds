@@ -19,7 +19,7 @@ MDS_HOOK_INIT(TIMER_START, MDS_Timer_t *timer);
 MDS_HOOK_INIT(TIMER_STOP, MDS_Timer_t *timer);
 
 /* Define ------------------------------------------------------------------ */
-#if (defined(MDS_DEBUG_TIMER) && (MDS_DEBUG_TIMER != 0))
+#if (defined(MDS_DEBUG_TIMER) && (MDS_DEBUG_TIMER > 0))
 #define MDS_TIMER_PRINT(fmt, ...) MDS_LOG_D("[TIMER]" fmt, ##__VA_ARGS__)
 #else
 #define MDS_TIMER_PRINT(fmt, ...)
@@ -323,7 +323,7 @@ MDS_Tick_t MDS_SysTimerNextTick(void)
         return (MDS_TICK_FOREVER);
     }
 
-#if (defined(MDS_DEBUG_TIMER) && (MDS_DEBUG_TIMER != 0))
+#if (defined(MDS_DEBUG_TIMER) && (MDS_DEBUG_TIMER > 0))
     static MDS_Timer_t *last = NULL;
     if (last != NULL) {
         MDS_Tick_t currTick = MDS_SysTickGetCount();

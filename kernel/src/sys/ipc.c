@@ -32,7 +32,7 @@ MDS_HOOK_INIT(MEMPOOL_HAS_ALLOC, MDS_MemPool_t *memPool, void *ptr);
 MDS_HOOK_INIT(MEMPOOL_HAS_FREE, MDS_MemPool_t *memPool, void *ptr);
 
 /* Define ------------------------------------------------------------------ */
-#if (defined(MDS_DEBUG_IPC) && (MDS_DEBUG_IPC != 0))
+#if (defined(MDS_DEBUG_IPC) && (MDS_DEBUG_IPC > 0))
 #define MDS_IPC_PRINT(fmt, ...) MDS_LOG_D("[IPC]" fmt, ##__VA_ARGS__)
 #else
 #define MDS_IPC_PRINT(fmt, ...)
@@ -743,14 +743,10 @@ MDS_Err_t MDS_EventSet(MDS_Event_t *event, MDS_Mask_t mask)
     MDS_ASSERT(event != NULL);
     MDS_ASSERT(MDS_ObjectGetType(&(event->object)) == MDS_OBJECT_TYPE_EVENT);
 
-    if (mask == 0U) {
-        return (MDS_EOK);
-    }
-
     MDS_IPC_PRINT("event(%p) which value:%x set mask:%x", event, event->value, mask);
 
     MDS_Thread_t *iter = NULL;
-    MDS_Err_t err = MDS_ENOENT;
+    MDS_Err_t err = MDS_EOK;
     register MDS_Item_t lock = MDS_CoreInterruptLock();
 
     MDS_HOOK_CALL(EVENT_HAS_SET, event, mask);
@@ -911,7 +907,7 @@ MDS_Err_t MDS_MsgQueueRecvAcquire(MDS_MsgQueue_t *msgQueue, void *recv, size_t *
 
     MDS_HOOK_CALL(MSGQUEUE_TRY_RECV, msgQueue, timeout);
 
-    MDS_Err_t err = MDS_ENOENT;
+    MDS_Err_t err = MDS_EOK;
     MDS_MsgQueueHeader_t *msg = NULL;
     MDS_Item_t lock = MDS_CoreInterruptLock();
     do {
@@ -1026,7 +1022,7 @@ MDS_Err_t MDS_MsgQueueSendMsg(MDS_MsgQueue_t *msgQueue, const MDS_MsgList_t *msg
 
     MDS_HOOK_CALL(MSGQUEUE_TRY_SEND, msgQueue, timeout);
 
-    MDS_Err_t err = MDS_ENOENT;
+    MDS_Err_t err = MDS_EOK;
     MDS_MsgQueueHeader_t *msg = NULL;
     MDS_Item_t lock = MDS_CoreInterruptLock();
     do {
@@ -1285,7 +1281,7 @@ void *MDS_MemPoolAlloc(MDS_MemPool_t *memPool, MDS_Tick_t timeout)
 
     MDS_Thread_t *thread = MDS_KernelCurrentThread();
 
-    MDS_Err_t err = MDS_ENOENT;
+    MDS_Err_t err = MDS_EOK;
     union MDS_MemPoolHeader *blk = NULL;
     MDS_Item_t lock = MDS_CoreInterruptLock();
     do {

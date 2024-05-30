@@ -193,18 +193,24 @@ static void hookSchedulerSwitch(MDS_Thread_t *toThread, MDS_Thread_t *fromThread
 static void hookInterruptEnter(MDS_Item_t irq)
 {
     UNUSED(irq);
+
+#if (defined(MDS_SYSTEMVIEW_TRACE_ISR) && (MDS_SYSTEMVIEW_TRACE_ISR > 0))
     SEGGER_SYSVIEW_RecordEnterISR();
+#endif
 }
 
 static void hookInterruptExit(MDS_Item_t irq)
 {
     UNUSED(irq);
+#if (defined(MDS_SYSTEMVIEW_TRACE_ISR) && (MDS_SYSTEMVIEW_TRACE_ISR > 0))
     if (MDS_CoreInterruptCurrent() != 0) {
         SEGGER_SYSVIEW_RecordExitISR();
         return;
+    } else {
+        SEGGER_SYSVIEW_RecordExitISRToScheduler();
     }
+#endif
 
-    SEGGER_SYSVIEW_RecordExitISRToScheduler();
     MDS_Thread_t *thread = MDS_KernelCurrentThread();
     if (thread == MDS_KernelGetIdleThread()) {
         SEGGER_SYSVIEW_OnIdle();
@@ -403,8 +409,7 @@ U32 SEGGER_SYSVIEW_X_GetInterruptId(void)
 
 U32 SEGGER_SYSVIEW_X_GetTimestamp(void)
 {
-    // get cpu clock
-    return (0);
+    return (MDS_SysTickGetCount() * (MDS_TIME_MSEC_OF_SEC / MDS_SYSTICK_FREQ_HZ));
 }
 
 /*************************** End of file ****************************/

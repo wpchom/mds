@@ -12,9 +12,9 @@ void __STACK_LIMIT(void);
 void Reset_Handler(void);
 
 /* Interrupt --------------------------------------------------------------- */
-__attribute__((weak)) void InterruptHandler(int irq)
+__attribute__((weak)) void Interrupt_Handler(uintptr_t ipsr)
 {
-    (void)(irq);
+    (void)(ipsr);
 
     for (;;) {
         __WFI();
@@ -23,9 +23,9 @@ __attribute__((weak)) void InterruptHandler(int irq)
 
 static void Default_Handler(void)
 {
-    int irq = __get_IPSR() & IPSR_ISR_Msk;
+    uintptr_t ipsr = __get_IPSR() & IPSR_ISR_Msk;
 
-    InterruptHandler(irq);
+    Interrupt_Handler(ipsr);
 }
 
 __attribute__((weak, alias("Default_Handler"))) void NMI_Handler(void);

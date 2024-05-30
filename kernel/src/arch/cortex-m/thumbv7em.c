@@ -168,13 +168,13 @@ inline void MDS_CoreIdleSleep(void)
 }
 
 /* CoreInterrupt ----------------------------------------------------------- */
-#if defined(MDS_INTERRUPT_IRQ_NUMS) && (MDS_INTERRUPT_IRQ_NUMS > 0)
+#if (defined(MDS_INTERRUPT_IRQ_NUMS) && (MDS_INTERRUPT_IRQ_NUMS > 0))
 static __attribute__((section(".mds.isr"))) struct {
     MDS_IsrHandler_t handler;
     MDS_Arg_t *arg;
 } g_mds_isr[MDS_INTERRUPT_IRQ_NUMS];
 
-void InterruptHandler(uintptr_t ipsr)
+void Interrupt_Handler(uintptr_t ipsr)
 {
     MDS_HOOK_CALL(INTERRUPT_ENTER, ipsr);
 

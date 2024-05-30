@@ -12,6 +12,10 @@
 /* Include ----------------------------------------------------------------- */
 #include "mds_sys.h"
 
+/* Hook -------------------------------------------------------------------- */
+MDS_HOOK_INIT(INTERRUPT_ENTER, MDS_Item_t irq);
+MDS_HOOK_INIT(INTERRUPT_EXIT, MDS_Item_t irq);
+
 /* Define ------------------------------------------------------------------ */
 #define MSTATUS_UIE  0x00000001
 #define MSTATUS_SIE  0x00000002
@@ -314,10 +318,13 @@ __attribute__((naked)) void ContextStackExit(void)
 }
 
 /* CoreFunction ------------------------------------------------------------ */
-static intptr_t g_mcause = 0;
 inline intptr_t MDS_CoreInterruptCurrent(void)
 {
-    return (g_mcause);
+    intptr_t mcause;
+
+    __asm volatile("csrr        %0, mcause" : "=r"(mcause));
+
+    return (mcause);
 }
 
 inline MDS_Item_t MDS_CoreInterruptLock(void)
@@ -561,9 +568,9 @@ __attribute__((noreturn)) void Exception_Handler(uintptr_t sp)
 
 /* Trap -------------------------------------------------------------------- */
 #if (defined(MDS_THREAD_PRIORITY_MAX) && (MDS_THREAD_PRIORITY_MAX > 0))
-__attribute__((weak)) void Interrupt_Handler(uintptr_t irq)
+__attribute__((weak)) void Interrupt_Handler(uintptr_t cause)
 {
-    UNUSED(irq);
+    UNUSED(cause);
 }
 
 __attribute__((naked, __aligned__(0x04))) void Trap_Handler(void)
@@ -577,16 +584,13 @@ __attribute__((naked, __aligned__(0x04))) void Trap_Handler(void)
         __asm volatile("csrrw       sp, mscratch, sp");
     }
 
-    g_mcause = (mcause != 0) ? (mcause) : ((intptr_t)(INTPTR_MIN));
+    MDS_HOOK_CALL(INTERRUPT_ENTER, mcause);
     if ((mcause & MCAUSE_INT) == 0U) {
-        register uintptr_t sp;
-        __asm volatile("mv          %0, sp" : "=r"(sp));
-
-        Exception_Handler(sp);
+        Exception_Handler(mscratch);
     } else {
         Interrupt_Handler(mcause & MCAUSE_CAUSE);
     }
-    g_mcause = 0;
+    MDS_HOOK_CALL(INTERRUPT_EXIT, mcause);
 
     if (mscratch != 0) {
         __asm volatile("csrrw       sp, mscratch, sp");

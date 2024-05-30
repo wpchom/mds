@@ -59,7 +59,8 @@ typedef struct MDS_LOG_Compress {
 } MDS_LOG_Compress_t;
 
 /* Function ---------------------------------------------------------------- */
-extern size_t MDS_LOG_CompressStruct(MDS_LOG_Compress_t *log, size_t level, const char *fmt, size_t cnt, va_list ap);
+extern size_t MDS_LOG_CompressStructVa(MDS_LOG_Compress_t *log, size_t level, const char *fmt, size_t cnt, va_list ap);
+extern size_t MDS_LOG_CompressSturctPrint(MDS_LOG_Compress_t *log, size_t level, const char *fmt, size_t cnt, ...);
 extern void MDS_LOG_VaPrintf(size_t level, const char *fmt, size_t cnt, va_list ap);
 extern void MDS_LOG_Printf(size_t level, const char *fmt, size_t cnt, ...);
 

@@ -19,7 +19,7 @@ MDS_HOOK_INIT(THREAD_RESUME, MDS_Thread_t *thread);
 MDS_HOOK_INIT(THREAD_SUSPEND, MDS_Thread_t *thread);
 
 /* Define ------------------------------------------------------------------ */
-#if (defined(MDS_DEBUG_THREAD) && (MDS_DEBUG_THREAD != 0))
+#if (defined(MDS_DEBUG_THREAD) && (MDS_DEBUG_THREAD > 0))
 #define MDS_THREAD_PRINT(fmt, ...) MDS_LOG_D("[THREAD]" fmt, ##__VA_ARGS__)
 #else
 #define MDS_THREAD_PRINT(fmt, ...)

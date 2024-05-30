@@ -689,7 +689,7 @@ static int FMT_VaParsePrint(char *buff, size_t size, size_t *pos, const char **f
     args.base = FMT_PrintIntegerBase(ch);
     if (args.base > 0) {
         FMT_PrintInteger(buff, size, pos, ch, ap, &args);
-#if defined(MDS_FORMAT_WITH_FLOAT)
+#if (defined(MDS_FORMAT_WITH_FLOAT) && (MDS_FORMAT_WITH_FLOAT > 0))
     } else if ((ch == 'f') || (ch == 'F') || (ch == 'e') || (ch == 'E') || (ch == 'g') || (ch == 'G')) {
         FMT_PrintFloat(buff, size, pos, ch, ap, &args);
 #endif

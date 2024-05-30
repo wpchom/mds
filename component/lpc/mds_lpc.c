@@ -29,7 +29,7 @@ typedef struct MDS_LPC_Manager {
     MDS_LPC_Vote_t sleepVote[MDS_LPC_SLEEP_NUMS];
     MDS_LPC_Vote_t runVote[MDS_LPC_RUN_NUMS];
 
-#if defined(MDS_LPC_STATISTIC)
+#if (defined(MDS_LPC_STATISTIC) && (MDS_LPC_STATISTIC > 0))
     MDS_Tick_t lastTick;
     MDS_Tick_t runTime[MDS_LPC_RUN_NUMS];
 #endif
@@ -133,7 +133,7 @@ static void LPC_SleepModeSwitch(MDS_LPC_Manager_t *mgr)
         mgr->runMode = mgr->ops->run(run);
     }
     if (mgr->runMode != run) {
-#if defined(MDS_LPC_STATISTIC)
+#if (defined(MDS_LPC_STATISTIC) && (MDS_LPC_STATISTIC > 0))
         MDS_Tick_t curTick = MDS_SysTickGetCount();
         mgr->runTime[mgr->runMode] += curTick - mgr->lastTick;
         mgr->lastTick = curTick;
@@ -161,7 +161,7 @@ static void LPC_RunModeSwitch(MDS_LPC_Manager_t *mgr)
         return;
     }
 
-#if defined(MDS_LPC_STATISTIC)
+#if (defined(MDS_LPC_STATISTIC) && (MDS_LPC_STATISTIC > 0))
     MDS_Tick_t curTick = MDS_SysTickGetCount();
     mgr->runTime[mgr->runMode] += curTick - mgr->lastTick;
     mgr->lastTick = curTick;
@@ -369,7 +369,7 @@ MDS_Err_t MDS_LPC_DeviceUnregister(MDS_LPC_Device_t *device)
     return (MDS_EOK);
 }
 
-#if defined(MDS_LPC_STATISTIC)
+#if (defined(MDS_LPC_STATISTIC) && (MDS_LPC_STATISTIC > 0))
 void MDS_LPC_RunTimeClear(void)
 {
     size_t run;
