@@ -391,7 +391,7 @@ bool MDS_CoreThreadStackCheck(MDS_Thread_t *thread)
 }
 
 /* CoreScheduler ----------------------------------------------------------- */
-#if (defined(MDS_THREAD_PRIORITY_MAX) && (MDS_THREAD_PRIORITY_MAX > 0))
+#if (defined(MDS_THREAD_PRIORITY_NUMS) && (MDS_THREAD_PRIORITY_NUMS > 0))
 static struct CoreScheduler {
     uintptr_t swflag;
     uintptr_t *fromSP;
@@ -567,7 +567,7 @@ __attribute__((noreturn)) void Exception_Handler(uintptr_t sp)
 #endif
 
 /* Trap -------------------------------------------------------------------- */
-#if (defined(MDS_THREAD_PRIORITY_MAX) && (MDS_THREAD_PRIORITY_MAX > 0))
+#if (defined(MDS_THREAD_PRIORITY_NUMS) && (MDS_THREAD_PRIORITY_NUMS > 0))
 __attribute__((weak)) void Interrupt_Handler(uintptr_t cause)
 {
     UNUSED(cause);

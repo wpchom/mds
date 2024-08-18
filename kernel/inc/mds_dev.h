@@ -24,11 +24,11 @@ typedef enum MDS_DeviceCmd {
     MDS_DEVICE_CMD_INIT,
     MDS_DEVICE_CMD_DEINIT,
     MDS_DEVICE_CMD_HANDLESZ,
+    MDS_DEVICE_CMD_OPEN,
+    MDS_DEVICE_CMD_CLOSE,
     MDS_DEVICE_CMD_GETID,
     MDS_DEVICE_CMD_PROBE,
     MDS_DEVICE_CMD_DUMP,
-    MDS_DEVICE_CMD_OPEN,
-    MDS_DEVICE_CMD_CLOSE,
 
     MDS_DEVICE_CMD_DRIVER,
 } MDS_DeviceCmd_t;
@@ -47,6 +47,7 @@ typedef struct MDS_DevDriver {
 
 struct MDS_Device {
     MDS_Object_t object;
+    MDS_Mask_t flags;
     void (*hook)(const MDS_Device_t *device, MDS_DeviceCmd_t cmd);
 };
 
@@ -124,7 +125,7 @@ extern MDS_Device_t *MDS_DeviceProbeDrivers(const MDS_DevDriver_t **driver, cons
 
 /* Define ------------------------------------------------------------------ */
 #ifndef MDS_DEVICE_PERIPH_TIMEOUT
-#define MDS_DEVICE_PERIPH_TIMEOUT 5000
+#define MDS_DEVICE_PERIPH_TIMEOUT 2000
 #endif
 
 #define MDS_DEVICE_ARG_HANDLE_SIZE(arg, handleT)                                                                       \

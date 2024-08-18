@@ -19,12 +19,23 @@
 extern "C" {
 #endif
 
+/* Define ------------------------------------------------------------------ */
+#if (defined(MDS_DEBUG_SCHEDULER) && (MDS_DEBUG_SCHEDULER > 0))
+#define MDS_SCHEDULER_PRINT(fmt, ...) MDS_LOG_D("[SCHEDULER]" fmt, ##__VA_ARGS__)
+#else
+#define MDS_SCHEDULER_PRINT(fmt, ...)
+#endif
+
+/* Kernel ------------------------------------------------------------------ */
+extern void MDS_KernelSchedulerCheck(void);
+extern void MDS_KernelPushDefunct(MDS_Thread_t *thread);
+extern MDS_Thread_t *MDS_KernelPopDefunct(void);
+
 /* Scheduler --------------------------------------------------------------- */
-extern void MDS_SchedulerCheck(void);
+extern void MDS_SchedulerInit(void);
+extern MDS_Thread_t *MDS_SchedulerGetHighestPriorityThread(void);
 extern void MDS_SchedulerInsertThread(MDS_Thread_t *thread);
 extern void MDS_SchedulerRemoveThread(MDS_Thread_t *thread);
-extern void MDS_SchedulerPushDefunct(MDS_Thread_t *thread);
-extern MDS_Thread_t *MDS_SchedulerPopDefunct(void);
 
 /* Timer ------------------------------------------------------------------- */
 extern void MDS_SysTimerInit(void);

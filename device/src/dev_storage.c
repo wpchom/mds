@@ -41,7 +41,7 @@ MDS_Err_t DEV_STORAGE_PeriphInit(DEV_STORAGE_Periph_t *periph, const char *name,
 {
     MDS_Err_t err = MDS_DevPeriphInit((MDS_DevPeriph_t *)periph, name, (MDS_DevAdaptr_t *)storage);
     if (err == MDS_EOK) {
-        periph->object.timeout = MDS_DEVICE_PERIPH_TIMEOUT;
+        periph->object.optick = MDS_DEVICE_PERIPH_TIMEOUT;
     }
 
     return (err);
@@ -57,7 +57,7 @@ DEV_STORAGE_Periph_t *DEV_STORAGE_PeriphCreate(const char *name, DEV_STORAGE_Ada
     DEV_STORAGE_Periph_t *periph = (DEV_STORAGE_Periph_t *)MDS_DevPeriphCreate(sizeof(DEV_STORAGE_Periph_t), name,
                                                                                (MDS_DevAdaptr_t *)storage);
     if (periph != NULL) {
-        periph->object.timeout = MDS_DEVICE_PERIPH_TIMEOUT;
+        periph->object.optick = MDS_DEVICE_PERIPH_TIMEOUT;
     }
 
     return (periph);
@@ -103,13 +103,13 @@ size_t DEV_STORAGE_PeriphBlockSize(DEV_STORAGE_Periph_t *periph, size_t block)
 
 size_t DEV_STORAGE_PeriphTotalSize(DEV_STORAGE_Periph_t *periph)
 {
-    if (periph->object.totalSize == 0) {
+    if (periph->totalSize == 0) {
         for (size_t cnt = 0; cnt < periph->object.blockNums; cnt++) {
-            periph->object.totalSize += DEV_STORAGE_PeriphBlockSize(periph, cnt);
+            periph->totalSize += DEV_STORAGE_PeriphBlockSize(periph, cnt);
         }
     }
 
-    return (periph->object.totalSize);
+    return (periph->totalSize);
 }
 
 MDS_Err_t DEV_STORAGE_PeriphRead(DEV_STORAGE_Periph_t *periph, size_t block, uintptr_t ofs, uint8_t *buff, size_t len)

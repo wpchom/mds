@@ -13,7 +13,8 @@
 #include "mds_sys.h"
 
 /* Define ------------------------------------------------------------------ */
-#define OBJECT_FLAG_CREATED   0x8000U
+#define OBJECT_FLAG_TYPEMASK  0x7FU
+#define OBJECT_FLAG_CREATED   0x80U
 #define OBJECT_LIST_INIT(obj) [obj] = {.prev = &(g_objectList[obj]), .next = &(g_objectList[obj])}
 
 /* Variable ---------------------------------------------------------------- */
@@ -33,8 +34,9 @@ static MDS_ListNode_t g_objectList[] = {
 MDS_Err_t MDS_ObjectInit(MDS_Object_t *object, MDS_ObjectType_t type, const char *name)
 {
     MDS_ASSERT(object != NULL);
+    MDS_ASSERT(type < ARRAY_SIZE(g_objectList));
 
-    if (object->type != MDS_OBJECT_TYPE_NONE) {
+    if (object->flags != MDS_OBJECT_TYPE_NONE) {
         return (MDS_EAGAIN);
     }
 
@@ -42,11 +44,10 @@ MDS_Err_t MDS_ObjectInit(MDS_Object_t *object, MDS_ObjectType_t type, const char
     if (name != NULL) {
         MDS_MemBuffCcpy(object->name, name, '\0', sizeof(object->name));
     }
-    object->type = type;
-    object->flags = 0U;
+    object->flags = type;
 
     register MDS_Item_t lock = MDS_CoreInterruptLock();
-    MDS_ListInsertNodePrev(&(g_objectList[object->type]), &(object->node));
+    MDS_ListInsertNodePrev(&(g_objectList[type]), &(object->node));
     MDS_CoreInterruptRestore(lock);
 
     return (MDS_EOK);
@@ -58,7 +59,7 @@ MDS_Err_t MDS_ObjectDeInit(MDS_Object_t *object)
 
     register MDS_Item_t lock = MDS_CoreInterruptLock();
     MDS_ListRemoveNode(&(object->node));
-    object->type = MDS_OBJECT_TYPE_NONE;
+    object->flags = MDS_OBJECT_TYPE_NONE;
     MDS_CoreInterruptRestore(lock);
 
     return (MDS_EOK);
@@ -111,9 +112,11 @@ MDS_Object_t *MDS_ObjectFind(const MDS_ObjectType_t type, const char *name)
 MDS_Object_t *MDS_ObjectPrev(const MDS_Object_t *object)
 {
     MDS_ASSERT(object != NULL);
-    MDS_ASSERT((object->type != MDS_OBJECT_TYPE_NONE) && (object->type < ARRAY_SIZE(g_objectList)));
 
-    if (object->node.prev != &(g_objectList[object->type])) {
+    MDS_ObjectType_t type = MDS_ObjectGetType(object);
+    MDS_ASSERT((type != MDS_OBJECT_TYPE_NONE) && (type < ARRAY_SIZE(g_objectList)));
+
+    if (object->node.prev != &(g_objectList[type])) {
         return (CONTAINER_OF(object->node.prev, MDS_Object_t, node));
     } else {
         return (NULL);
@@ -123,9 +126,11 @@ MDS_Object_t *MDS_ObjectPrev(const MDS_Object_t *object)
 MDS_Object_t *MDS_ObjectNext(const MDS_Object_t *object)
 {
     MDS_ASSERT(object != NULL);
-    MDS_ASSERT((object->type != MDS_OBJECT_TYPE_NONE) && (object->type < ARRAY_SIZE(g_objectList)));
 
-    if (object->node.next != &(g_objectList[object->type])) {
+    MDS_ObjectType_t type = MDS_ObjectGetType(object);
+    MDS_ASSERT((type != MDS_OBJECT_TYPE_NONE) && (type < ARRAY_SIZE(g_objectList)));
+
+    if (object->node.next != &(g_objectList[type])) {
         return (CONTAINER_OF(object->node.next, MDS_Object_t, node));
     } else {
         return (NULL);
@@ -157,12 +162,12 @@ MDS_ObjectType_t MDS_ObjectGetType(const MDS_Object_t *object)
 {
     MDS_ASSERT(object != NULL);
 
-    return (object->type);
+    return (object->flags & OBJECT_FLAG_TYPEMASK);
 }
 
 bool MDS_ObjectIsCreated(const MDS_Object_t *object)
 {
     MDS_ASSERT(object != NULL);
 
-    return ((object->flags & OBJECT_FLAG_CREATED) != 0U);
+    return ((object->flags & OBJECT_FLAG_CREATED) != 0);
 }

@@ -85,7 +85,7 @@ MDS_Err_t MDS_KernelDelIdleHook(void (*hook)(void))
 static void IDLE_ThreadDefunct(void)
 {
     MDS_LOOP {
-        MDS_Thread_t *thread = MDS_SchedulerPopDefunct();
+        MDS_Thread_t *thread = MDS_KernelPopDefunct();
         if (thread == NULL) {
             break;
         }
@@ -122,7 +122,7 @@ static __attribute__((noreturn)) void IDLE_ThreadEntry(MDS_Arg_t *arg)
 void MDS_IdleThreadInit(void)
 {
     MDS_ThreadInit(&g_idleThread, "idle", IDLE_ThreadEntry, NULL, &g_idleStack, sizeof(g_idleStack),
-                   MDS_THREAD_PRIORITY_MAX - 1, MDS_THREAD_IDLE_TICKS);
+                   MDS_THREAD_PRIORITY_NUMS - 1, MDS_THREAD_IDLE_TICKS);
 
     MDS_ThreadStartup(&g_idleThread);
 }

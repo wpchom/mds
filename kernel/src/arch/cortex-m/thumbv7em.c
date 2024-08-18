@@ -268,7 +268,7 @@ bool MDS_CoreThreadStackCheck(MDS_Thread_t *thread)
 }
 
 /* CoreScheduler ----------------------------------------------------------- */
-#if (defined(MDS_THREAD_PRIORITY_MAX) && (MDS_THREAD_PRIORITY_MAX > 0))
+#if (defined(MDS_THREAD_PRIORITY_NUMS) && (MDS_THREAD_PRIORITY_NUMS > 0))
 static struct CoreScheduler {
     uintptr_t swflag;
     uintptr_t *fromSP;

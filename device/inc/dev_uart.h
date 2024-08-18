@@ -67,14 +67,15 @@ typedef enum DEV_UART_HwFlowCtl {
     DEV_UART_HWFLOWCTL_RTS_CTS,
 } DEV_UART_HwFlowCtl_t;
 
-typedef struct DEV_UART_Config {
+typedef struct DEV_UART_Object {
+    MDS_Tick_t optick;  // transmit
     uint32_t baudrate;
     DEV_UART_DataBits_t databits   : 4;
     DEV_UART_StopBits_t stopbits   : 4;
     DEV_UART_Direct_t direct       : 4;
     DEV_UART_Parity_t parity       : 2;
     DEV_UART_HwFlowCtl_t hwFlowCtl : 2;
-} DEV_UART_Config_t;
+} DEV_UART_Object_t;
 
 enum DEV_UART_Cmd {
     DEV_UART_CMD_DIRECT = MDS_DEVICE_CMD_DRIVER,
@@ -97,15 +98,10 @@ struct DEV_UART_Adaptr {
     const MDS_Mutex_t mutex;
 };
 
-typedef struct DEV_UART_Object {
-    MDS_Tick_t timeout;  // transmit
-} DEV_UART_Object_t;
-
 struct DEV_UART_Periph {
     const MDS_Device_t device;
     const DEV_UART_Adaptr_t *mount;
 
-    DEV_UART_Config_t config;
     DEV_UART_Object_t object;
 
     void (*txCallback)(const DEV_UART_Periph_t *periph, MDS_Arg_t *arg, const uint8_t *buff, size_t size, size_t send);

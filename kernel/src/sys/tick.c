@@ -45,7 +45,7 @@ void MDS_SysTickIncCount(void)
             thread->remainTick = thread->initTick;
             thread->state |= MDS_THREAD_STATE_YIELD;
             MDS_CoreInterruptRestore(lock);
-            MDS_SchedulerCheck();
+            MDS_KernelSchedulerCheck();
         } else {
             MDS_CoreInterruptRestore(lock);
         }

@@ -26,7 +26,7 @@ MDS_HOOK_INIT(THREAD_SUSPEND, MDS_Thread_t *thread);
 #endif
 
 /* Function ---------------------------------------------------------------- */
-static void THREAD_Terminate(MDS_Thread_t *thread, bool withSchedule)
+static void THREAD_Terminate(MDS_Thread_t *thread)
 {
     register MDS_Item_t lock = MDS_CoreInterruptLock();
 
@@ -34,25 +34,32 @@ static void THREAD_Terminate(MDS_Thread_t *thread, bool withSchedule)
 
     MDS_SchedulerRemoveThread(thread);
     if ((thread->state & MDS_THREAD_STATE_MASK) != MDS_THREAD_STATE_INACTIVED) {
-        MDS_SchedulerPushDefunct(thread);
+        MDS_KernelPushDefunct(thread);
     }
 
     thread->state = MDS_THREAD_STATE_TERMINATED;
 
     MDS_CoreInterruptRestore(lock);
+}
 
-    if (withSchedule) {
-        MDS_SchedulerCheck();
+static void THREAD_Entry(void *arg)
+{
+    MDS_Thread_t *thread = (MDS_Thread_t *)arg;
+
+    if (thread->entry != NULL) {
+        thread->entry(thread->arg);
     }
+
+    THREAD_Terminate(thread);
+
+    MDS_HOOK_CALL(THREAD_EXIT, thread);
+
+    MDS_KernelSchedulerCheck();
 }
 
 static void THREAD_Exit(void)
 {
-    MDS_Thread_t *thread = MDS_KernelCurrentThread();
-
-    THREAD_Terminate(thread, true);
-
-    MDS_HOOK_CALL(THREAD_EXIT, thread);
+    MDS_PANIC("thread should exit");
 }
 
 static void THREAD_Timeout(MDS_Arg_t *arg)
@@ -71,7 +78,7 @@ static void THREAD_Timeout(MDS_Arg_t *arg)
 
     MDS_CoreInterruptRestore(lock);
 
-    MDS_SchedulerCheck();
+    MDS_KernelSchedulerCheck();
 }
 
 static MDS_Err_t THREAD_Init(MDS_Thread_t *thread, MDS_ThreadEntry_t entry, MDS_Arg_t *arg, void *stackPool,
@@ -80,7 +87,7 @@ static MDS_Err_t THREAD_Init(MDS_Thread_t *thread, MDS_ThreadEntry_t entry, MDS_
     MDS_ASSERT(entry != NULL);
     MDS_ASSERT(stackPool != NULL);
     MDS_ASSERT(stackSize > 0);
-    MDS_ASSERT(priority < MDS_THREAD_PRIORITY_MAX);
+    MDS_ASSERT(priority < MDS_THREAD_PRIORITY_NUMS);
     MDS_ASSERT(ticks > 0);
 
     MDS_ListInitNode(&(thread->node));
@@ -90,8 +97,8 @@ static MDS_Err_t THREAD_Init(MDS_Thread_t *thread, MDS_ThreadEntry_t entry, MDS_
     thread->stackSize = stackSize;
     thread->stackBase = stackPool;
 
-    thread->stackPoint = MDS_CoreThreadStackInit(thread->stackBase, thread->stackSize, (void *)entry, (void *)arg,
-                                                 (void *)THREAD_Exit);
+    thread->stackPoint = MDS_CoreThreadStackInit(thread->stackBase, thread->stackSize, (void *)THREAD_Entry,
+                                                 (void *)thread, (void *)THREAD_Exit);
 
     thread->eventMask = 0U;
     thread->eventOpt = 0U;
@@ -134,7 +141,7 @@ MDS_Err_t MDS_ThreadDeInit(MDS_Thread_t *thread)
     MDS_ASSERT(MDS_ObjectGetType(&(thread->object)) == MDS_OBJECT_TYPE_THREAD);
 
     if ((thread->state & MDS_THREAD_STATE_MASK) != MDS_THREAD_STATE_TERMINATED) {
-        THREAD_Terminate(thread, false);
+        THREAD_Terminate(thread);
     }
 
     return (MDS_EOK);
@@ -170,7 +177,7 @@ MDS_Err_t MDS_ThreadDestroy(MDS_Thread_t *thread)
     MDS_ASSERT(MDS_ObjectGetType(&(thread->object)) == MDS_OBJECT_TYPE_THREAD);
 
     if ((thread->state & MDS_THREAD_STATE_MASK) != MDS_THREAD_STATE_TERMINATED) {
-        THREAD_Terminate(thread, false);
+        THREAD_Terminate(thread);
     }
 
     return (MDS_EOK);
@@ -189,7 +196,7 @@ MDS_Err_t MDS_ThreadStartup(MDS_Thread_t *thread)
         MDS_ThreadResume(thread);
 
         if (MDS_KernelCurrentThread() != NULL) {
-            MDS_SchedulerCheck();
+            MDS_KernelSchedulerCheck();
         }
     }
 
@@ -245,22 +252,6 @@ MDS_Err_t MDS_ThreadSuspend(MDS_Thread_t *thread)
     return (MDS_EOK);
 }
 
-MDS_Err_t MDS_ThreadYield(void)
-{
-    register MDS_Item_t lock = MDS_CoreInterruptLock();
-    MDS_Thread_t *thread = MDS_KernelCurrentThread();
-
-    MDS_ASSERT(thread != NULL);
-
-    thread->remainTick = thread->initTick;
-    thread->state |= MDS_THREAD_STATE_YIELD;
-    MDS_SchedulerCheck();
-
-    MDS_CoreInterruptRestore(lock);
-
-    return (MDS_EOK);
-}
-
 MDS_Err_t MDS_ThreadDelay(MDS_Tick_t delay)
 {
     register MDS_Item_t lock = MDS_CoreInterruptLock();
@@ -268,12 +259,17 @@ MDS_Err_t MDS_ThreadDelay(MDS_Tick_t delay)
 
     MDS_ASSERT(thread != NULL);
 
-    MDS_ThreadSuspend(thread);
-    MDS_TimerStart(&(thread->timer), delay);
+    if (delay == 0) {
+        thread->remainTick = thread->initTick;
+        thread->state |= MDS_THREAD_STATE_YIELD;
+    } else {
+        MDS_ThreadSuspend(thread);
+        MDS_TimerStart(&(thread->timer), delay);
+    }
 
     MDS_CoreInterruptRestore(lock);
 
-    MDS_SchedulerCheck();
+    MDS_KernelSchedulerCheck();
 
     if (thread->err == MDS_ETIME) {
         thread->err = MDS_EOK;

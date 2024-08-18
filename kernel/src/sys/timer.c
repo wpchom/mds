@@ -75,8 +75,8 @@ static void TIMER_Check(MDS_ListNode_t timerList[], size_t size, bool isSoft)
         }
 
         MDS_SkipListRemoveNode(t->node, size);
-        if ((t->object.flags & MDS_TIMER_TYPE_PERIOD) == 0U) {
-            t->object.flags &= ~MDS_TIMER_FLAG_ACTIVED;
+        if ((t->flags & MDS_TIMER_TYPE_PERIOD) == 0U) {
+            t->flags &= ~MDS_TIMER_FLAG_ACTIVED;
         }
         MDS_ListInsertNodeNext(&runList, &(t->node[size - 1]));
 
@@ -103,14 +103,14 @@ static void TIMER_Check(MDS_ListNode_t timerList[], size_t size, bool isSoft)
 
         MDS_HOOK_CALL(TIMER_EXIT, t);
 
-        MDS_TIMER_PRINT("timer(%p) entry:%p flag:%x exit current tick:%u", t, t->entry, t->object.flags, currTick);
+        MDS_TIMER_PRINT("timer(%p) entry:%p flag:%x exit current tick:%u", t, t->entry, t->flags, currTick);
 
         if (MDS_ListIsEmpty(&runList)) {
             continue;
         }
 
         MDS_ListRemoveNode(&(t->node[size - 1]));
-        if ((t->object.flags & (MDS_TIMER_FLAG_ACTIVED | MDS_TIMER_TYPE_PERIOD)) ==
+        if ((t->flags & (MDS_TIMER_FLAG_ACTIVED | MDS_TIMER_TYPE_PERIOD)) ==
             (MDS_TIMER_FLAG_ACTIVED | MDS_TIMER_TYPE_PERIOD)) {
             MDS_TimerStart(t, t->ticklimit - t->tickstart);
         }
@@ -147,7 +147,7 @@ static __attribute__((noreturn)) void TIMER_ThreadEntry(MDS_Arg_t *arg)
         if (nextTick == MDS_TICK_FOREVER) {
             MDS_Thread_t *thread = MDS_KernelCurrentThread();
             MDS_ThreadSuspend(thread);
-            MDS_SchedulerCheck();
+            MDS_KernelSchedulerCheck();
         } else {
             MDS_Tick_t currTick = MDS_SysTickGetCount();
             if ((nextTick - currTick) < MDS_TIMER_TICK_MAX) {
@@ -170,7 +170,7 @@ MDS_Err_t MDS_TimerInit(MDS_Timer_t *timer, const char *name, MDS_Mask_t type, M
         MDS_SkipListInitNode(timer->node, ARRAY_SIZE(timer->node));
         timer->entry = entry;
         timer->arg = arg;
-        timer->object.flags |= type & (~MDS_TIMER_FLAG_ACTIVED);
+        timer->flags = type & (~MDS_TIMER_FLAG_ACTIVED);
     }
 
     return (err);
@@ -190,7 +190,7 @@ MDS_Timer_t *MDS_TimerCreate(const char *name, MDS_Mask_t type, MDS_TimerEntry_t
         MDS_SkipListInitNode(timer->node, ARRAY_SIZE(timer->node));
         timer->entry = entry;
         timer->arg = arg;
-        timer->object.flags |= type & (~MDS_TIMER_FLAG_ACTIVED);
+        timer->flags = type & (~MDS_TIMER_FLAG_ACTIVED);
     } else {
         MDS_TIMER_PRINT("timer entry:%p type:%x create failed", entry, type);
     }
@@ -216,8 +216,8 @@ MDS_Err_t MDS_TimerStart(MDS_Timer_t *timer, MDS_Tick_t timeout)
 
     static size_t skipRand = 0;
 #ifdef MDS_THREAD_TIMER_ENABLE
-    MDS_ListNode_t *timerList = ((timer->object.flags & MDS_TIMER_TYPE_SYSTEM) == 0U) ? (g_softTimerSkipList)
-                                                                                      : (g_sysTimerSkipList);
+    MDS_ListNode_t *timerList = ((timer->flags & MDS_TIMER_TYPE_SYSTEM) == 0U) ? (g_softTimerSkipList)
+                                                                               : (g_sysTimerSkipList);
 #else
     MDS_ListNode_t *timerList = g_sysTimerSkipList;
 #endif
@@ -226,7 +226,7 @@ MDS_Err_t MDS_TimerStart(MDS_Timer_t *timer, MDS_Tick_t timeout)
         register MDS_Item_t lock = MDS_CoreInterruptLock();
 
         MDS_SkipListRemoveNode(timer->node, ARRAY_SIZE(timer->node));
-        timer->object.flags &= ~MDS_TIMER_FLAG_ACTIVED;
+        timer->flags &= ~MDS_TIMER_FLAG_ACTIVED;
 
         if (timeout == 0) {
             MDS_HOOK_CALL(TIMER_STOP, timer);
@@ -241,14 +241,14 @@ MDS_Err_t MDS_TimerStart(MDS_Timer_t *timer, MDS_Tick_t timeout)
 
             skipRand = skipRand + timer->tickstart + 1;
             MDS_SkipListInsertNode(skipList, timer->node, ARRAY_SIZE(timer->node), skipRand, MDS_TIMER_SKIPLIST_SHIFT);
-            timer->object.flags |= MDS_TIMER_FLAG_ACTIVED;
+            timer->flags |= MDS_TIMER_FLAG_ACTIVED;
 
 #ifdef MDS_THREAD_TIMER_ENABLE
-            if (((timer->object.flags & MDS_TIMER_TYPE_SYSTEM) == 0U) &&
+            if (((timer->flags & MDS_TIMER_TYPE_SYSTEM) == 0U) &&
                 ((!g_softIsBusy) && ((g_softTimerThread.state & MDS_THREAD_STATE_MASK) == MDS_THREAD_STATE_BLOCKED))) {
                 MDS_ThreadResume(&g_softTimerThread);
                 MDS_CoreInterruptRestore(lock);
-                MDS_SchedulerCheck();
+                MDS_KernelSchedulerCheck();
                 break;
             }
 #endif
@@ -257,8 +257,8 @@ MDS_Err_t MDS_TimerStart(MDS_Timer_t *timer, MDS_Tick_t timeout)
         MDS_CoreInterruptRestore(lock);
     } while (0);
 
-    MDS_TIMER_PRINT("timer(%p) entry:%p flag:%x start timeout:%u tick on:%u out:%u", timer, timer->entry,
-                    timer->object.flags, timeout, timer->tickstart, timer->ticklimit);
+    MDS_TIMER_PRINT("timer(%p) entry:%p flag:%x start timeout:%u tick on:%u out:%u", timer, timer->entry, timer->flags,
+                    timeout, timer->tickstart, timer->ticklimit);
 
     return (MDS_EOK);
 }
@@ -268,17 +268,17 @@ MDS_Err_t MDS_TimerStop(MDS_Timer_t *timer)
     MDS_ASSERT(timer != NULL);
     MDS_ASSERT(MDS_ObjectGetType(&(timer->object)) == MDS_OBJECT_TYPE_TIMER);
 
-    if ((timer->object.flags & MDS_TIMER_FLAG_ACTIVED) != 0U) {
+    if ((timer->flags & MDS_TIMER_FLAG_ACTIVED) != 0U) {
         register MDS_Item_t lock = MDS_CoreInterruptLock();
 
         MDS_HOOK_CALL(TIMER_STOP, timer);
 
         MDS_SkipListRemoveNode(timer->node, ARRAY_SIZE(timer->node));
-        timer->object.flags &= ~MDS_TIMER_FLAG_ACTIVED;
+        timer->flags &= ~MDS_TIMER_FLAG_ACTIVED;
 
         MDS_CoreInterruptRestore(lock);
 
-        MDS_TIMER_PRINT("timer(%p) entry:%p flag:%x stop", timer, timer->entry, timer->object.flags);
+        MDS_TIMER_PRINT("timer(%p) entry:%p flag:%x stop", timer, timer->entry, timer->flags);
     }
 
     return (MDS_EOK);
@@ -290,7 +290,7 @@ bool MDS_TimerIsActived(const MDS_Timer_t *timer)
     MDS_ASSERT(MDS_ObjectGetType(&(timer->object)) == MDS_OBJECT_TYPE_TIMER);
 
     register MDS_Item_t lock = MDS_CoreInterruptLock();
-    bool isActived = ((timer->object.flags & MDS_TIMER_FLAG_ACTIVED) != 0U) ? (true) : (false);
+    bool isActived = ((timer->flags & MDS_TIMER_FLAG_ACTIVED) != 0U) ? (true) : (false);
     MDS_CoreInterruptRestore(lock);
 
     return (isActived);

@@ -28,16 +28,19 @@ typedef enum DEV_QSPI_ClockMode {
     DEV_QSPI_CLKMODE_3,  // CPOL_1, CPHA_1
 } DEV_QSPI_ClockMode_t;
 
-typedef struct DEV_QSPI_Config {
-    uint32_t clock;  // Hz
-    DEV_QSPI_ClockMode_t clkMode : 8;
-} DEV_QSPI_Config_t;
-
 typedef enum DEV_QSPI_BusCS {
     DEV_QSPI_BUSCS_LOW,
     DEV_QSPI_BUSCS_HIGH,
     DEV_QSPI_BUSCS_NO,
 } DEV_QSPI_BusCS_t;
+
+typedef struct DEV_QSPI_Object {
+    MDS_Tick_t optick;
+    DEV_GPIO_Pin_t *cs;
+    uint32_t clock;  // Hz
+    DEV_QSPI_BusCS_t busCS       : 8;
+    DEV_QSPI_ClockMode_t clkMode : 8;
+} DEV_QSPI_Object_t;
 
 typedef enum DEV_QSPI_CmdLine {
     DEV_QSPI_CMDLINE_0,
@@ -119,17 +122,10 @@ struct DEV_QSPI_Adaptr {
     const MDS_Mutex_t mutex;
 };
 
-typedef struct DEV_QSPI_Object {
-    MDS_Tick_t timeout;
-    DEV_GPIO_Pin_t *cs;
-    DEV_QSPI_BusCS_t busCS : 8;
-} DEV_QSPI_Object_t;
-
 struct DEV_QSPI_Periph {
     const MDS_Device_t device;
     const DEV_QSPI_Adaptr_t *mount;
 
-    DEV_QSPI_Config_t config;
     DEV_QSPI_Object_t object;
 
     void (*callback)(const DEV_QSPI_Periph_t *periph, MDS_Arg_t *arg, const uint8_t *tx, uint8_t *rx, size_t size,

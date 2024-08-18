@@ -34,11 +34,15 @@ typedef enum DEV_ADC_InputMode {
     DEV_ADC_INPUTMODE_DIFF,
 } DEV_ADC_InputMode_t;
 
-typedef struct DEV_ADC_Config {
+typedef struct DEV_ADC_Object {
+    MDS_Tick_t optick;
+    uint32_t channelP;
+    uint32_t channelN;
     uint32_t samptime;
     DEV_ADC_Resolution_t resolution : 8;
     DEV_ADC_InputMode_t inputMode   : 8;
-} DEV_ADC_Config_t;
+    uint16_t averages;
+} DEV_ADC_Object_t;
 
 typedef struct DEV_ADC_Adaptr DEV_ADC_Adaptr_t;
 typedef struct DEV_ADC_Periph DEV_ADC_Periph_t;
@@ -58,18 +62,10 @@ struct DEV_ADC_Adaptr {
     uint32_t refVoltage;  // mV
 };
 
-typedef struct DEV_ADC_Object {
-    MDS_Tick_t timeout;
-    uint32_t averages;
-    uint32_t channelP;
-    uint32_t channelN;
-} DEV_ADC_Object_t;
-
 struct DEV_ADC_Periph {
     const MDS_Device_t device;
     const DEV_ADC_Adaptr_t *mount;
 
-    DEV_ADC_Config_t config;
     DEV_ADC_Object_t object;
 };
 

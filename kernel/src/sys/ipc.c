@@ -41,20 +41,25 @@ MDS_HOOK_INIT(MEMPOOL_HAS_FREE, MDS_MemPool_t *memPool, void *ptr);
 /* IPC thread -------------------------------------------------------------- */
 static void IPC_ListSuspendThread(MDS_ListNode_t *list, MDS_Thread_t *thread, bool isPrio, MDS_Tick_t timeout)
 {
-    register MDS_Thread_t *iter = NULL;
+    MDS_Thread_t *find = NULL;
 
-    MDS_ThreadSuspend(thread);
+    if (MDS_ThreadSuspend(thread) != MDS_EOK) {
+        return;
+    }
 
     if (isPrio) {
+        MDS_Thread_t *iter = NULL;
         MDS_LIST_FOREACH_NEXT (iter, node, list) {
             if (thread->currPrio < iter->currPrio) {
-                MDS_ListInsertNodePrev(&(iter->node), &(thread->node));
+                find = iter;
                 break;
             }
         }
     }
 
-    if ((iter == NULL) || (&(iter->node) == list)) {
+    if (find != NULL) {
+        MDS_ListInsertNodePrev(&(find->node), &(thread->node));
+    } else {
         MDS_ListInsertNodePrev(list, &(thread->node));
     }
 
@@ -69,7 +74,7 @@ static MDS_Err_t IPC_ListSuspendWait(MDS_Item_t *lock, MDS_ListNode_t *list, MDS
 
     IPC_ListSuspendThread(list, thread, true, timeout);
     MDS_CoreInterruptRestore(*lock);
-    MDS_SchedulerCheck();
+    MDS_KernelSchedulerCheck();
     if (thread->err != MDS_EOK) {
         return (thread->err);
     }
@@ -184,7 +189,7 @@ MDS_Err_t MDS_SemaphoreAcquire(MDS_Semaphore_t *semaphore, MDS_Tick_t timeout)
 
         IPC_ListSuspendThread(&(semaphore->list), thread, true, timeout);
         MDS_CoreInterruptRestore(lock);
-        MDS_SchedulerCheck();
+        MDS_KernelSchedulerCheck();
         err = thread->err;
     }
 
@@ -208,7 +213,7 @@ MDS_Err_t MDS_SemaphoreRelease(MDS_Semaphore_t *semaphore)
     if (!MDS_ListIsEmpty(&(semaphore->list))) {
         IPC_ListResumeThread(&(semaphore->list));
         MDS_CoreInterruptRestore(lock);
-        MDS_SchedulerCheck();
+        MDS_KernelSchedulerCheck();
     } else {
         if (semaphore->value < semaphore->max) {
             semaphore->value += 1;
@@ -317,7 +322,7 @@ MDS_Err_t MDS_ConditionWait(MDS_Condition_t *condition, MDS_Mutex_t *mutex, MDS_
         IPC_ListSuspendThread(&(condition->list), thread, false, timeout);
         MDS_MutexRelease(mutex);
         MDS_CoreInterruptRestore(lock);
-        MDS_SchedulerCheck();
+        MDS_KernelSchedulerCheck();
 
         err = thread->err;
         MDS_MutexAcquire(mutex, MDS_TICK_FOREVER);
@@ -334,7 +339,7 @@ MDS_Err_t MDS_MutexInit(MDS_Mutex_t *mutex, const char *name)
     MDS_Err_t err = MDS_ObjectInit(&(mutex->object), MDS_OBJECT_TYPE_MUTEX, name);
     if (err == MDS_EOK) {
         mutex->owner = NULL;
-        mutex->priority = MDS_THREAD_PRIORITY_MAX - 1;
+        mutex->priority = MDS_THREAD_PRIORITY_NUMS - 1;
         mutex->value = 1;
         mutex->nest = 0;
         MDS_ListInitNode(&(mutex->list));
@@ -358,7 +363,7 @@ MDS_Mutex_t *MDS_MutexCreate(const char *name)
     MDS_Mutex_t *mutex = (MDS_Mutex_t *)MDS_ObjectCreate(sizeof(MDS_Mutex_t), MDS_OBJECT_TYPE_MUTEX, name);
     if (mutex != NULL) {
         mutex->owner = NULL;
-        mutex->priority = MDS_THREAD_PRIORITY_MAX - 1;
+        mutex->priority = MDS_THREAD_PRIORITY_NUMS - 1;
         mutex->value = 1;
         mutex->nest = 0;
         MDS_ListInitNode(&(mutex->list));
@@ -422,7 +427,7 @@ MDS_Err_t MDS_MutexAcquire(MDS_Mutex_t *mutex, MDS_Tick_t timeout)
         }
         IPC_ListSuspendThread(&(mutex->list), thread, true, timeout);
         MDS_CoreInterruptRestore(lock);
-        MDS_SchedulerCheck();
+        MDS_KernelSchedulerCheck();
         err = thread->err;
     }
 
@@ -468,11 +473,11 @@ MDS_Err_t MDS_MutexRelease(MDS_Mutex_t *mutex)
             }
             IPC_ListResumeThread(&(mutex->list));
             MDS_CoreInterruptRestore(lock);
-            MDS_SchedulerCheck();
+            MDS_KernelSchedulerCheck();
             return (MDS_EOK);
         } else {
             mutex->owner = NULL;
-            mutex->priority = MDS_THREAD_PRIORITY_MAX - 1;
+            mutex->priority = MDS_THREAD_PRIORITY_NUMS - 1;
             if (mutex->value < (__typeof__(mutex->value))(-1)) {
                 mutex->value += 1;
             } else {
@@ -725,7 +730,7 @@ MDS_Err_t MDS_EventWait(MDS_Event_t *event, MDS_Mask_t mask, MDS_Mask_t opt, MDS
         thread->eventOpt = opt;
         IPC_ListSuspendThread(&(event->list), thread, true, timeout);
         MDS_CoreInterruptRestore(lock);
-        MDS_SchedulerCheck();
+        MDS_KernelSchedulerCheck();
         err = thread->err;
 
         if (recv != NULL) {
@@ -772,7 +777,7 @@ MDS_Err_t MDS_EventSet(MDS_Event_t *event, MDS_Mask_t mask)
             }
             IPC_ListResumeThread(&(event->list));
             MDS_CoreInterruptRestore(lock);
-            MDS_SchedulerCheck();
+            MDS_KernelSchedulerCheck();
             return (MDS_EOK);
         }
     }
@@ -979,7 +984,7 @@ MDS_Err_t MDS_MsgQueueRecvRelease(MDS_MsgQueue_t *msgQueue, void *recv)
     if (!MDS_ListIsEmpty(&(msgQueue->listSend))) {
         IPC_ListResumeThread(&(msgQueue->listSend));
         MDS_CoreInterruptRestore(lock);
-        MDS_SchedulerCheck();
+        MDS_KernelSchedulerCheck();
     } else {
         MDS_CoreInterruptRestore(lock);
     }
@@ -1077,7 +1082,7 @@ MDS_Err_t MDS_MsgQueueSendMsg(MDS_MsgQueue_t *msgQueue, const MDS_MsgList_t *msg
     if (!MDS_ListIsEmpty(&(msgQueue->listRecv))) {
         IPC_ListResumeThread(&(msgQueue->listRecv));
         MDS_CoreInterruptRestore(lock);
-        MDS_SchedulerCheck();
+        MDS_KernelSchedulerCheck();
     } else {
         MDS_CoreInterruptRestore(lock);
     }
@@ -1141,7 +1146,7 @@ MDS_Err_t MDS_MsgQueueUrgentMsg(MDS_MsgQueue_t *msgQueue, const MDS_MsgList_t *m
     if (!MDS_ListIsEmpty(&(msgQueue->listRecv))) {
         IPC_ListResumeThread(&(msgQueue->listRecv));
         MDS_CoreInterruptRestore(lock);
-        MDS_SchedulerCheck();
+        MDS_KernelSchedulerCheck();
     } else {
         MDS_CoreInterruptRestore(lock);
     }
@@ -1334,7 +1339,7 @@ static void MDS_MemPoolFreeBlk(union MDS_MemPoolHeader *blk)
     if (!MDS_ListIsEmpty(&(memPool->list))) {
         IPC_ListResumeThread(&(memPool->list));
         MDS_CoreInterruptRestore(lock);
-        MDS_SchedulerCheck();
+        MDS_KernelSchedulerCheck();
     } else {
         MDS_CoreInterruptRestore(lock);
     }

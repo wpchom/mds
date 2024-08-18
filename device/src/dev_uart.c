@@ -40,7 +40,7 @@ MDS_Err_t DEV_UART_PeriphInit(DEV_UART_Periph_t *periph, const char *name, DEV_U
 {
     MDS_Err_t err = MDS_DevPeriphInit((MDS_DevPeriph_t *)periph, name, (MDS_DevAdaptr_t *)uart);
     if (err == MDS_EOK) {
-        periph->object.timeout = MDS_DEVICE_PERIPH_TIMEOUT;
+        periph->object.optick = MDS_DEVICE_PERIPH_TIMEOUT;
     }
 
     return (err);
@@ -56,7 +56,7 @@ DEV_UART_Periph_t *DEV_UART_PeriphCreate(const char *name, DEV_UART_Adaptr_t *ua
     DEV_UART_Periph_t *periph = (DEV_UART_Periph_t *)MDS_DevPeriphCreate(sizeof(DEV_UART_Periph_t), name,
                                                                          (MDS_DevAdaptr_t *)uart);
     if (periph != NULL) {
-        periph->object.timeout = MDS_DEVICE_PERIPH_TIMEOUT;
+        periph->object.optick = MDS_DEVICE_PERIPH_TIMEOUT;
     }
 
     return (periph);
@@ -111,7 +111,7 @@ MDS_Err_t DEV_UART_PeriphTransmitMsg(DEV_UART_Periph_t *periph, const MDS_MsgLis
         return (MDS_EIO);
     }
 
-    if ((periph->config.direct & DEV_UART_DIRECT_HALF) != 0U) {
+    if ((periph->object.direct & DEV_UART_DIRECT_HALF) != 0U) {
         MDS_Mask_t dir = DEV_UART_DIRECT_HALF | DEV_UART_DIRECT_TX;
         uart->driver->control(uart, DEV_UART_CMD_DIRECT, (MDS_Arg_t *)(&dir));
     }
@@ -121,7 +121,7 @@ MDS_Err_t DEV_UART_PeriphTransmitMsg(DEV_UART_Periph_t *periph, const MDS_MsgLis
             break;
         }
     }
-    if ((periph->config.direct & DEV_UART_DIRECT_HALF) != 0U) {
+    if ((periph->object.direct & DEV_UART_DIRECT_HALF) != 0U) {
         MDS_Mask_t dir = DEV_UART_DIRECT_HALF | DEV_UART_DIRECT_RX;
         uart->driver->control(uart, DEV_UART_CMD_DIRECT, (MDS_Arg_t *)(&dir));
     }
@@ -153,7 +153,7 @@ MDS_Err_t DEV_UART_PeriphReceive(DEV_UART_Periph_t *periph, uint8_t *buff, size_
         return (MDS_EIO);
     }
 
-    if ((periph->config.direct & DEV_UART_DIRECT_HALF) != 0U) {
+    if ((periph->object.direct & DEV_UART_DIRECT_HALF) != 0U) {
         MDS_Mask_t dir = DEV_UART_DIRECT_HALF | DEV_UART_DIRECT_RX;
         uart->driver->control(uart, DEV_UART_CMD_DIRECT, (MDS_Arg_t *)(&dir));
     }

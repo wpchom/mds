@@ -40,7 +40,7 @@ MDS_Err_t DEV_SPI_PeriphInit(DEV_SPI_Periph_t *periph, const char *name, DEV_SPI
 {
     MDS_Err_t err = MDS_DevPeriphInit((MDS_DevPeriph_t *)periph, name, (MDS_DevAdaptr_t *)spi);
     if (err == MDS_EOK) {
-        periph->object.timeout = MDS_DEVICE_PERIPH_TIMEOUT;
+        periph->object.optick = MDS_DEVICE_PERIPH_TIMEOUT;
     }
 
     return (err);
@@ -56,7 +56,7 @@ DEV_SPI_Periph_t *DEV_SPI_PeriphCreate(const char *name, DEV_SPI_Adaptr_t *spi)
     DEV_SPI_Periph_t *periph = (DEV_SPI_Periph_t *)MDS_DevPeriphCreate(sizeof(DEV_SPI_Periph_t), name,
                                                                        (MDS_DevAdaptr_t *)spi);
     if (periph != NULL) {
-        periph->object.timeout = MDS_DEVICE_PERIPH_TIMEOUT;
+        periph->object.optick = MDS_DEVICE_PERIPH_TIMEOUT;
     }
 
     return (periph);

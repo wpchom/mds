@@ -18,6 +18,7 @@ config("chip_stm32f1xx_config") {
 source_set("chip_stm32f1xx_driver") {
   sources = [
     "src/drv_gpio.c",
+    # "src/drv_i2c.c",
     "src/startup_stm32f1xx.c",
   ]
 

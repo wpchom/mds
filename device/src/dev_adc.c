@@ -40,7 +40,7 @@ MDS_Err_t DEV_ADC_PeriphInit(DEV_ADC_Periph_t *periph, const char *name, DEV_ADC
 {
     MDS_Err_t err = MDS_DevPeriphInit((MDS_DevPeriph_t *)periph, name, (MDS_DevAdaptr_t *)adc);
     if (err == MDS_EOK) {
-        periph->object.timeout = MDS_DEVICE_PERIPH_TIMEOUT;
+        periph->object.optick = MDS_DEVICE_PERIPH_TIMEOUT;
     }
 
     return (err);
@@ -56,7 +56,7 @@ DEV_ADC_Periph_t *DEV_ADC_PeriphCreate(const char *name, DEV_ADC_Adaptr_t *adc)
     DEV_ADC_Periph_t *periph = (DEV_ADC_Periph_t *)MDS_DevPeriphCreate(sizeof(DEV_ADC_Periph_t), name,
                                                                        (MDS_DevAdaptr_t *)adc);
     if (periph != NULL) {
-        periph->object.timeout = MDS_DEVICE_PERIPH_TIMEOUT;
+        periph->object.optick = MDS_DEVICE_PERIPH_TIMEOUT;
     }
 
     return (periph);
@@ -113,7 +113,7 @@ MDS_Err_t DEV_ADC_PeriphConvert(DEV_ADC_Periph_t *periph, uint32_t *value, uint3
         *value = val;
     }
     if (voltage != NULL) {
-        *voltage = ((uint64_t)(val + 1) * periph->mount->refVoltage) >> periph->config.resolution;
+        *voltage = ((uint64_t)(val + 1) * periph->mount->refVoltage) >> periph->object.resolution;
     }
 
     return (err);

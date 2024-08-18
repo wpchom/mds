@@ -25,8 +25,6 @@ enum DEV_I2C_MsgFlag {
     DEV_I2C_MSGFLAG_RD = 0x01U,
     DEV_I2C_MSGFLAG_NO_START = 0x04U,
     DEV_I2C_MSGFLAG_NO_STOP = 0x08U,
-    DEV_I2C_MSGFLAG_IGNORE_ACK = 0x10U,
-    DEV_I2C_MSGFLAG_NOREAD_ACK = 0x20U,
 };
 
 typedef struct DEV_I2C_Msg {
@@ -46,28 +44,27 @@ typedef enum DEV_I2C_BusMode {
     DEV_I2C_BUSMODE_I2C_SLAVE,
 } DEV_I2C_BusMode_t;
 
-typedef enum DEV_I2C_CycleDuty {
-    DEV_I2C_CYCLEDUTY_2,
-    DEV_I2C_CYCLEDUTY_16_9,
-} DEV_I2C_CycleDuty_t;
-
 typedef enum DEV_I2C_DevAddrBits {
     DEV_I2C_DEVADDRBITS_7 = 7,
     DEV_I2C_DEVADDRBITS_10 = 10,
 } DEV_I2C_DevAddrBits_t;
 
-typedef struct DEV_I2C_Config {
-    uint32_t baudrate;
-    DEV_I2C_BusMode_t busMode : 8;
-    DEV_I2C_CycleDuty_t duty  : 8;
-} DEV_I2C_Config_t;
+typedef struct DEV_I2C_Object {
+    MDS_Tick_t optick;
+    uint32_t clock;
+    uint16_t devAddress;
+    DEV_I2C_BusMode_t busMode        : 4;
+    DEV_I2C_DevAddrBits_t devAddrBit : 4;
+    uint8_t retry;
+} DEV_I2C_Object_t;
 
 typedef struct DEV_I2C_Adaptr DEV_I2C_Adaptr_t;
 typedef struct DEV_I2C_Periph DEV_I2C_Periph_t;
 
 typedef struct DEV_I2C_Driver {
     MDS_Err_t (*control)(const DEV_I2C_Adaptr_t *i2c, MDS_Item_t cmd, MDS_Arg_t *arg);
-    MDS_Err_t (*transfer)(const DEV_I2C_Periph_t *periph, DEV_I2C_Msg_t *msg);
+    MDS_Err_t (*master)(const DEV_I2C_Periph_t *periph, const DEV_I2C_Msg_t *msg);
+    MDS_Err_t (*slave)(const DEV_I2C_Periph_t *periph, bool read, uint8_t *buff, size_t size, MDS_Tick_t timeout);
 } DEV_I2C_Driver_t;
 
 struct DEV_I2C_Adaptr {
@@ -78,21 +75,13 @@ struct DEV_I2C_Adaptr {
     const MDS_Mutex_t mutex;
 };
 
-typedef struct DEV_I2C_Object {
-    MDS_Tick_t timeout;
-    uint16_t devAddress;
-    DEV_I2C_DevAddrBits_t devAddrBit : 8;
-    uint8_t retry;
-} DEV_I2C_Object_t;
-
 struct DEV_I2C_Periph {
     const MDS_Device_t device;
     const DEV_I2C_Adaptr_t *mount;
 
-    DEV_I2C_Config_t config;
     DEV_I2C_Object_t object;
 
-    void (*callback)(const DEV_I2C_Periph_t *periph, MDS_Arg_t *arg, const DEV_I2C_Msg_t *msg, size_t trans);
+    void (*callback)(const DEV_I2C_Periph_t *periph, MDS_Arg_t *arg, uint8_t *buff, size_t recv);
     MDS_Arg_t *arg;
 };
 
@@ -110,16 +99,20 @@ extern MDS_Err_t DEV_I2C_PeriphDestroy(DEV_I2C_Periph_t *periph);
 
 extern MDS_Err_t DEV_I2C_PeriphOpen(DEV_I2C_Periph_t *periph, MDS_Tick_t timeout);
 extern MDS_Err_t DEV_I2C_PeriphClose(DEV_I2C_Periph_t *periph);
-extern void DEV_I2C_PeriphCallback(
-    DEV_I2C_Periph_t *periph, void (*callback)(const DEV_I2C_Periph_t *, MDS_Arg_t *, const DEV_I2C_Msg_t *, size_t),
-    MDS_Arg_t *arg);
-extern MDS_Err_t DEV_I2C_PeriphTransfer(DEV_I2C_Periph_t *periph, DEV_I2C_Msg_t msg[], size_t len);
-extern MDS_Err_t DEV_I2C_PeriphWriteMem(DEV_I2C_Periph_t *periph, uint32_t memAddr, uint8_t memAddrSz,
-                                        const uint8_t *buff, size_t len);
-extern MDS_Err_t DEV_I2C_PeriphReadMem(DEV_I2C_Periph_t *periph, uint32_t memAddr, uint8_t memAddrSz, uint8_t *buff,
-                                       size_t len);
-extern MDS_Err_t DEV_I2C_PeriphModifyMem(DEV_I2C_Periph_t *periph, uint32_t memAddr, uint32_t memAddrSz, uint8_t *buff,
-                                         size_t len, const uint8_t *clr, const uint8_t *set);
+extern void DEV_I2C_PeriphCallback(DEV_I2C_Periph_t *periph,
+                                   void (*callback)(const DEV_I2C_Periph_t *, MDS_Arg_t *, uint8_t *, size_t),
+                                   MDS_Arg_t *arg);
+extern MDS_Err_t DEV_I2C_PeriphSlaveReceive(DEV_I2C_Periph_t *periph, uint8_t *buff, size_t size, MDS_Tick_t timeout);
+extern MDS_Err_t DEV_I2C_PeriphSlaveTransmit(DEV_I2C_Periph_t *periph, const uint8_t *buff, size_t len, MDS_Tick_t timeout);
+extern MDS_Err_t DEV_I2C_PeriphMasterTransfer(DEV_I2C_Periph_t *periph, const DEV_I2C_Msg_t msg[], size_t num);
+extern MDS_Err_t DEV_I2C_PeriphMasterTransmit(DEV_I2C_Periph_t *periph, const uint8_t *buff, size_t len);
+extern MDS_Err_t DEV_I2C_PeriphMasterReceive(DEV_I2C_Periph_t *periph, uint8_t *buff, size_t size);
+extern MDS_Err_t DEV_I2C_PeriphMasterWriteMem(DEV_I2C_Periph_t *periph, uint32_t memAddr, uint8_t memAddrSz,
+                                              const uint8_t *buff, size_t len);
+extern MDS_Err_t DEV_I2C_PeriphMasterReadMem(DEV_I2C_Periph_t *periph, uint32_t memAddr, uint8_t memAddrSz,
+                                             uint8_t *buff, size_t len);
+extern MDS_Err_t DEV_I2C_PeriphMasterModifyMem(DEV_I2C_Periph_t *periph, uint32_t memAddr, uint32_t memAddrSz,
+                                               uint8_t *buff, size_t len, const uint8_t *clr, const uint8_t *set);
 
 #ifdef __cplusplus
 }

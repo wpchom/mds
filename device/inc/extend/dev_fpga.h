@@ -20,10 +20,6 @@ extern "C" {
 #endif
 
 /* Typedef ----------------------------------------------------------------- */
-typedef struct DEV_FPGA_Config {
-    uint32_t clock;
-} DEV_FPGA_Config_t;
-
 typedef struct DEV_FPGA_Adaptr DEV_FPGA_Adaptr_t;
 typedef struct DEV_FPGA_Periph DEV_FPGA_Periph_t;
 
@@ -43,7 +39,8 @@ struct DEV_FPGA_Adaptr {
 };
 
 typedef struct DEV_FPGA_Object {
-    MDS_Tick_t timeout;
+    MDS_Tick_t optick;
+    MDS_Tick_t clock;
     DEV_GPIO_Pin_t *prog_b;
     DEV_GPIO_Pin_t *init_b;
     DEV_GPIO_Pin_t *done;
@@ -53,7 +50,6 @@ struct DEV_FPGA_Periph {
     const MDS_Device_t device;
     const DEV_FPGA_Adaptr_t *mount;
 
-    DEV_FPGA_Config_t config;
     DEV_FPGA_Object_t object;
 };
 

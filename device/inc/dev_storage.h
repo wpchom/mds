@@ -40,10 +40,9 @@ struct DEV_STORAGE_Adaptr {
 };
 
 typedef struct DEV_STORAGE_Object {
-    MDS_Tick_t timeout;
+    MDS_Tick_t optick;
     size_t blockBase;
     size_t blockNums;
-    size_t totalSize;
 } DEV_STORAGE_Object_t;
 
 struct DEV_STORAGE_Periph {
@@ -51,6 +50,8 @@ struct DEV_STORAGE_Periph {
     const DEV_STORAGE_Adaptr_t *mount;
 
     DEV_STORAGE_Object_t object;
+
+    size_t totalSize;
 };
 
 /* Function ---------------------------------------------------------------- */

@@ -71,7 +71,8 @@ typedef enum DEV_I2S_WsInversion {
     DEV_I2S_WSINVERSION_ENABLE = 1,
 } DEV_I2S_WsInversion_t;
 
-typedef struct DEV_I2S_Config {
+typedef struct DEV_I2S_Object {
+    MDS_Tick_t optick;
     uint32_t audioFreq;
     DEV_I2S_Standard_t standard   : 8;
     DEV_I2S_DataWidth_t dataWidth : 8;
@@ -80,7 +81,7 @@ typedef struct DEV_I2S_Config {
     DEV_I2S_ClkEdge_t clkEdge     : 2;
     DEV_I2S_FirstBit_t firstBit   : 2;
     DEV_I2S_WsInversion_t ws      : 2;
-} DEV_I2S_Config_t;
+} DEV_I2S_Object_t;
 
 typedef struct DEV_I2S_Adaptr DEV_I2S_Adaptr_t;
 typedef struct DEV_I2S_Periph DEV_I2S_Periph_t;
@@ -99,16 +100,10 @@ struct DEV_I2S_Adaptr {
     const MDS_Mutex_t mutex;
 };
 
-typedef struct DEV_I2S_Object {
-    MDS_Tick_t timeout;
-    uint8_t retry;
-} DEV_I2S_Object_t;
-
 struct DEV_I2S_Periph {
     const MDS_Device_t device;
     const DEV_I2S_Adaptr_t *mount;
 
-    DEV_I2S_Config_t config;
     DEV_I2S_Object_t object;
 
     void (*txCallback)(const DEV_I2S_Periph_t *periph, MDS_Arg_t *arg, const uint8_t *buff, size_t size, size_t send);

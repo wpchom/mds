@@ -43,8 +43,8 @@ MDS_Err_t DEV_LED_DeviceLight(DEV_LED_Device_t *led, const DEV_LED_Color_t *colo
 
     MDS_Err_t err = led->driver->light(led, color, light);
     if (err == MDS_EOK) {
-        led->config.light = *light;
-        led->config.colorEnum = DEV_LED_COLOR_NUMS;
+        led->object.light = *light;
+        led->object.colorEnum = DEV_LED_COLOR_NUMS;
     }
 
     return (err);
@@ -57,10 +57,10 @@ MDS_Err_t DEV_LED_DeviceColor(DEV_LED_Device_t *led, DEV_LED_ColorEnum_t colorEn
     MDS_ASSERT(led->driver->light != NULL);
     MDS_ASSERT(colorEnum < DEV_LED_COLOR_NUMS);
 
-    MDS_Err_t err = led->driver->light(led, &(led->config.color[colorEnum]), light);
+    MDS_Err_t err = led->driver->light(led, &(led->object.color[colorEnum]), light);
     if (err == MDS_EOK) {
-        led->config.light = *light;
-        led->config.colorEnum = colorEnum;
+        led->object.light = *light;
+        led->object.colorEnum = colorEnum;
     }
 
     return (err);

@@ -40,7 +40,7 @@ MDS_Err_t DEV_I2C_PeriphInit(DEV_I2C_Periph_t *periph, const char *name, DEV_I2C
 {
     MDS_Err_t err = MDS_DevPeriphInit((MDS_DevPeriph_t *)periph, name, (MDS_DevAdaptr_t *)i2c);
     if (err == MDS_EOK) {
-        periph->object.timeout = MDS_DEVICE_PERIPH_TIMEOUT;
+        periph->object.optick = MDS_DEVICE_PERIPH_TIMEOUT;
     }
     return (err);
 }
@@ -55,7 +55,7 @@ DEV_I2C_Periph_t *DEV_I2C_PeriphCreate(const char *name, DEV_I2C_Adaptr_t *i2c)
     DEV_I2C_Periph_t *periph = (DEV_I2C_Periph_t *)MDS_DevPeriphCreate(sizeof(DEV_I2C_Periph_t), name,
                                                                        (MDS_DevAdaptr_t *)i2c);
     if (periph != NULL) {
-        periph->object.timeout = MDS_DEVICE_PERIPH_TIMEOUT;
+        periph->object.optick = MDS_DEVICE_PERIPH_TIMEOUT;
     }
 
     return (periph);
@@ -77,19 +77,46 @@ MDS_Err_t DEV_I2C_PeriphClose(DEV_I2C_Periph_t *periph)
 }
 
 void DEV_I2C_PeriphCallback(DEV_I2C_Periph_t *periph,
-                            void (*callback)(const DEV_I2C_Periph_t *, MDS_Arg_t *, const DEV_I2C_Msg_t *, size_t),
-                            MDS_Arg_t *arg)
+                            void (*callback)(const DEV_I2C_Periph_t *, MDS_Arg_t *, uint8_t *, size_t), MDS_Arg_t *arg)
 {
     periph->callback = callback;
     periph->arg = arg;
 }
 
-MDS_Err_t DEV_I2C_PeriphTransfer(DEV_I2C_Periph_t *periph, DEV_I2C_Msg_t msg[], size_t len)
+MDS_Err_t DEV_I2C_PeriphSlaveReceive(DEV_I2C_Periph_t *periph, uint8_t *buff, size_t size, MDS_Tick_t timeout)
 {
     MDS_ASSERT(periph != NULL);
     MDS_ASSERT(periph->mount != NULL);
     MDS_ASSERT(periph->mount->driver != NULL);
-    MDS_ASSERT(periph->mount->driver->transfer != NULL);
+    MDS_ASSERT(periph->mount->driver->slave != NULL);
+
+    if (!MDS_DevPeriphIsAccessible((MDS_DevPeriph_t *)periph)) {
+        return (MDS_EIO);
+    }
+
+    return (periph->mount->driver->slave(periph, true, buff, size, timeout));
+}
+
+MDS_Err_t DEV_I2C_PeriphSlaveTransmit(DEV_I2C_Periph_t *periph, const uint8_t *buff, size_t len, MDS_Tick_t timeout)
+{
+    MDS_ASSERT(periph != NULL);
+    MDS_ASSERT(periph->mount != NULL);
+    MDS_ASSERT(periph->mount->driver != NULL);
+    MDS_ASSERT(periph->mount->driver->slave != NULL);
+
+    if (!MDS_DevPeriphIsAccessible((MDS_DevPeriph_t *)periph)) {
+        return (MDS_EIO);
+    }
+
+    return (periph->mount->driver->slave(periph, false, (uint8_t *)buff, len, timeout));
+}
+
+MDS_Err_t DEV_I2C_PeriphMasterTransfer(DEV_I2C_Periph_t *periph, const DEV_I2C_Msg_t msg[], size_t num)
+{
+    MDS_ASSERT(periph != NULL);
+    MDS_ASSERT(periph->mount != NULL);
+    MDS_ASSERT(periph->mount->driver != NULL);
+    MDS_ASSERT(periph->mount->driver->master != NULL);
 
     MDS_Err_t err = MDS_EINVAL;
     const DEV_I2C_Adaptr_t *i2c = periph->mount;
@@ -99,8 +126,8 @@ MDS_Err_t DEV_I2C_PeriphTransfer(DEV_I2C_Periph_t *periph, DEV_I2C_Msg_t msg[], 
     }
 
     for (size_t retry = 0; (err != MDS_EOK) && (retry <= periph->object.retry); retry++) {
-        for (size_t cnt = 0; cnt < len; cnt++) {
-            err = i2c->driver->transfer(periph, &(msg[cnt]));
+        for (size_t cnt = 0; cnt < num; cnt++) {
+            err = i2c->driver->master(periph, &(msg[cnt]));
             if (err != MDS_EOK) {
                 break;
             }
@@ -110,8 +137,26 @@ MDS_Err_t DEV_I2C_PeriphTransfer(DEV_I2C_Periph_t *periph, DEV_I2C_Msg_t msg[], 
     return (err);
 }
 
-MDS_Err_t DEV_I2C_PeriphWriteMem(DEV_I2C_Periph_t *periph, uint32_t memAddr, uint8_t memAddrSz, const uint8_t *buff,
-                                 size_t len)
+MDS_Err_t DEV_I2C_PeriphMasterTransmit(DEV_I2C_Periph_t *periph, const uint8_t *buff, size_t len)
+{
+    DEV_I2C_Msg_t msg[] = {
+        {.flags = DEV_I2C_MSGFLAG_WR, .buff = (uint8_t *)buff, .len = len},
+    };
+
+    return (DEV_I2C_PeriphMasterTransfer(periph, msg, ARRAY_SIZE(msg)));
+}
+
+MDS_Err_t DEV_I2C_PeriphMasterReceive(DEV_I2C_Periph_t *periph, uint8_t *buff, size_t size)
+{
+    DEV_I2C_Msg_t msg[] = {
+        {.flags = DEV_I2C_MSGFLAG_RD, .buff = buff, .len = size},
+    };
+
+    return (DEV_I2C_PeriphMasterTransfer(periph, msg, ARRAY_SIZE(msg)));
+}
+
+MDS_Err_t DEV_I2C_PeriphMasterWriteMem(DEV_I2C_Periph_t *periph, uint32_t memAddr, uint8_t memAddrSz,
+                                       const uint8_t *buff, size_t len)
 {
     MDS_ASSERT(memAddrSz <= sizeof(uint32_t));
 
@@ -126,11 +171,11 @@ MDS_Err_t DEV_I2C_PeriphWriteMem(DEV_I2C_Periph_t *periph, uint32_t memAddr, uin
         {.flags = DEV_I2C_MSGFLAG_WR | DEV_I2C_MSGFLAG_NO_START, .buff = (uint8_t *)buff, .len = len},
     };
 
-    return (DEV_I2C_PeriphTransfer(periph, msg, ARRAY_SIZE(msg)));
+    return (DEV_I2C_PeriphMasterTransfer(periph, msg, ARRAY_SIZE(msg)));
 }
 
-MDS_Err_t DEV_I2C_PeriphReadMem(DEV_I2C_Periph_t *periph, uint32_t memAddr, uint8_t memAddrSz, uint8_t *buff,
-                                size_t len)
+MDS_Err_t DEV_I2C_PeriphMasterReadMem(DEV_I2C_Periph_t *periph, uint32_t memAddr, uint8_t memAddrSz, uint8_t *buff,
+                                      size_t len)
 {
     MDS_ASSERT(memAddrSz <= sizeof(uint32_t));
 
@@ -145,15 +190,15 @@ MDS_Err_t DEV_I2C_PeriphReadMem(DEV_I2C_Periph_t *periph, uint32_t memAddr, uint
         {.flags = DEV_I2C_MSGFLAG_RD, .buff = buff, .len = len},
     };
 
-    return (DEV_I2C_PeriphTransfer(periph, msg, ARRAY_SIZE(msg)));
+    return (DEV_I2C_PeriphMasterTransfer(periph, msg, ARRAY_SIZE(msg)));
 }
 
-MDS_Err_t DEV_I2C_PeriphModifyMem(DEV_I2C_Periph_t *periph, uint32_t memAddr, uint32_t memAddrSz, uint8_t *buff,
-                                  size_t len, const uint8_t *clr, const uint8_t *set)
+MDS_Err_t DEV_I2C_PeriphMasterModifyMem(DEV_I2C_Periph_t *periph, uint32_t memAddr, uint32_t memAddrSz, uint8_t *buff,
+                                        size_t len, const uint8_t *clr, const uint8_t *set)
 {
     MDS_ASSERT(memAddrSz <= sizeof(uint32_t));
 
-    MDS_Err_t err = DEV_I2C_PeriphReadMem(periph, memAddr, memAddrSz, buff, len);
+    MDS_Err_t err = DEV_I2C_PeriphMasterReadMem(periph, memAddr, memAddrSz, buff, len);
     if (err == MDS_EOK) {
         for (size_t idx = 0; idx < len; idx++) {
             if (clr != NULL) {
@@ -163,7 +208,7 @@ MDS_Err_t DEV_I2C_PeriphModifyMem(DEV_I2C_Periph_t *periph, uint32_t memAddr, ui
                 buff[idx] |= (uint8_t)(set[idx]);
             }
         }
-        err = DEV_I2C_PeriphWriteMem(periph, memAddr, memAddrSz, buff, len);
+        err = DEV_I2C_PeriphMasterWriteMem(periph, memAddr, memAddrSz, buff, len);
     }
 
     return (err);

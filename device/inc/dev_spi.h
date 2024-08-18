@@ -54,18 +54,22 @@ typedef enum DEV_SPI_FirstBit {
 } DEV_SPI_FirstBit_t;
 
 typedef enum DEV_SPI_BusCS {
+    DEV_SPI_BUSCS_NO = -1,
     DEV_SPI_BUSCS_LOW,
     DEV_SPI_BUSCS_HIGH,
-    DEV_SPI_BUSCS_NO,
 } DEV_SPI_BusCS_t;
 
-typedef struct DEV_SPI_Config {
+typedef struct DEV_SPI_Object {
+    MDS_Tick_t optick;
+    DEV_GPIO_Pin_t *nss;
     uint32_t clock;  // Hz
-    DEV_SPI_BusMode_t busMode   : 8;
+    DEV_SPI_BusCS_t busCS       : 4;
+    DEV_SPI_BusMode_t busMode   : 4;
+    DEV_SPI_ClkMode_t clkMode   : 4;
+    DEV_SPI_FirstBit_t firstBit : 4;
     DEV_SPI_DataBits_t dataBits : 8;
-    DEV_SPI_ClkMode_t clkMode   : 8;
-    DEV_SPI_FirstBit_t firstBit : 8;
-} DEV_SPI_Config_t;
+    uint8_t retry;
+} DEV_SPI_Object_t;
 
 typedef struct DEV_SPI_Adaptr DEV_SPI_Adaptr_t;
 typedef struct DEV_SPI_Periph DEV_SPI_Periph_t;
@@ -83,18 +87,10 @@ struct DEV_SPI_Adaptr {
     const MDS_Mutex_t mutex;
 };
 
-typedef struct DEV_SPI_Object {
-    MDS_Tick_t timeout;
-    DEV_GPIO_Pin_t *nss;
-    DEV_SPI_BusCS_t busCS : 8;
-    uint8_t retry;
-} DEV_SPI_Object_t;
-
 struct DEV_SPI_Periph {
     const MDS_Device_t device;
     const DEV_SPI_Adaptr_t *mount;
 
-    DEV_SPI_Config_t config;
     DEV_SPI_Object_t object;
 
     void (*callback)(const DEV_SPI_Periph_t *periph, MDS_Arg_t *arg, const uint8_t *tx, uint8_t *rx, size_t size,

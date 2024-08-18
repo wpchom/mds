@@ -63,12 +63,7 @@ MDS_Err_t DEV_GPIO_PinConfig(DEV_GPIO_Pin_t *pin, const DEV_GPIO_Config_t *confi
     MDS_ASSERT(pin->mount->driver != NULL);
     MDS_ASSERT(pin->mount->driver->config != NULL);
 
-    MDS_Err_t err = pin->mount->driver->config(pin, config);
-    if (err == MDS_EOK) {
-        pin->config = *config;
-    }
-
-    return (err);
+    return (pin->mount->driver->config(pin, config));
 }
 
 void DEV_GPIO_PinInterruptCallback(DEV_GPIO_Pin_t *pin, void (*callback)(const DEV_GPIO_Pin_t *, MDS_Arg_t *),
@@ -119,14 +114,4 @@ void DEV_GPIO_PinLow(DEV_GPIO_Pin_t *pin)
 void DEV_GPIO_PinHigh(DEV_GPIO_Pin_t *pin)
 {
     DEV_GPIO_PinWrite(pin, (MDS_Mask_t)(-1));
-}
-
-void DEV_GPIO_PinActive(DEV_GPIO_Pin_t *pin, bool actived)
-{
-    DEV_GPIO_PinWrite(pin, (actived) ? (~(pin->config.initVal)) : (pin->config.initVal));
-}
-
-bool DEV_GPIO_PinIsActived(const DEV_GPIO_Pin_t *pin)
-{
-    return (DEV_GPIO_PinRead(pin) != pin->config.initVal);
 }

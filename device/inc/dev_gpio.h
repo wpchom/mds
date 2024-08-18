@@ -85,7 +85,6 @@ struct DEV_GPIO_Pin {
     const MDS_Device_t device;
     const DEV_GPIO_Module_t *mount;
 
-    DEV_GPIO_Config_t config;
     DEV_GPIO_Object_t object;
 
     void (*extiCallback)(const DEV_GPIO_Pin_t *pin, MDS_Arg_t *arg);

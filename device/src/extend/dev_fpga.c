@@ -40,7 +40,7 @@ MDS_Err_t DEV_FPGA_PeriphInit(DEV_FPGA_Periph_t *periph, const char *name, DEV_F
 {
     MDS_Err_t err = MDS_DevPeriphInit((MDS_DevPeriph_t *)periph, name, (MDS_DevAdaptr_t *)fpga);
     if (err == MDS_EOK) {
-        periph->object.timeout = MDS_DEVICE_PERIPH_TIMEOUT;
+        periph->object.optick = MDS_DEVICE_PERIPH_TIMEOUT;
     }
 
     return (err);
@@ -56,7 +56,7 @@ DEV_FPGA_Periph_t *DEV_FPGA_PeriphCreate(const char *name, DEV_FPGA_Adaptr_t *fp
     DEV_FPGA_Periph_t *periph = (DEV_FPGA_Periph_t *)MDS_DevPeriphCreate(sizeof(DEV_FPGA_Periph_t), name,
                                                                          (MDS_DevAdaptr_t *)fpga);
     if (periph != NULL) {
-        periph->object.timeout = MDS_DEVICE_PERIPH_TIMEOUT;
+        periph->object.optick = MDS_DEVICE_PERIPH_TIMEOUT;
     }
 
     return (periph);

@@ -44,7 +44,6 @@ MDS_Err_t DRV_FPGA_SimulateInit(DRV_FPGA_SimulateHandle_t *hfpga)
     static const DEV_GPIO_Config_t gpioConfig = {
         .mode = DEV_GPIO_MODE_OUTPUT,
         .type = DEV_GPIO_TYPE_PP_UP,
-        .speed = DEV_GPIO_SPEED_HIGH,
         .alternate = 0,
     };
 

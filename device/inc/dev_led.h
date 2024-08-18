@@ -48,11 +48,11 @@ typedef struct DEV_LED_Color {
     DEV_LED_Bright_t bright[DEV_LED_COLOR_NUMS];
 } DEV_LED_Color_t;
 
-typedef struct DEV_LED_Config {
+typedef struct DEV_LED_Object {
     DEV_LED_Color_t color[DEV_LED_COLOR_NUMS];
     DEV_LED_Light_t light;
     DEV_LED_ColorEnum_t colorEnum;
-} DEV_LED_Config_t;
+} DEV_LED_Object_t;
 
 typedef struct DEV_LED_Device DEV_LED_Device_t;
 
@@ -66,7 +66,7 @@ struct DEV_LED_Device {
     const DEV_LED_Driver_t *driver;
     const MDS_DevHandle_t *handle;
 
-    DEV_LED_Config_t config;
+    DEV_LED_Object_t object;
 };
 
 /* Function ---------------------------------------------------------------- */

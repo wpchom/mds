@@ -22,7 +22,6 @@ extern MDS_Err_t DRV_GPIO_PinConfig(GPIO_TypeDef *GPIOx, uint32_t GPIO_Pin, cons
 extern uint32_t DRV_GPIO_PortReadInput(GPIO_TypeDef *GPIOx);
 extern uint32_t DRV_GPIO_PortReadOutput(GPIO_TypeDef *GPIOx);
 extern void DRV_GPIO_PortWrite(GPIO_TypeDef *GPIOx, uint32_t val);
-extern void DRV_GPIO_PinWrite(GPIO_TypeDef *GPIOx, uint32_t GPIO_Pin, uint32_t val);
 extern void DRV_GPIO_PinHigh(GPIO_TypeDef *GPIOx, uint32_t GPIO_Pin);
 extern void DRV_GPIO_PinLow(GPIO_TypeDef *GPIOx, uint32_t GPIO_Pin);
 extern void DRV_GPIO_PinToggle(GPIO_TypeDef *GPIOx, uint32_t GPIO_Pin);

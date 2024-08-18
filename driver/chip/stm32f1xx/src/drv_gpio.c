@@ -8,6 +8,16 @@
 #include "drv_gpio.h"
 
 /* Function ---------------------------------------------------------------- */
+static void DRV_GPIO_PinWrite(GPIO_TypeDef *GPIOx, uint32_t GPIO_Pin, uint32_t val)
+{
+    uint32_t shift = __CLZ(__RBIT(GPIO_Pin));
+    if (shift < GPIO_BSRR_BR0_Pos) {
+        uint32_t set = (val << shift) & GPIO_Pin;  // 00(101)11 & 00(111)00 => 00(101)00
+        uint32_t clr = (~set) & GPIO_Pin;          // 11(010)00 & 00(111)00 => 00(010)00
+        WRITE_REG(GPIOx->BSRR, clr << GPIO_BSRR_BR0_Pos | set);
+    }
+}
+
 MDS_Err_t DRV_GPIO_PinConfig(GPIO_TypeDef *GPIOx, uint32_t GPIO_Pin, const DEV_GPIO_Config_t *config)
 {
     MDS_ASSERT(config != NULL);
@@ -66,16 +76,6 @@ void DRV_GPIO_PortWrite(GPIO_TypeDef *GPIOx, uint32_t val)
     LL_GPIO_WriteOutputPort(GPIOx, val);
 }
 
-void DRV_GPIO_PinWrite(GPIO_TypeDef *GPIOx, uint32_t GPIO_Pin, uint32_t val)
-{
-    uint32_t shift = __CLZ(__RBIT(GPIO_Pin));
-    if (shift < GPIO_BSRR_BR0_Pos) {
-        uint32_t set = (val << shift) & GPIO_Pin;  // 00(101)11 & 00(111)00 => 00(101)00
-        uint32_t clr = (~set) & GPIO_Pin;          // 11(010)00 & 00(111)00 => 00(010)00
-        WRITE_REG(GPIOx->BSRR, clr << GPIO_BSRR_BR0_Pos | set);
-    }
-}
-
 void DRV_GPIO_PinHigh(GPIO_TypeDef *GPIOx, uint32_t GPIO_Pin)
 {
     LL_GPIO_SetOutputPin(GPIOx, GPIO_Pin);
@@ -123,8 +123,7 @@ static MDS_Mask_t DDRV_GPIO_PinRead(const DEV_GPIO_Pin_t *pin)
 {
     GPIO_TypeDef *GPIOx = (GPIO_TypeDef *)(pin->object.GPIOx);
 
-    MDS_Mask_t read = (pin->config.mode == DEV_GPIO_MODE_OUTPUT) ? (DRV_GPIO_PortReadOutput(GPIOx))
-                                                                 : (DRV_GPIO_PortReadOutput(GPIOx));
+    MDS_Mask_t read = DRV_GPIO_PortReadInput(GPIOx);
 
     return (read >> __CLZ(__RBIT(pin->object.pinMask)));
 }
