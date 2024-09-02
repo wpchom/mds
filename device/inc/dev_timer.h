@@ -106,7 +106,7 @@ struct DEV_TIMER_Device {
     const DEV_TIMER_Driver_t *driver;
     const MDS_DevHandle_t *handle;
 
-    void (*callback)(const DEV_TIMER_Device_t *timer, MDS_Arg_t *arg);
+    void (*callback)(DEV_TIMER_Device_t *timer, MDS_Arg_t *arg);
     MDS_Arg_t *arg;
 };
 
@@ -121,7 +121,7 @@ struct DEV_TIMER_OC_Channel {
 
     DEV_TIMER_OC_Object_t object;
 
-    void (*callback)(const DEV_TIMER_OC_Channel_t *oc, MDS_Arg_t *arg);
+    void (*callback)(DEV_TIMER_OC_Channel_t *oc, MDS_Arg_t *arg);
     MDS_Arg_t *arg;
 };
 
@@ -135,7 +135,7 @@ struct DEV_TIMER_IC_Channel {
 
     DEV_TIMER_IC_Object_t object;
 
-    void (*callback)(const DEV_TIMER_IC_Channel_t *ic, MDS_Arg_t *arg);
+    void (*callback)(DEV_TIMER_IC_Channel_t *ic, MDS_Arg_t *arg);
     MDS_Arg_t *arg;
 };
 
@@ -147,8 +147,8 @@ extern DEV_TIMER_Device_t *DEV_TIMER_DeviceCreate(const char *name, const DEV_TI
                                                   const MDS_Arg_t *init);
 extern MDS_Err_t DEV_TIMER_DeviceDestroy(DEV_TIMER_Device_t *timer);
 
-extern void DEV_TIMER_DeviceCallback(DEV_TIMER_Device_t *timer,
-                                     void (*callback)(const DEV_TIMER_Device_t *, MDS_Arg_t *), MDS_Arg_t *arg);
+extern void DEV_TIMER_DeviceCallback(DEV_TIMER_Device_t *timer, void (*callback)(DEV_TIMER_Device_t *, MDS_Arg_t *),
+                                     MDS_Arg_t *arg);
 extern MDS_Err_t DEV_TIMER_DeviceConfig(DEV_TIMER_Device_t *timer, const DEV_TIMER_Config_t *config,
                                         MDS_Tick_t timeout);
 extern MDS_Err_t DEV_TIMER_DeviceStart(DEV_TIMER_Device_t *timer);
@@ -161,7 +161,7 @@ extern DEV_TIMER_OC_Channel_t *DEV_TIMER_OC_ChannelCreate(const char *name, DEV_
 extern MDS_Err_t DEV_TIMER_OC_ChannelDestroy(DEV_TIMER_OC_Channel_t *oc);
 
 extern void DEV_TIMER_OC_ChannelCallback(DEV_TIMER_OC_Channel_t *oc,
-                                         void (*callback)(const DEV_TIMER_OC_Channel_t *, MDS_Arg_t *), MDS_Arg_t *arg);
+                                         void (*callback)(DEV_TIMER_OC_Channel_t *, MDS_Arg_t *), MDS_Arg_t *arg);
 extern MDS_Err_t DEV_TIMER_OC_ChannelConfig(DEV_TIMER_OC_Channel_t *oc, const DEV_TIMER_OC_Config_t *config);
 extern MDS_Err_t DEV_TIMER_OC_ChannelEnable(DEV_TIMER_OC_Channel_t *oc, bool enabled);
 extern MDS_Err_t DEV_TIMER_OC_ChannelDuty(DEV_TIMER_OC_Channel_t *oc, size_t nume, size_t deno);
@@ -172,7 +172,7 @@ extern DEV_TIMER_IC_Channel_t *DEV_TIMER_IC_ChannelCreate(const char *name, DEV_
 extern MDS_Err_t DEV_TIMER_IC_ChannelDestroy(DEV_TIMER_IC_Channel_t *ic);
 
 extern void DEV_TIMER_IC_ChannelCallback(DEV_TIMER_IC_Channel_t *ic,
-                                         void (*callback)(const DEV_TIMER_IC_Channel_t *, MDS_Arg_t *), MDS_Arg_t *arg);
+                                         void (*callback)(DEV_TIMER_IC_Channel_t *, MDS_Arg_t *), MDS_Arg_t *arg);
 extern MDS_Err_t DEV_TIMER_IC_ChannelConfig(DEV_TIMER_IC_Channel_t *ic, const DEV_TIMER_IC_Config_t *config);
 extern MDS_Err_t DEV_TIMER_IC_ChannelEnable(DEV_TIMER_IC_Channel_t *ic, bool enabled);
 extern MDS_Err_t DEV_TIMER_IC_ChannelGetCount(DEV_TIMER_IC_Channel_t *ic, size_t *count);

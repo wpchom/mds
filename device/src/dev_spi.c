@@ -79,7 +79,7 @@ MDS_Err_t DEV_SPI_PeriphClose(DEV_SPI_Periph_t *periph)
 
 void DEV_SPI_PeriphCallback(
     DEV_SPI_Periph_t *periph,
-    void (*callback)(const DEV_SPI_Periph_t *, MDS_Arg_t *, const uint8_t *, uint8_t *, size_t, size_t), MDS_Arg_t *arg)
+    void (*callback)(DEV_SPI_Periph_t *, MDS_Arg_t *, const uint8_t *, uint8_t *, size_t, size_t), MDS_Arg_t *arg)
 {
     periph->callback = callback;
     periph->arg = arg;

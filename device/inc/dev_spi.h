@@ -93,7 +93,7 @@ struct DEV_SPI_Periph {
 
     DEV_SPI_Object_t object;
 
-    void (*callback)(const DEV_SPI_Periph_t *periph, MDS_Arg_t *arg, const uint8_t *tx, uint8_t *rx, size_t size,
+    void (*callback)(DEV_SPI_Periph_t *periph, MDS_Arg_t *arg, const uint8_t *tx, uint8_t *rx, size_t size,
                      size_t trans);
     MDS_Arg_t *arg;
 };
@@ -112,10 +112,9 @@ extern MDS_Err_t DEV_SPI_PeriphDestroy(DEV_SPI_Periph_t *periph);
 
 extern MDS_Err_t DEV_SPI_PeriphOpen(DEV_SPI_Periph_t *periph, MDS_Tick_t timeout);
 extern MDS_Err_t DEV_SPI_PeriphClose(DEV_SPI_Periph_t *periph);
-extern void DEV_SPI_PeriphCallback(DEV_SPI_Periph_t *periph,
-                                   void (*callback)(const DEV_SPI_Periph_t *, MDS_Arg_t *, const uint8_t *, uint8_t *,
-                                                    size_t, size_t),
-                                   MDS_Arg_t *arg);
+extern void DEV_SPI_PeriphCallback(
+    DEV_SPI_Periph_t *periph,
+    void (*callback)(DEV_SPI_Periph_t *, MDS_Arg_t *, const uint8_t *, uint8_t *, size_t, size_t), MDS_Arg_t *arg);
 extern MDS_Err_t DEV_SPI_PeriphTransferMsg(DEV_SPI_Periph_t *periph, const DEV_SPI_Msg_t *msg);
 extern MDS_Err_t DEV_SPI_PeriphTransfer(DEV_SPI_Periph_t *periph, const uint8_t *tx, uint8_t *rx, size_t size);
 

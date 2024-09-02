@@ -20,8 +20,6 @@ extern "C" {
 #endif
 
 /* Typedef ----------------------------------------------------------------- */
-typedef uint8_t MDS_BUTTON_Level_t;
-
 typedef enum MDS_BUTTON_Event {
     MDS_BUTTON_EVENT_NONE = 0,
     MDS_BUTTON_EVENT_CLICK = 1,
@@ -46,10 +44,10 @@ typedef struct MDS_BUTTON_Group {
 typedef struct MDS_BUTTON_Device MDS_BUTTON_Device_t;
 typedef struct MDS_BUTTON_InitStruct {
     const MDS_Arg_t *periph;
-    MDS_BUTTON_Level_t (*getLevel)(const MDS_Arg_t *periph);
+    MDS_Mask_t (*getLevel)(const MDS_Arg_t *periph);
     MDS_Tick_t clickTicks;
     MDS_Tick_t holdTicks;
-    MDS_BUTTON_Level_t releasedLevel;
+    MDS_Mask_t releasedLevel;
     uint8_t debounceOut;
 
     void (*callback)(const MDS_BUTTON_Device_t *button, MDS_BUTTON_Event_t event);
@@ -61,13 +59,15 @@ struct MDS_BUTTON_Device {
     MDS_BUTTON_InitStruct_t init;
 
     MDS_Tick_t tickCount;
-    MDS_BUTTON_Level_t btnLevel;
-    MDS_BUTTON_Level_t fakedLevel;
+    MDS_Mask_t btnLevel;
+    MDS_Mask_t fakedLevel;
     int8_t isFaked;
     MDS_BUTTON_State_t state : 8;
     uint8_t debounceCnt;
     uint8_t repeatCnt;
 };
+
+#define MDS_BUTTON_GROUP_INIT(btnGroup) {.list.next = &((btnGroup)->list), .list.prev = &((btnGroup)->list)}
 
 /* Function ---------------------------------------------------------------- */
 extern void MDS_BUTTON_GroupInit(MDS_BUTTON_Group_t *group);
@@ -80,8 +80,8 @@ extern bool MDS_BUTTON_IsPressed(const MDS_BUTTON_Device_t *button);
 extern MDS_Tick_t MDS_BUTTON_GetTickCount(const MDS_BUTTON_Device_t *button);
 extern uint8_t MDS_BUTTON_GetRepeatCount(const MDS_BUTTON_Device_t *button);
 
-extern bool MDS_BUTTON_FakedState(const MDS_BUTTON_Device_t *button, MDS_BUTTON_Level_t *level);
-extern void MDS_BUTTON_FakeButton(MDS_BUTTON_Device_t *button, bool faked, MDS_BUTTON_Level_t level);
+extern bool MDS_BUTTON_FakedState(const MDS_BUTTON_Device_t *button, MDS_Mask_t *level);
+extern void MDS_BUTTON_FakeButton(MDS_BUTTON_Device_t *button, bool faked, MDS_Mask_t level);
 
 #ifdef __cplusplus
 }

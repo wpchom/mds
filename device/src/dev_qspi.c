@@ -97,10 +97,9 @@ MDS_Err_t DEV_QSPI_PeriphClose(DEV_QSPI_Periph_t *periph)
     return (err);
 }
 
-void DEV_QSPI_PeriphCallback(DEV_QSPI_Periph_t *periph,
-                             void (*callback)(const DEV_QSPI_Periph_t *, MDS_Arg_t *, const uint8_t *, uint8_t *,
-                                              size_t, size_t),
-                             MDS_Arg_t *arg)
+void DEV_QSPI_PeriphCallback(
+    DEV_QSPI_Periph_t *periph,
+    void (*callback)(DEV_QSPI_Periph_t *, MDS_Arg_t *, const uint8_t *, uint8_t *, size_t, size_t), MDS_Arg_t *arg)
 {
     periph->callback = callback;
     periph->arg = arg;

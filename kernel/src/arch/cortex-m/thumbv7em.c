@@ -26,10 +26,6 @@ MDS_HOOK_INIT(INTERRUPT_EXIT, MDS_Item_t irq);
 #define CORE_WITH_FPU 0
 #endif
 
-#ifndef MDS_INTERRUPT_IRQ_NUMS
-#define MDS_INTERRUPT_IRQ_NUMS 0
-#endif
-
 struct SCB_Typedef {
     volatile uint32_t CPUID;
     volatile uint32_t ICSR;
@@ -168,39 +164,6 @@ inline void MDS_CoreIdleSleep(void)
 }
 
 /* CoreInterrupt ----------------------------------------------------------- */
-#if (defined(MDS_INTERRUPT_IRQ_NUMS) && (MDS_INTERRUPT_IRQ_NUMS > 0))
-static __attribute__((section(".mds.isr"))) struct {
-    MDS_IsrHandler_t handler;
-    MDS_Arg_t *arg;
-} g_mds_isr[MDS_INTERRUPT_IRQ_NUMS];
-
-void Interrupt_Handler(uintptr_t ipsr)
-{
-    MDS_HOOK_CALL(INTERRUPT_ENTER, ipsr);
-
-    if ((ipsr < ARRAY_SIZE(g_mds_isr)) && (g_mds_isr[ipsr].handler != NULL)) {
-        g_mds_isr[ipsr].handler(g_mds_isr[ipsr].arg);
-    }
-
-    MDS_HOOK_CALL(INTERRUPT_EXIT, ipsr);
-}
-
-MDS_Err_t MDS_CoreInterruptRequestRegister(MDS_Item_t irq, MDS_IsrHandler_t handler, MDS_Arg_t *arg)
-{
-    uintptr_t ipsr = irq + 0x10;
-    if (ipsr < ARRAY_SIZE(g_mds_isr)) {
-        register MDS_Item_t lock = MDS_CoreInterruptLock();
-        g_mds_isr[ipsr].handler = handler;
-        g_mds_isr[ipsr].arg = arg;
-        MDS_CoreInterruptRestore(lock);
-
-        return (MDS_EOK);
-    }
-
-    return (MDS_ERANGE);
-}
-#endif
-
 inline MDS_Item_t MDS_CoreInterruptCurrent(void)
 {
     register intptr_t result;

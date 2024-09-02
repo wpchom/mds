@@ -106,10 +106,10 @@ struct DEV_I2S_Periph {
 
     DEV_I2S_Object_t object;
 
-    void (*txCallback)(const DEV_I2S_Periph_t *periph, MDS_Arg_t *arg, const uint8_t *buff, size_t size, size_t send);
+    void (*txCallback)(DEV_I2S_Periph_t *periph, MDS_Arg_t *arg, const uint8_t *buff, size_t size, size_t send);
     MDS_Arg_t *txArg;
 
-    void (*rxCallback)(const DEV_I2S_Periph_t *periph, MDS_Arg_t *arg, uint8_t *buff, size_t size, size_t recv);
+    void (*rxCallback)(DEV_I2S_Periph_t *periph, MDS_Arg_t *arg, uint8_t *buff, size_t size, size_t recv);
     MDS_Arg_t *rxArg;
 };
 
@@ -127,11 +127,11 @@ extern MDS_Err_t DEV_I2S_PeriphDestroy(DEV_I2S_Periph_t *periph);
 
 extern MDS_Err_t DEV_I2S_PeriphOpen(DEV_I2S_Periph_t *periph, MDS_Tick_t timeout);
 extern MDS_Err_t DEV_I2S_PeriphClose(DEV_I2S_Periph_t *periph);
-extern void DEV_I2S_PeriphTxCallback(
-    DEV_I2S_Periph_t *periph, void (*callback)(const DEV_I2S_Periph_t *, MDS_Arg_t *, const uint8_t *, size_t, size_t),
-    MDS_Arg_t *arg);
+extern void DEV_I2S_PeriphTxCallback(DEV_I2S_Periph_t *periph,
+                                     void (*callback)(DEV_I2S_Periph_t *, MDS_Arg_t *, const uint8_t *, size_t, size_t),
+                                     MDS_Arg_t *arg);
 extern void DEV_I2S_PeriphRxCallback(DEV_I2S_Periph_t *periph,
-                                     void (*callback)(const DEV_I2S_Periph_t *, MDS_Arg_t *, uint8_t *, size_t, size_t),
+                                     void (*callback)(DEV_I2S_Periph_t *, MDS_Arg_t *, uint8_t *, size_t, size_t),
                                      MDS_Arg_t *arg);
 extern MDS_Err_t DEV_I2S_PeriphTransmit(DEV_I2S_Periph_t *periph, const uint8_t *buff, size_t len);
 extern MDS_Err_t DEV_I2S_PeriphReceive(DEV_I2S_Periph_t *periph, uint8_t *buff, size_t size, size_t *recv,

@@ -36,6 +36,7 @@ extern void MDS_SchedulerInit(void);
 extern MDS_Thread_t *MDS_SchedulerGetHighestPriorityThread(void);
 extern void MDS_SchedulerInsertThread(MDS_Thread_t *thread);
 extern void MDS_SchedulerRemoveThread(MDS_Thread_t *thread);
+extern void MDS_SchedulerRemainThread(void);
 
 /* Timer ------------------------------------------------------------------- */
 extern void MDS_SysTimerInit(void);

@@ -48,7 +48,7 @@ struct DEV_RTC_Timer {
     const MDS_Device_t device;
     const DEV_RTC_Device_t *mount;
 
-    void (*callback)(const DEV_RTC_Timer_t *timer, MDS_Arg_t *arg);
+    void (*callback)(DEV_RTC_Timer_t *timer, MDS_Arg_t *arg);
     MDS_Arg_t *arg;
 };
 
@@ -56,7 +56,7 @@ struct DEV_RTC_Alarm {
     const MDS_Device_t device;
     const DEV_RTC_Device_t *mount;
 
-    void (*callback)(const DEV_RTC_Alarm_t *alarm, MDS_Arg_t *arg);
+    void (*callback)(DEV_RTC_Alarm_t *alarm, MDS_Arg_t *arg);
     MDS_Arg_t *arg;
 };
 
@@ -77,7 +77,7 @@ extern MDS_Err_t DEV_RTC_TimerDeInit(DEV_RTC_Timer_t *timer);
 extern DEV_RTC_Timer_t *DEV_RTC_TimerCreate(const char *name, DEV_RTC_Device_t *rtc);
 extern MDS_Err_t DEV_RTC_TimerDestroy(DEV_RTC_Timer_t *timer);
 
-extern void DEV_RTC_TimerCallback(DEV_RTC_Timer_t *timer, void (*callback)(const DEV_RTC_Timer_t *, MDS_Arg_t *),
+extern void DEV_RTC_TimerCallback(DEV_RTC_Timer_t *timer, void (*callback)(DEV_RTC_Timer_t *, MDS_Arg_t *),
                                   MDS_Arg_t *arg);
 extern MDS_Err_t DEV_RTC_TimerStart(DEV_RTC_Timer_t *timer, MDS_Tick_t timeout);
 extern MDS_Err_t DEV_RTC_TimerStop(DEV_RTC_Timer_t *timer);
@@ -88,7 +88,7 @@ extern MDS_Err_t DEV_RTC_AlarmDeInit(DEV_RTC_Alarm_t *alarm);
 extern DEV_RTC_Alarm_t *DEV_RTC_AlarmCreate(const char *name, DEV_RTC_Device_t *rtc);
 extern MDS_Err_t DEV_RTC_AlarmDestroy(DEV_RTC_Alarm_t *alarm);
 
-extern void DEV_RTC_AlarmCallback(DEV_RTC_Alarm_t *alarm, void (*callback)(const DEV_RTC_Alarm_t *, MDS_Arg_t *),
+extern void DEV_RTC_AlarmCallback(DEV_RTC_Alarm_t *alarm, void (*callback)(DEV_RTC_Alarm_t *, MDS_Arg_t *),
                                   MDS_Arg_t *arg);
 extern MDS_Err_t DEV_RTC_AlarmEnable(DEV_RTC_Alarm_t *alarm, const MDS_TimeDate_t *tm);
 extern MDS_Err_t DEV_RTC_AlarmDisable(DEV_RTC_Alarm_t *alarm);

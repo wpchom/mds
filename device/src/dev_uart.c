@@ -77,24 +77,14 @@ MDS_Err_t DEV_UART_PeriphClose(DEV_UART_Periph_t *periph)
     return (MDS_DevPeriphClose((MDS_DevPeriph_t *)periph));
 }
 
-void DEV_UART_PeriphTxCallback(
-    DEV_UART_Periph_t *periph,
-    void (*callback)(const DEV_UART_Periph_t *, MDS_Arg_t *, const uint8_t *, size_t, size_t), MDS_Arg_t *arg)
-{
-    MDS_ASSERT(periph != NULL);
-
-    periph->txCallback = callback;
-    periph->txArg = arg;
-}
-
 void DEV_UART_PeriphRxCallback(DEV_UART_Periph_t *periph,
-                               void (*callback)(const DEV_UART_Periph_t *, MDS_Arg_t *, uint8_t *, size_t, size_t),
+                               void (*callback)(DEV_UART_Periph_t *, MDS_Arg_t *, uint8_t *, size_t, size_t),
                                MDS_Arg_t *arg)
 {
     MDS_ASSERT(periph != NULL);
 
-    periph->rxCallback = callback;
-    periph->rxArg = arg;
+    periph->callback = callback;
+    periph->arg = arg;
 }
 
 MDS_Err_t DEV_UART_PeriphTransmitMsg(DEV_UART_Periph_t *periph, const MDS_MsgList_t *msg)

@@ -66,6 +66,24 @@ void MDS_SchedulerRemoveThread(MDS_Thread_t *thread)
     }
 }
 
+void MDS_SchedulerRemainThread(void)
+{
+    MDS_Thread_t *thread = MDS_KernelCurrentThread();
+    if (thread == NULL) {
+        return;
+    }
+
+    if (thread->remainTick > 0) {
+        thread->remainTick -= 1;
+    }
+
+    if (thread->remainTick == 0) {
+        thread->remainTick = thread->initTick;
+        thread->state |= MDS_THREAD_STATE_YIELD;
+        MDS_KernelSchedulerCheck();
+    }
+}
+
 __attribute__((weak)) size_t MDS_SchedulerFFS(size_t value)
 {
 #if defined(__GNUC__)

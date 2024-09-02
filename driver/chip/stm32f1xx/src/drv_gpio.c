@@ -30,7 +30,6 @@ MDS_Err_t DRV_GPIO_PinConfig(GPIO_TypeDef *GPIOx, uint32_t GPIO_Pin, const DEV_G
         init.Mode = GPIO_MODE_INPUT;
     } else if (config->mode == DEV_GPIO_MODE_OUTPUT) {
         init.Mode = GPIO_MODE_OUTPUT_PP;
-        DRV_GPIO_PinWrite(GPIOx, GPIO_Pin, config->initVal);
     } else if (config->mode == DEV_GPIO_MODE_ALTERNATE) {
         init.Mode = GPIO_MODE_AF_PP;
     } else {  // DEV_GPIO_MODE_ANALOG
@@ -49,10 +48,10 @@ MDS_Err_t DRV_GPIO_PinConfig(GPIO_TypeDef *GPIOx, uint32_t GPIO_Pin, const DEV_G
         init.Pull = GPIO_NOPULL;
     }
 
-    if ((config->interrupt & DEV_GPIO_INT_RISING) != 0) {
+    if ((config->intr & DEV_GPIO_INTR_RISING) != 0) {
         init.Mode |= GPIO_MODE_IT_RISING;
     }
-    if ((config->interrupt & DEV_GPIO_INT_FALLING) != 0) {
+    if ((config->intr & DEV_GPIO_INTR_FALLING) != 0) {
         init.Mode |= GPIO_MODE_IT_FALLING;
     }
 
@@ -91,6 +90,18 @@ void DRV_GPIO_PinToggle(GPIO_TypeDef *GPIOx, uint32_t GPIO_Pin)
     LL_GPIO_TogglePin(GPIOx, GPIO_Pin);
 }
 
+void DRV_GPIO_PinIRQHandler(DEV_GPIO_Object_t *object)
+{
+    if (LL_EXTI_ReadFlag_0_31(object->pinMask) != 0x00U) {
+        LL_EXTI_ClearFlag_0_31(object->pinMask);
+
+        DEV_GPIO_Pin_t *pin = (DEV_GPIO_Pin_t *)(object->parent);
+        if ((pin != NULL) && (pin->callback != NULL)) {
+            pin->callback(pin, pin->arg);
+        }
+    }
+}
+
 /* Driver ------------------------------------------------------------------ */
 static MDS_Err_t DDRV_GPIO_PortControl(const DEV_GPIO_Module_t *gpio, MDS_Item_t cmd, MDS_Arg_t *arg)
 {
@@ -115,6 +126,10 @@ static MDS_Err_t DDRV_GPIO_PortControl(const DEV_GPIO_Module_t *gpio, MDS_Item_t
 static MDS_Err_t DDRV_GPIO_PinConfig(const DEV_GPIO_Pin_t *pin, const DEV_GPIO_Config_t *config)
 {
     GPIO_TypeDef *GPIOx = (GPIO_TypeDef *)(pin->object.GPIOx);
+
+    if (config->mode == DEV_GPIO_MODE_OUTPUT) {
+        DRV_GPIO_PinWrite(GPIOx, pin->object.pinMask, pin->object.initVal);
+    }
 
     return (DRV_GPIO_PinConfig(GPIOx, pin->object.pinMask, config));
 }

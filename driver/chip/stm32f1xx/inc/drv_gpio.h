@@ -11,6 +11,7 @@
 #include "dev_gpio.h"
 #include "stm32f1xx_hal_gpio.h"
 #include "stm32f1xx_ll_gpio.h"
+#include "stm32f1xx_ll_exti.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -25,6 +26,8 @@ extern void DRV_GPIO_PortWrite(GPIO_TypeDef *GPIOx, uint32_t val);
 extern void DRV_GPIO_PinHigh(GPIO_TypeDef *GPIOx, uint32_t GPIO_Pin);
 extern void DRV_GPIO_PinLow(GPIO_TypeDef *GPIOx, uint32_t GPIO_Pin);
 extern void DRV_GPIO_PinToggle(GPIO_TypeDef *GPIOx, uint32_t GPIO_Pin);
+
+extern void DRV_GPIO_PinIRQHandler(DEV_GPIO_Object_t *object);
 
 /* Driver ------------------------------------------------------------------ */
 extern const DEV_GPIO_Driver_t G_DRV_STM32F1XX_GPIO;

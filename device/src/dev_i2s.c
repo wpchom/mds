@@ -78,7 +78,7 @@ MDS_Err_t DEV_I2S_PeriphClose(DEV_I2S_Periph_t *periph)
 }
 
 void DEV_I2S_PeriphTxCallback(DEV_I2S_Periph_t *periph,
-                              void (*callback)(const DEV_I2S_Periph_t *, MDS_Arg_t *, const uint8_t *, size_t, size_t),
+                              void (*callback)(DEV_I2S_Periph_t *, MDS_Arg_t *, const uint8_t *, size_t, size_t),
                               MDS_Arg_t *arg)
 {
     MDS_ASSERT(periph != NULL);
@@ -88,7 +88,7 @@ void DEV_I2S_PeriphTxCallback(DEV_I2S_Periph_t *periph,
 }
 
 void DEV_I2S_PeriphRxCallback(DEV_I2S_Periph_t *periph,
-                              void (*callback)(const DEV_I2S_Periph_t *, MDS_Arg_t *, uint8_t *, size_t, size_t),
+                              void (*callback)(DEV_I2S_Periph_t *, MDS_Arg_t *, uint8_t *, size_t, size_t),
                               MDS_Arg_t *arg)
 {
     MDS_ASSERT(periph != NULL);

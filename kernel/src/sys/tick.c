@@ -33,23 +33,12 @@ void MDS_SysTickSetCount(MDS_Tick_t tickcnt)
 void MDS_SysTickIncCount(void)
 {
     register MDS_Item_t lock = MDS_CoreInterruptLock();
-    MDS_Thread_t *thread = MDS_KernelCurrentThread();
 
     g_sysTickCount += 1U;
 
-    if (thread == NULL) {
-        MDS_CoreInterruptRestore(lock);
-    } else {
-        thread->remainTick -= 1U;
-        if (thread->remainTick == 0) {
-            thread->remainTick = thread->initTick;
-            thread->state |= MDS_THREAD_STATE_YIELD;
-            MDS_CoreInterruptRestore(lock);
-            MDS_KernelSchedulerCheck();
-        } else {
-            MDS_CoreInterruptRestore(lock);
-        }
-    }
+    MDS_SchedulerRemainThread();
+
+    MDS_CoreInterruptRestore(lock);
 
     MDS_SysTimerCheck();
 }

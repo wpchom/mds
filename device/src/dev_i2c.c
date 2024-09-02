@@ -76,39 +76,45 @@ MDS_Err_t DEV_I2C_PeriphClose(DEV_I2C_Periph_t *periph)
     return (MDS_DevPeriphClose((MDS_DevPeriph_t *)periph));
 }
 
-void DEV_I2C_PeriphCallback(DEV_I2C_Periph_t *periph,
-                            void (*callback)(const DEV_I2C_Periph_t *, MDS_Arg_t *, uint8_t *, size_t), MDS_Arg_t *arg)
+void DEV_I2C_PeriphSlaveCallback(DEV_I2C_Periph_t *periph,
+                                 void (*callback)(DEV_I2C_Periph_t *, MDS_Arg_t *, MDS_Mask_t), MDS_Arg_t *arg)
 {
+    MDS_ASSERT(periph != NULL);
+
     periph->callback = callback;
     periph->arg = arg;
 }
 
-MDS_Err_t DEV_I2C_PeriphSlaveReceive(DEV_I2C_Periph_t *periph, uint8_t *buff, size_t size, MDS_Tick_t timeout)
+MDS_Err_t DEV_I2C_PeriphSlaveListen(DEV_I2C_Periph_t *periph, MDS_Tick_t timeout)
 {
     MDS_ASSERT(periph != NULL);
     MDS_ASSERT(periph->mount != NULL);
     MDS_ASSERT(periph->mount->driver != NULL);
-    MDS_ASSERT(periph->mount->driver->slave != NULL);
+
+    const DEV_I2C_Adaptr_t *i2c = periph->mount;
 
     if (!MDS_DevPeriphIsAccessible((MDS_DevPeriph_t *)periph)) {
         return (MDS_EIO);
     }
 
-    return (periph->mount->driver->slave(periph, true, buff, size, timeout));
+    return (i2c->driver->slave(periph, NULL, NULL, timeout));
 }
 
-MDS_Err_t DEV_I2C_PeriphSlaveTransmit(DEV_I2C_Periph_t *periph, const uint8_t *buff, size_t len, MDS_Tick_t timeout)
+extern MDS_Err_t DEV_I2C_PeriphSlaveTransfer(DEV_I2C_Periph_t *periph, DEV_I2C_Msg_t *msg, size_t *len,
+                                             MDS_Tick_t timeout)
 {
     MDS_ASSERT(periph != NULL);
     MDS_ASSERT(periph->mount != NULL);
     MDS_ASSERT(periph->mount->driver != NULL);
     MDS_ASSERT(periph->mount->driver->slave != NULL);
 
+    const DEV_I2C_Adaptr_t *i2c = periph->mount;
+
     if (!MDS_DevPeriphIsAccessible((MDS_DevPeriph_t *)periph)) {
         return (MDS_EIO);
     }
 
-    return (periph->mount->driver->slave(periph, false, (uint8_t *)buff, len, timeout));
+    return (i2c->driver->slave(periph, msg, len, timeout));
 }
 
 MDS_Err_t DEV_I2C_PeriphMasterTransfer(DEV_I2C_Periph_t *periph, const DEV_I2C_Msg_t msg[], size_t num)
@@ -120,6 +126,10 @@ MDS_Err_t DEV_I2C_PeriphMasterTransfer(DEV_I2C_Periph_t *periph, const DEV_I2C_M
 
     MDS_Err_t err = MDS_EINVAL;
     const DEV_I2C_Adaptr_t *i2c = periph->mount;
+
+    if (((msg[0].flags & DEV_I2C_MSGFLAG_NO_START) != 0U) || ((msg[num].flags & DEV_I2C_MSGFLAG_NO_STOP) != 0U)) {
+        return (MDS_EINVAL);
+    }
 
     if (!MDS_DevPeriphIsAccessible((MDS_DevPeriph_t *)periph)) {
         return (MDS_EIO);

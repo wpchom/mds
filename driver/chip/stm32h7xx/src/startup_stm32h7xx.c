@@ -124,22 +124,3 @@ __attribute__((__noreturn__)) void BOOT_SystemReset(void)
     NVIC_SystemReset();
 }
 
-void MDS_CoreInterruptRequestEnable(intptr_t irq)
-{
-    NVIC_EnableIRQ(irq);
-}
-
-void MDS_CoreInterruptRequestDisable(intptr_t irq)
-{
-    NVIC_DisableIRQ(irq);
-}
-
-void MDS_CoreInterruptRequestClearPending(intptr_t irq)
-{
-    NVIC_ClearPendingIRQ(irq);
-}
-
-void MDS_CoreInterruptRequestPriority(intptr_t irq, uintptr_t priority)
-{
-    NVIC_SetPriority(irq, priority);
-}

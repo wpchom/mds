@@ -92,8 +92,7 @@ MDS_Err_t DEV_RTC_TimerDestroy(DEV_RTC_Timer_t *timer)
     return (MDS_DevPeriphDestroy((MDS_DevPeriph_t *)timer));
 }
 
-void DEV_RTC_TimerCallback(DEV_RTC_Timer_t *timer, void (*callback)(const DEV_RTC_Timer_t *, MDS_Arg_t *),
-                           MDS_Arg_t *arg)
+void DEV_RTC_TimerCallback(DEV_RTC_Timer_t *timer, void (*callback)(DEV_RTC_Timer_t *, MDS_Arg_t *), MDS_Arg_t *arg)
 {
     MDS_ASSERT(timer != NULL);
 
@@ -152,8 +151,7 @@ MDS_Err_t DEV_RTC_AlarmDestroy(DEV_RTC_Alarm_t *alarm)
     return (MDS_DevPeriphDestroy((MDS_DevPeriph_t *)alarm));
 }
 
-void DEV_RTC_AlarmCallback(DEV_RTC_Alarm_t *alarm, void (*callback)(const DEV_RTC_Alarm_t *, MDS_Arg_t *),
-                           MDS_Arg_t *arg)
+void DEV_RTC_AlarmCallback(DEV_RTC_Alarm_t *alarm, void (*callback)(DEV_RTC_Alarm_t *, MDS_Arg_t *), MDS_Arg_t *arg)
 {
     MDS_ASSERT(alarm != NULL);
 

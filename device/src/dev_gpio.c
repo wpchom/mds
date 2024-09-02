@@ -38,7 +38,12 @@ MDS_Err_t DEV_GPIO_ModuleDestroy(DEV_GPIO_Module_t *gpio)
 /* GPIO pin ---------------------------------------------------------------- */
 MDS_Err_t DEV_GPIO_PinInit(DEV_GPIO_Pin_t *pin, const char *name, DEV_GPIO_Module_t *gpio)
 {
-    return (MDS_DevPeriphInit((MDS_DevPeriph_t *)pin, name, (MDS_DevAdaptr_t *)gpio));
+    MDS_Err_t err = MDS_DevPeriphInit((MDS_DevPeriph_t *)pin, name, (MDS_DevAdaptr_t *)gpio);
+    if (err == MDS_EOK) {
+        pin->object.parent = pin;
+    }
+
+    return (err);
 }
 
 MDS_Err_t DEV_GPIO_PinDeInit(DEV_GPIO_Pin_t *pin)
@@ -48,7 +53,12 @@ MDS_Err_t DEV_GPIO_PinDeInit(DEV_GPIO_Pin_t *pin)
 
 DEV_GPIO_Pin_t *DEV_GPIO_PinCreate(const char *name, DEV_GPIO_Module_t *gpio)
 {
-    return ((DEV_GPIO_Pin_t *)MDS_DevPeriphCreate(sizeof(DEV_GPIO_Pin_t), name, (MDS_DevAdaptr_t *)gpio));
+    DEV_GPIO_Pin_t *pin = (DEV_GPIO_Pin_t *)MDS_DevPeriphCreate(sizeof(DEV_GPIO_Pin_t), name, (MDS_DevAdaptr_t *)gpio);
+    if (pin != NULL) {
+        pin->object.parent = pin;
+    }
+
+    return (pin);
 }
 
 MDS_Err_t DEV_GPIO_PinDestroy(DEV_GPIO_Pin_t *pin)
@@ -66,13 +76,11 @@ MDS_Err_t DEV_GPIO_PinConfig(DEV_GPIO_Pin_t *pin, const DEV_GPIO_Config_t *confi
     return (pin->mount->driver->config(pin, config));
 }
 
-void DEV_GPIO_PinInterruptCallback(DEV_GPIO_Pin_t *pin, void (*callback)(const DEV_GPIO_Pin_t *, MDS_Arg_t *),
-                                   MDS_Arg_t *arg)
+void DEV_GPIO_PinInterruptCallback(DEV_GPIO_Pin_t *pin, void (*callback)(DEV_GPIO_Pin_t *, MDS_Arg_t *), MDS_Arg_t *arg)
 {
     MDS_ASSERT(pin != NULL);
 
-    pin->object.parent = (MDS_Arg_t *)pin;
-    pin->extiCallback = callback;
+    pin->callback = callback;
     pin->arg = arg;
 }
 

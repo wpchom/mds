@@ -74,13 +74,6 @@ extern MDS_Item_t MDS_CoreInterruptCurrent(void);
 extern MDS_Item_t MDS_CoreInterruptLock(void);
 extern void MDS_CoreInterruptRestore(MDS_Item_t lock);
 
-typedef void (*MDS_IsrHandler_t)(MDS_Arg_t *);
-extern MDS_Err_t MDS_CoreInterruptRequestRegister(MDS_Item_t irq, MDS_IsrHandler_t handler, MDS_Arg_t *arg);
-extern void MDS_CoreInterruptRequestEnable(MDS_Item_t irq);
-extern void MDS_CoreInterruptRequestDisable(MDS_Item_t irq);
-extern void MDS_CoreInterruptRequestClearPending(MDS_Item_t irq);
-extern void MDS_CoreInterruptRequestPriority(MDS_Item_t irq, uintptr_t priority);
-
 /* Object ------------------------------------------------------------------ */
 #ifndef MDS_TIMER_TYPE
 typedef struct MDS_Timer MDS_Timer_t;

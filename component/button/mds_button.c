@@ -39,7 +39,7 @@
 #endif
 
 /* Function ---------------------------------------------------------------- */
-static MDS_BUTTON_Level_t MDS_BUTTON_GetLevel(MDS_BUTTON_Device_t *button)
+static MDS_Mask_t MDS_BUTTON_GetLevel(MDS_BUTTON_Device_t *button)
 {
     if (button->isFaked != 0) {
         return (button->fakedLevel);
@@ -134,7 +134,7 @@ static void BUTTON_CheckState(MDS_BUTTON_Device_t *button, MDS_Tick_t interval)
         [MDS_BUTTON_STATE_HOLD] = BUTTON_StateHold,
     };
 
-    MDS_BUTTON_Level_t readLevel = MDS_BUTTON_GetLevel(button);
+    MDS_Mask_t readLevel = MDS_BUTTON_GetLevel(button);
 
     MDS_ASSERT(button->state < ARRAY_SIZE(buttonState));
 
@@ -239,7 +239,7 @@ uint8_t MDS_BUTTON_GetRepeatCount(const MDS_BUTTON_Device_t *button)
     return (button->repeatCnt);
 }
 
-bool MDS_BUTTON_FakedState(const MDS_BUTTON_Device_t *button, MDS_BUTTON_Level_t *level)
+bool MDS_BUTTON_FakedState(const MDS_BUTTON_Device_t *button, MDS_Mask_t *level)
 {
     MDS_ASSERT(button != NULL);
 
@@ -250,7 +250,7 @@ bool MDS_BUTTON_FakedState(const MDS_BUTTON_Device_t *button, MDS_BUTTON_Level_t
     return (button->isFaked);
 }
 
-void MDS_BUTTON_FakeButton(MDS_BUTTON_Device_t *button, bool faked, MDS_BUTTON_Level_t level)
+void MDS_BUTTON_FakeButton(MDS_BUTTON_Device_t *button, bool faked, MDS_Mask_t level)
 {
     MDS_ASSERT(button != NULL);
 

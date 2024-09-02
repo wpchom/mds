@@ -44,7 +44,7 @@ MDS_Err_t DEV_TIMER_DeviceConfig(DEV_TIMER_Device_t *timer, const DEV_TIMER_Conf
     return (timer->driver->config(timer, config, timeout));
 }
 
-void DEV_TIMER_DeviceCallback(DEV_TIMER_Device_t *timer, void (*callback)(const DEV_TIMER_Device_t *, MDS_Arg_t *),
+void DEV_TIMER_DeviceCallback(DEV_TIMER_Device_t *timer, void (*callback)(DEV_TIMER_Device_t *, MDS_Arg_t *),
                               MDS_Arg_t *arg)
 {
     MDS_ASSERT(timer != NULL);
@@ -101,8 +101,8 @@ MDS_Err_t DEV_TIMER_OC_ChannelDestroy(DEV_TIMER_OC_Channel_t *oc)
     return (MDS_DevPeriphDestroy((MDS_DevPeriph_t *)oc));
 }
 
-void DEV_TIMER_OC_ChannelCallback(DEV_TIMER_OC_Channel_t *oc,
-                                  void (*callback)(const DEV_TIMER_OC_Channel_t *, MDS_Arg_t *), MDS_Arg_t *arg)
+void DEV_TIMER_OC_ChannelCallback(DEV_TIMER_OC_Channel_t *oc, void (*callback)(DEV_TIMER_OC_Channel_t *, MDS_Arg_t *),
+                                  MDS_Arg_t *arg)
 {
     MDS_ASSERT(oc != NULL);
 
@@ -161,8 +161,8 @@ MDS_Err_t DEV_TIMER_IC_ChannelDestroy(DEV_TIMER_IC_Channel_t *ic)
     return (MDS_DevPeriphDestroy((MDS_DevPeriph_t *)ic));
 }
 
-void DEV_TIMER_IC_ChannelCallback(DEV_TIMER_IC_Channel_t *ic,
-                                  void (*callback)(const DEV_TIMER_IC_Channel_t *, MDS_Arg_t *), MDS_Arg_t *arg)
+void DEV_TIMER_IC_ChannelCallback(DEV_TIMER_IC_Channel_t *ic, void (*callback)(DEV_TIMER_IC_Channel_t *, MDS_Arg_t *),
+                                  MDS_Arg_t *arg)
 {
     MDS_ASSERT(ic != NULL);
 

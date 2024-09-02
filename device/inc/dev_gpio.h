@@ -40,18 +40,17 @@ typedef enum DEV_GPIO_Type {
 } DEV_GPIO_Type_t;
 
 typedef enum DEV_GPIO_Interrupt {
-    DEV_GPIO_INT_DISABLE = 0x00U,
-    DEV_GPIO_INT_FALLING = 0x01U,
-    DEV_GPIO_INT_RISING = 0x02U,
-    DEV_GPIO_INT_BOTH = 0x03U,
+    DEV_GPIO_INTR_NONE = 0x00U,
+    DEV_GPIO_INTR_FALLING = 0x01U,
+    DEV_GPIO_INTR_RISING = 0x02U,
+    DEV_GPIO_INTR_BOTH = 0x03U,
 } DEV_GPIO_Interrupt_t;
 
 typedef struct DEV_GPIO_Config {
-    MDS_Mask_t initVal;
     uint8_t alternate;
-    DEV_GPIO_Interrupt_t interrupt : 8;
-    DEV_GPIO_Mode_t mode           : 8;
-    DEV_GPIO_Type_t type           : 8;
+    DEV_GPIO_Mode_t mode      : 8;
+    DEV_GPIO_Type_t type      : 8;
+    DEV_GPIO_Interrupt_t intr : 8;
 } DEV_GPIO_Config_t;
 
 enum DEV_GPIO_Cmd {
@@ -77,8 +76,9 @@ struct DEV_GPIO_Module {
 typedef struct DEV_GPIO_Object {
     void *GPIOx;
     MDS_Mask_t pinMask;
+    MDS_Mask_t initVal;
 
-    MDS_Arg_t *parent;
+    const void *parent;
 } DEV_GPIO_Object_t;
 
 struct DEV_GPIO_Pin {
@@ -87,7 +87,7 @@ struct DEV_GPIO_Pin {
 
     DEV_GPIO_Object_t object;
 
-    void (*extiCallback)(const DEV_GPIO_Pin_t *pin, MDS_Arg_t *arg);
+    void (*callback)(DEV_GPIO_Pin_t *pin, MDS_Arg_t *arg);
     MDS_Arg_t *arg;
 };
 
@@ -105,7 +105,7 @@ extern DEV_GPIO_Pin_t *DEV_GPIO_PinCreate(const char *name, DEV_GPIO_Module_t *g
 extern MDS_Err_t DEV_GPIO_PinDestroy(DEV_GPIO_Pin_t *pin);
 
 extern MDS_Err_t DEV_GPIO_PinConfig(DEV_GPIO_Pin_t *pin, const DEV_GPIO_Config_t *config);
-extern void DEV_GPIO_PinInterruptCallback(DEV_GPIO_Pin_t *pin, void (*callback)(const DEV_GPIO_Pin_t *, MDS_Arg_t *),
+extern void DEV_GPIO_PinInterruptCallback(DEV_GPIO_Pin_t *pin, void (*callback)(DEV_GPIO_Pin_t *, MDS_Arg_t *),
                                           MDS_Arg_t *arg);
 extern MDS_Mask_t DEV_GPIO_PinRead(const DEV_GPIO_Pin_t *pin);
 extern void DEV_GPIO_PinWrite(DEV_GPIO_Pin_t *pin, MDS_Mask_t val);

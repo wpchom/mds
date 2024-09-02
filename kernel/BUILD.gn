@@ -1,7 +1,6 @@
 declare_args() {
   mds_log_build_level = "MDS_LOG_LEVEL_INFO"
 
-  mds_kernel_interrupt_irq_nums = 0
   mds_kernel_object_name_size = 7
   mds_kernel_use_assert = false
   mds_kernel_lib_miniable = false
@@ -68,7 +67,7 @@ source_set("mds_kernel") {
     "src/object.c",
   ]
 
-  defines = [ "MDS_INTERRUPT_IRQ_NUMS=${mds_kernel_interrupt_irq_nums}" ]
+  defines = []
 
   if (defined(mds_kernel_lib_miniable) && mds_kernel_lib_miniable) {
     defines += [ "MDS_LIB_MINIABLE=1" ]

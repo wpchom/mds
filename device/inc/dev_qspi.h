@@ -128,7 +128,7 @@ struct DEV_QSPI_Periph {
 
     DEV_QSPI_Object_t object;
 
-    void (*callback)(const DEV_QSPI_Periph_t *periph, MDS_Arg_t *arg, const uint8_t *tx, uint8_t *rx, size_t size,
+    void (*callback)(DEV_QSPI_Periph_t *periph, MDS_Arg_t *arg, const uint8_t *tx, uint8_t *rx, size_t size,
                      size_t trans);
     MDS_Arg_t *arg;
 };
@@ -148,10 +148,9 @@ extern MDS_Err_t DEV_QSPI_PeriphDestroy(DEV_QSPI_Periph_t *periph);
 
 extern MDS_Err_t DEV_QSPI_PeriphOpen(DEV_QSPI_Periph_t *periph, MDS_Tick_t timeout);
 extern MDS_Err_t DEV_QSPI_PeriphClose(DEV_QSPI_Periph_t *periph);
-extern void DEV_QSPI_PeriphCallback(DEV_QSPI_Periph_t *periph,
-                                    void (*callback)(const DEV_QSPI_Periph_t *, MDS_Arg_t *, const uint8_t *, uint8_t *,
-                                                     size_t, size_t),
-                                    MDS_Arg_t *arg);
+extern void DEV_QSPI_PeriphCallback(
+    DEV_QSPI_Periph_t *periph,
+    void (*callback)(DEV_QSPI_Periph_t *, MDS_Arg_t *, const uint8_t *, uint8_t *, size_t, size_t), MDS_Arg_t *arg);
 extern MDS_Err_t DEV_QSPI_PeriphCommand(DEV_QSPI_Periph_t *periph, const DEV_QSPI_Command_t *cmd);
 extern MDS_Err_t DEV_QSPI_PeriphPolling(DEV_QSPI_Periph_t *periph, const DEV_QSPI_Command_t *cmd,
                                         const DEV_QSPI_Polling_t *poll);
