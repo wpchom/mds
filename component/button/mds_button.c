@@ -15,7 +15,7 @@
 /*
  * Button [State] (Action) {Event}
  *
- *    ┌───────────────── {click} <───────────────── (>clickTicks) <────────────────┐
+ *    ┌──────────── {click/repeat} <─────────────────── (>clickTicks) <────────────┐
  *    │                                                                            │
  *    │                                                                            │
  * [{None}] ───────> ({presse}) ───────> [Pressed] ──────> ({release}) ──────> [Released]

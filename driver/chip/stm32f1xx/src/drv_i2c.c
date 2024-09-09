@@ -31,7 +31,7 @@ MDS_Err_t DRV_I2C_Open(DRV_I2C_Handle_t *hi2c, const DEV_I2C_Object_t *object)
     MDS_ASSERT(object != NULL);
 
     hi2c->handle.Init.ClockSpeed = object->clock;
-    hi2c->handle.Init.OwnAddress1 = object->devAddress;
+    hi2c->handle.Init.OwnAddress1 = object->devAddress << 1U;
     hi2c->handle.Init.AddressingMode = (object->devAddrBit == DEV_I2C_DEVADDRBITS_10) ? (I2C_ADDRESSINGMODE_10BIT)
                                                                                       : (I2C_ADDRESSINGMODE_7BIT);
 
@@ -143,7 +143,7 @@ static HAL_StatusTypeDef HAL_I2C_Master_OpreateTransmit(I2C_HandleTypeDef *hi2c,
                                                         MDS_Tick_t tickout)
 {
     HAL_StatusTypeDef ret = HAL_OK;
-    MDS_Tick_t tickstart = HAL_GetTick();
+    MDS_Tick_t tickstart = DRV_HalGetTick();
     size_t idx = 0;
 
     if ((msg->flags & DEV_I2C_MSGFLAG_NO_START) == 0U) {
@@ -177,7 +177,7 @@ static HAL_StatusTypeDef HAL_I2C_Master_OpreateReceive(I2C_HandleTypeDef *hi2c, 
                                                        MDS_Tick_t tickout)
 {
     HAL_StatusTypeDef ret = HAL_OK;
-    MDS_Tick_t tickstart = HAL_GetTick();
+    MDS_Tick_t tickstart = DRV_HalGetTick();
     size_t idx = 0;
 
     if ((msg->flags & DEV_I2C_MSGFLAG_NO_START) == 0U) {

@@ -55,6 +55,8 @@ MDS_Err_t DRV_GPIO_PinConfig(GPIO_TypeDef *GPIOx, uint32_t GPIO_Pin, const DEV_G
         init.Mode |= GPIO_MODE_IT_FALLING;
     }
 
+    init.Speed = GPIO_SPEED_FREQ_LOW;
+
     HAL_GPIO_Init(GPIOx, &init);
 
     return (MDS_EOK);
@@ -87,7 +89,9 @@ void DRV_GPIO_PinLow(GPIO_TypeDef *GPIOx, uint32_t GPIO_Pin)
 
 void DRV_GPIO_PinToggle(GPIO_TypeDef *GPIOx, uint32_t GPIO_Pin)
 {
+    MDS_Item_t lock = MDS_CoreInterruptLock();
     LL_GPIO_TogglePin(GPIOx, GPIO_Pin);
+    MDS_CoreInterruptRestore(lock);
 }
 
 void DRV_GPIO_PinIRQHandler(DEV_GPIO_Object_t *object)
@@ -138,7 +142,7 @@ static MDS_Mask_t DDRV_GPIO_PinRead(const DEV_GPIO_Pin_t *pin)
 {
     GPIO_TypeDef *GPIOx = (GPIO_TypeDef *)(pin->object.GPIOx);
 
-    MDS_Mask_t read = DRV_GPIO_PortReadInput(GPIOx);
+    MDS_Mask_t read = DRV_GPIO_PortReadInput(GPIOx) & pin->object.pinMask;
 
     return (read >> __CLZ(__RBIT(pin->object.pinMask)));
 }

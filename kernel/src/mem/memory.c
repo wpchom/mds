@@ -25,13 +25,13 @@ MDS_Err_t MDS_MemHeapInit(MDS_MemHeap_t *memheap, const char *name, void *begin,
     }
 
     do {
-        err = MDS_SemaphoreInit(&(memheap->lock), name, 0, 1);
+        err = MDS_SemaphoreInit(&(memheap->lock), name, 1, 1);
         if (err != MDS_EOK) {
             break;
         }
 
-        if ((memheap->ops != NULL) && (memheap->ops->setup != NULL)) {
-            err = memheap->ops->setup(memheap, begin, limit);
+        if ((ops != NULL) && (ops->setup != NULL)) {
+            err = ops->setup(memheap, begin, limit);
         } else {
             err = MDS_ENOENT;
         }
