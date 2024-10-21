@@ -3,7 +3,9 @@ config("mds_device_config") {
 }
 
 source_set("mds_device") {
-  sources = [
+  sources = [ "src/mds_dev.c" ]
+
+  sources += [
     "src/dev_adc.c",
     "src/dev_gpio.c",
     "src/dev_i2c.c",
@@ -15,6 +17,9 @@ source_set("mds_device") {
     "src/dev_storage.c",
     "src/dev_timer.c",
     "src/dev_uart.c",
+  ]
+
+  sources += [
     "src/extend/dev_fpga.c",
     "src/extend/dev_ntc.c",
   ]

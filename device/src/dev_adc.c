@@ -77,7 +77,7 @@ MDS_Err_t DEV_ADC_PeriphClose(DEV_ADC_Periph_t *periph)
     return (MDS_DevPeriphClose((MDS_DevPeriph_t *)periph));
 }
 
-MDS_Err_t DEV_ADC_PeriphConvert(DEV_ADC_Periph_t *periph, uint32_t *value, uint32_t *voltage)
+MDS_Err_t DEV_ADC_PeriphConvert(DEV_ADC_Periph_t *periph, int32_t *value, int32_t *voltage)
 {
     MDS_ASSERT(periph != NULL);
     MDS_ASSERT(periph->mount != NULL);
@@ -91,7 +91,7 @@ MDS_Err_t DEV_ADC_PeriphConvert(DEV_ADC_Periph_t *periph, uint32_t *value, uint3
     }
 
     uint32_t times = 1;
-    uint32_t sum, max, min, val;
+    int32_t sum, max, min, val;
     MDS_Err_t err = adc->driver->convert(periph, &sum);
     if (err == MDS_EOK) {
         for (max = min = sum; times < periph->object.averages; times++) {
@@ -113,7 +113,7 @@ MDS_Err_t DEV_ADC_PeriphConvert(DEV_ADC_Periph_t *periph, uint32_t *value, uint3
         *value = val;
     }
     if (voltage != NULL) {
-        *voltage = ((uint64_t)(val + 1) * periph->mount->refVoltage) >> periph->object.resolution;
+        *voltage = ((int64_t)(val + 1) * periph->mount->refVoltage) >> periph->object.resolution;
     }
 
     return (err);

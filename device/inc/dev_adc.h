@@ -49,7 +49,7 @@ typedef struct DEV_ADC_Periph DEV_ADC_Periph_t;
 
 typedef struct DEV_ADC_Driver {
     MDS_Err_t (*control)(const DEV_ADC_Adaptr_t *adc, MDS_Item_t cmd, MDS_Arg_t *arg);
-    MDS_Err_t (*convert)(const DEV_ADC_Periph_t *periph, uint32_t *val);
+    MDS_Err_t (*convert)(const DEV_ADC_Periph_t *periph, int32_t *val);
 } DEV_ADC_Driver_t;
 
 struct DEV_ADC_Adaptr {
@@ -83,7 +83,7 @@ extern MDS_Err_t DEV_ADC_PeriphDestroy(DEV_ADC_Periph_t *periph);
 
 extern MDS_Err_t DEV_ADC_PeriphOpen(DEV_ADC_Periph_t *periph, MDS_Tick_t timeout);
 extern MDS_Err_t DEV_ADC_PeriphClose(DEV_ADC_Periph_t *periph);
-extern MDS_Err_t DEV_ADC_PeriphConvert(DEV_ADC_Periph_t *periph, uint32_t *value, uint32_t *voltage);
+extern MDS_Err_t DEV_ADC_PeriphConvert(DEV_ADC_Periph_t *periph, int32_t *value, int32_t *voltage);
 
 #ifdef __cplusplus
 }

@@ -1,0 +1,11 @@
+config("mds_component_topic_config") {
+  include_dirs = [ "./" ]
+}
+
+source_set("mds_component_topic") {
+  sources = [ "mds_topic.c" ]
+
+  public_configs = [ ":mds_component_topic_config" ]
+
+  public_deps = [ "../../kernel:mds_kernel" ]
+}

@@ -58,7 +58,6 @@ config("mds_kernel_config") {
 
 source_set("mds_kernel") {
   sources = [
-    "src/device.c",
     "src/library.c",
     "src/locale.c",
     "src/log.c",
