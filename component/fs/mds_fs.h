@@ -38,8 +38,6 @@ enum MDS_OpenFlag {
     MDS_OFLAG_APPEND = 0x0010U,
     MDS_OFLAG_CREAT = 0x0020U,
     MDS_OFLAG_TRUNC = 0x0040U,
-
-    MDS_OFLAG_DIRECOTY = 0x0100U,
 };
 
 enum MDS_FileFlag {
@@ -101,10 +99,11 @@ typedef struct MDS_FileSystemOps {
     MDS_Err_t (*unmount)(MDS_FileSystem_t *fs);
     MDS_Err_t (*statfs)(MDS_FileSystem_t *fs, MDS_FsStat_t *stat);
 
-    MDS_Err_t (*remove)(MDS_FileSystem_t *fs, const char *pathname);
+    MDS_Err_t (*mkdir)(MDS_FileSystem_t *fs, const char *path);
+    MDS_Err_t (*remove)(MDS_FileSystem_t *fs, const char *path);
     MDS_Err_t (*rename)(MDS_FileSystem_t *fs, const char *oldpath, const char *newpath);
     MDS_Err_t (*link)(MDS_FileSystem_t *fs, const char *srcpath, const char *dstpath);
-    MDS_Err_t (*stat)(MDS_FileSystem_t *fs, const char *filename, MDS_FileStat_t *stat);
+    MDS_Err_t (*stat)(MDS_FileSystem_t *fs, const char *path, MDS_FileStat_t *stat);
 
     MDS_Err_t (*open)(MDS_FileDesc_t *fd);
     MDS_Err_t (*close)(MDS_FileDesc_t *fd);
@@ -144,7 +143,7 @@ typedef struct MDS_FileNode {
 struct MDS_FileDesc {
     MDS_FileNode_t *node;
 
-    MDS_FileSize_t pos;
+    MDS_FileOffset_t pos;
     MDS_Mask_t flags;
 };
 
@@ -161,11 +160,13 @@ extern MDS_Err_t MDS_FileOpen(MDS_FileDesc_t *fd, const char *path, MDS_Mask_t f
 extern MDS_Err_t MDS_FileClose(MDS_FileDesc_t *fd);
 extern MDS_Err_t MDS_FileFlush(MDS_FileDesc_t *fd);
 extern MDS_Err_t MDS_FileIoctl(MDS_FileDesc_t *fd, MDS_Item_t cmd, MDS_Arg_t *args);
-extern MDS_FileSize_t MDS_FilePread(MDS_FileDesc_t *fd, uint8_t *buff, MDS_FileSize_t len, MDS_FileOffset_t ofs);
+extern MDS_FileSize_t MDS_FilePosRead(MDS_FileDesc_t *fd, uint8_t *buff, MDS_FileSize_t len, MDS_FileOffset_t ofs);
 extern MDS_FileSize_t MDS_FileRead(MDS_FileDesc_t *fd, uint8_t *buff, MDS_FileSize_t len);
-extern MDS_FileSize_t MDS_FilePwrite(MDS_FileDesc_t *fd, const uint8_t *buff, MDS_FileSize_t len, MDS_FileOffset_t ofs);
+extern MDS_FileSize_t MDS_FilePosWrite(MDS_FileDesc_t *fd, const uint8_t *buff, MDS_FileSize_t len,
+                                       MDS_FileOffset_t ofs);
 extern MDS_FileSize_t MDS_FileWrite(MDS_FileDesc_t *fd, const uint8_t *buff, MDS_FileSize_t len);
-extern MDS_FileOffset_t MDS_FileSeek(MDS_FileDesc_t *fd, MDS_FileOffset_t offset, int whence);
+extern MDS_FileOffset_t MDS_FilePosition(MDS_FileDesc_t *fd);
+extern MDS_FileOffset_t MDS_FileSeek(MDS_FileDesc_t *fd, MDS_FileOffset_t offset);
 extern MDS_Err_t MDS_FileTruncate(MDS_FileDesc_t *fd, MDS_FileOffset_t len);
 
 extern MDS_Err_t MDS_FileMkdir(const char *path);
