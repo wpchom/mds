@@ -37,7 +37,7 @@ __attribute__((weak, alias("Default_Handler"))) void SVC_Handler(void);
 __attribute__((weak, alias("Default_Handler"))) void DebugMon_Handler(void);
 __attribute__((weak, alias("Default_Handler"))) void PendSV_Handler(void);
 __attribute__((weak, alias("Default_Handler"))) void SysTick_Handler(void);
-#ifndef CHIP_STM32F1XX_WITHOUT_INTERRUPT
+#ifndef DRV_CHIP_STM32F1XX_WITHOUT_INTERRUPT
 __attribute__((weak, alias("Default_Handler"))) void WWDG_IRQHandler(void);
 __attribute__((weak, alias("Default_Handler"))) void PVD_IRQHandler(void);
 __attribute__((weak, alias("Default_Handler"))) void TAMPER_IRQHandler(void);
@@ -91,7 +91,7 @@ static void (*__VECTOR_TABLE[])(void) __VECTOR_TABLE_ATTRIBUTE = {
     0,
     PendSV_Handler,
     SysTick_Handler,
-#ifndef CHIP_STM32F1XX_WITHOUT_INTERRUPT
+#ifndef DRV_CHIP_STM32F1XX_WITHOUT_INTERRUPT
     WWDG_IRQHandler,
     PVD_IRQHandler,
     TAMPER_IRQHandler,

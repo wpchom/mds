@@ -31,18 +31,18 @@ MDS_HOOK_INIT(INTERRUPT_EXIT, MDS_Item_t irq);
 #define MSTATUS_XS   0x00018000
 
 #if (defined(__riscv_xlen) && (__riscv_xlen == 64))
-#define STORE    "sd "
-#define LOAD     "ld "
-#define REGBYTES 8
+#define STORE        "sd "
+#define LOAD         "ld "
+#define REGBYTES     8
 
 #define MSTATUS_SD   0x8000000000000000
 #define MCAUSE_INT   0x8000000000000000
 #define MCAUSE_CAUSE 0x7FFFFFFFFFFFFFFF
 
 #else
-#define STORE    "sw "
-#define LOAD     "lw "
-#define REGBYTES 4
+#define STORE        "sw "
+#define LOAD         "lw "
+#define REGBYTES     4
 
 #define MSTATUS_SD   0x80000000
 #define MCAUSE_INT   0x80000000
@@ -64,39 +64,39 @@ typedef uint32_t rv_fpreg_t;
 
 /* StackFrame -------------------------------------------------------------- */
 struct StackFrame {
-    uintptr_t mepc;     // mepc         | mchaine exception register
-    uintptr_t ra;       // x1  - ra     | return address
-    uintptr_t mstatus;  // mstatus      | machine status register
-    uintptr_t fcsr;     // fcsr         | float point constrl and status register
-    uintptr_t tp;       // x4  - tp     | thread pointer
-    uintptr_t t0;       // x5  - t0     | temporary register 0
-    uintptr_t t1;       // x6  - t1     | temporary register 1
-    uintptr_t t2;       // x7  - t2     | temporary register 2
-    uintptr_t s0_fp;    // x8  - s0/fp  | saved register 0 or frame pointer
-    uintptr_t s1;       // x9  - s1     | saved register 1
-    uintptr_t a0;       // x10 - a0     | return value or function argument 0
-    uintptr_t a1;       // x11 - a1     | return value or function argument 1
-    uintptr_t a2;       // x12 - a2     | function argument 2
-    uintptr_t a3;       // x13 - a3     | function argument 3
-    uintptr_t a4;       // x14 - a4     | function argument 4
-    uintptr_t a5;       // x15 - a5     | function argument 5
+    uintptr_t mepc;       // mepc         | mchaine exception register
+    uintptr_t ra;         // x1  - ra     | return address
+    uintptr_t mstatus;    // mstatus      | machine status register
+    uintptr_t fcsr;       // fcsr         | float point constrl and status register
+    uintptr_t tp;         // x4  - tp     | thread pointer
+    uintptr_t t0;         // x5  - t0     | temporary register 0
+    uintptr_t t1;         // x6  - t1     | temporary register 1
+    uintptr_t t2;         // x7  - t2     | temporary register 2
+    uintptr_t s0_fp;      // x8  - s0/fp  | saved register 0 or frame pointer
+    uintptr_t s1;         // x9  - s1     | saved register 1
+    uintptr_t a0;         // x10 - a0     | return value or function argument 0
+    uintptr_t a1;         // x11 - a1     | return value or function argument 1
+    uintptr_t a2;         // x12 - a2     | function argument 2
+    uintptr_t a3;         // x13 - a3     | function argument 3
+    uintptr_t a4;         // x14 - a4     | function argument 4
+    uintptr_t a5;         // x15 - a5     | function argument 5
 #ifndef __riscv_32e
-    uintptr_t a6;   // x16 - a6         | function argument 6
-    uintptr_t a7;   // x17 - a7         | function argument 7
-    uintptr_t s2;   // x18 - s2         | saved register 2
-    uintptr_t s3;   // x19 - s3         | saved register 3
-    uintptr_t s4;   // x20 - s4         | saved register 4
-    uintptr_t s5;   // x21 - s5         | saved register 5
-    uintptr_t s6;   // x22 - s6         | saved register 6
-    uintptr_t s7;   // x23 - s7         | saved register 7
-    uintptr_t s8;   // x24 - s8         | saved register 8
-    uintptr_t s9;   // x25 - s9         | saved register 9
-    uintptr_t s10;  // x26 - s10        | saved register 10
-    uintptr_t s11;  // x27 - s11        | saved register 11
-    uintptr_t t3;   // x28 - t3         | temporary register 3
-    uintptr_t t4;   // x29 - t4         | temporary register 4
-    uintptr_t t5;   // x30 - t5         | temporary register 5
-    uintptr_t t6;   // x31 - t6         | temporary register 6
+    uintptr_t a6;     // x16 - a6         | function argument 6
+    uintptr_t a7;     // x17 - a7         | function argument 7
+    uintptr_t s2;     // x18 - s2         | saved register 2
+    uintptr_t s3;     // x19 - s3         | saved register 3
+    uintptr_t s4;     // x20 - s4         | saved register 4
+    uintptr_t s5;     // x21 - s5         | saved register 5
+    uintptr_t s6;     // x22 - s6         | saved register 6
+    uintptr_t s7;     // x23 - s7         | saved register 7
+    uintptr_t s8;     // x24 - s8         | saved register 8
+    uintptr_t s9;     // x25 - s9         | saved register 9
+    uintptr_t s10;    // x26 - s10        | saved register 10
+    uintptr_t s11;    // x27 - s11        | saved register 11
+    uintptr_t t3;     // x28 - t3         | temporary register 3
+    uintptr_t t4;     // x29 - t4         | temporary register 4
+    uintptr_t t5;     // x30 - t5         | temporary register 5
+    uintptr_t t6;     // x31 - t6         | temporary register 6
 #endif
 
 #ifdef __riscv_flen
@@ -361,12 +361,12 @@ void *MDS_CoreThreadStackInit(void *stackBase, size_t stackSize, void *entry, vo
         ((uint32_t *)stack)[idx] = 0xDEADBEEF;
     }
 
-    stack->a0 = (uintptr_t)(arg);
+    stack->a0   = (uintptr_t)(arg);
     stack->mepc = (uintptr_t)(entry);
-    stack->ra = (uintptr_t)(exit);
+    stack->ra   = (uintptr_t)(exit);
 
 #ifdef __riscv_flen
-    stack->fcsr = 0;
+    stack->fcsr    = 0;
     stack->mstatus = MSTATUS_FS | MSTATUS_MPP | MSTATUS_MPIE;
 #else
     stack->mstatus = MSTATUS_MPP | MSTATUS_MPIE;
@@ -433,7 +433,7 @@ void MDS_CoreSchedulerStartup(void *toSP)
 
     g_coreScheduler.swflag = true;
     g_coreScheduler.fromSP = NULL;
-    g_coreScheduler.toSP = toSP;
+    g_coreScheduler.toSP   = toSP;
 
     MDS_CoreInterruptRestore(lock);
 
@@ -483,7 +483,7 @@ __attribute__((weak)) bool MDS_CoreStackPointerInCode(uintptr_t pc)
 #if defined(__IAR_SYSTEMS_ICC__)
 #pragma section(".text")
     const uintptr_t __text_start[] = __section_start(".text");
-    const uintptr_t __text_end[] = __section_end(".text");
+    const uintptr_t __text_end[]   = __section_end(".text");
 #else
     extern void __text_start(void);
     extern void __text_end(void);
@@ -538,11 +538,12 @@ static struct StackFrame *g_exceptionContext = NULL;
 
 __attribute__((noreturn)) void Exception_Handler(uintptr_t sp)
 {
-    register uintptr_t mepc, mtval;
+    register uintptr_t mcause, mepc, mtval;
+    __asm volatile("csrr        %0, mcause" : "=r"(mcause));
     __asm volatile("csrr        %0, mepc" : "=r"(mepc));
     __asm volatile("csrr        %0, mtval" : "=r"(mtval));
 
-    MDS_LOG_F("mcause:%d mepc:0x%x mtval:0x%x", g_mcause, mepc, mtval);
+    MDS_LOG_F("mcause:%d mepc:0x%x mtval:0x%x", mcause, mepc, mtval);
 
     if (g_exceptionContext == NULL) {
         g_exceptionContext = (struct StackFrame *)sp;

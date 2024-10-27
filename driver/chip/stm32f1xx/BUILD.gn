@@ -1,31 +1,35 @@
 declare_args() {
-  chip_stm32f1xx_without_interrupt = false
+  drv_chip_stm32f1xx_without_interrupt = true
 }
 
-pkggroup("chip/stm32f1xx") {
-  deps = [ "stm32f1xx_hal_driver/:stm32f1xx_hal_driver" ]
+pkggroup("stm32f1xx_hal_driver") {
+  deps = [ ":stm32f1xx_hal_driver" ]
 }
 
-config("chip_stm32f1xx_config") {
+pkggroup("mds") {
+  deps = [ ":device" ]
+}
+
+config("drv_chip_stm32f1xx_config") {
   include_dirs = [ "inc/" ]
   defines = []
-  if (defined(chip_stm32f1xx_without_interrupt) &&
-      chip_stm32f1xx_without_interrupt) {
-    defines += [ "CHIP_STM32f1XX_WITHOUT_INTERRUPT=1" ]
+  if (defined(drv_chip_stm32f1xx_without_interrupt) &&
+      drv_chip_stm32f1xx_without_interrupt) {
+    defines += [ "DRV_CHIP_STM32F1XX_WITHOUT_INTERRUPT=1" ]
   }
 }
 
-source_set("chip_stm32f1xx_driver") {
+source_set("drv_chip_stm32f1xx") {
   sources = [
     "src/drv_gpio.c",
     "src/drv_i2c.c",
     "src/startup_stm32f1xx.c",
   ]
 
-  public_configs = [ ":chip_stm32f1xx_config" ]
+  public_configs = [ ":drv_chip_stm32f1xx_config" ]
 
   public_deps = [
-    ":chip/stm32f1xx",
-    "../../../device:mds_device",
+    ":mds",
+    ":stm32f1xx_hal_driver",
   ]
 }

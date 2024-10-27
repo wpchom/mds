@@ -16,8 +16,8 @@
 MDS_HOOK_INIT(SCHEDULER_SWITCH, MDS_Thread_t *toThread, MDS_Thread_t *fromThread);
 
 /* Variable ---------------------------------------------------------------- */
-static int g_sysCriticalNest = 0;
-static MDS_Thread_t *g_sysCurrThread = NULL;
+static volatile int g_sysCriticalNest  = 0;
+static MDS_Thread_t *g_sysCurrThread   = NULL;
 static MDS_ListNode_t g_sysDefunctList = {.prev = &g_sysDefunctList, .next = &g_sysDefunctList};
 
 /* Function ---------------------------------------------------------------- */
@@ -36,7 +36,7 @@ void MDS_KernelSchedulerCheck(void)
         }
 
         MDS_Thread_t *currThread = g_sysCurrThread;
-        bool threadReady = false;
+        bool threadReady         = false;
 
         if ((currThread->state & MDS_THREAD_STATE_MASK) == MDS_THREAD_STATE_RUNNING) {
             if (currThread->currPrio < toThread->currPrio) {
@@ -174,7 +174,7 @@ MDS_Tick_t MDS_KernelGetSleepTick(void)
     if (MDS_SchedulerGetHighestPriorityThread() == NULL) {
         MDS_Tick_t nextTick = MDS_SysTimerNextTick();
         MDS_Tick_t currTick = MDS_SysTickGetCount();
-        sleepTick = (nextTick > currTick) ? (nextTick - currTick) : (0);
+        sleepTick           = (nextTick > currTick) ? (nextTick - currTick) : (0);
     }
     MDS_CoreInterruptRestore(lock);
 
@@ -184,9 +184,8 @@ MDS_Tick_t MDS_KernelGetSleepTick(void)
 void MDS_KernelCompensateTick(MDS_Tick_t tickcount)
 {
     register MDS_Item_t lock = MDS_CoreInterruptLock();
-    MDS_Tick_t currTick = MDS_SysTickGetCount() + tickcount;
+    MDS_Tick_t currTick      = MDS_SysTickGetCount() + tickcount;
     MDS_SysTickSetCount(currTick);
     MDS_SysTimerCheck();
     MDS_CoreInterruptRestore(lock);
 }
-
