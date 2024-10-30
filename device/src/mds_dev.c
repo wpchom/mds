@@ -457,6 +457,14 @@ bool MDS_DevPeriphIsAccessible(MDS_DevPeriph_t *periph)
     return (accessible);
 }
 
+bool MDS_DeviceIsPeriph(const MDS_Device_t *device)
+{
+    MDS_ASSERT(device != NULL);
+
+    return ((device->flags & (MDS_DEVICE_FLAG_MODULE | MDS_DEVICE_FLAG_ADAPTR | MDS_DEVICE_FLAG_PERIPH)) ==
+            MDS_DEVICE_FLAG_PERIPH);
+}
+
 const MDS_DevProbeId_t *MDS_DeviceGetId(const MDS_Device_t *device)
 {
     MDS_ASSERT(device != NULL);

@@ -35,7 +35,6 @@ typedef enum DEV_ADC_InputMode {
 } DEV_ADC_InputMode_t;
 
 typedef struct DEV_ADC_Object {
-    MDS_Tick_t optick;
     uint32_t channelP;
     uint32_t channelN;
     uint32_t samptime;

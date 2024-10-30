@@ -17,25 +17,25 @@ static MDS_Mutex_t g_fsLock;
 static MDS_ListNode_t g_fsList = {.prev = &g_fsList, .next = &g_fsList};
 
 /* Memory ------------------------------------------------------------------ */
-__attribute__((weak)) void *MDS_FsMalloc(size_t size)
+__attribute__((weak)) void *MDS_FileSystemMalloc(size_t size)
 {
     return (MDS_SysMemAlloc(size));
 }
 
-__attribute__((weak)) void MDS_FsFree(void *ptr)
+__attribute__((weak)) void MDS_FileSystemFree(void *ptr)
 {
     return (MDS_SysMemFree(ptr));
 }
 
-__attribute__((weak)) void *MDS_FsCalloc(size_t numb, size_t size)
+__attribute__((weak)) void *MDS_FileSystemCalloc(size_t numb, size_t size)
 {
     return (MDS_SysMemCalloc(numb, size));
 }
 
-__attribute__((weak)) char *MDS_FsStrdup(const char *str)
+__attribute__((weak)) char *MDS_FileSystemStrdup(const char *str)
 {
     size_t len = strlen(str) + 1;
-    char *dup = MDS_FsMalloc(len);
+    char *dup = MDS_FileSystemMalloc(len);
     if (dup != NULL) {
         MDS_MemBuffCopy(dup, len, str, len);
     }
@@ -100,7 +100,7 @@ char *MDS_FileSystemJoinPath(const char *path, ...)
     }
     va_end(args);
 
-    char *fullpath = (len > 0) ? (MDS_FsMalloc(len)) : (NULL);
+    char *fullpath = (len > 0) ? (MDS_FileSystemMalloc(len)) : (NULL);
     if (fullpath != NULL) {
         va_start(args, path);
         for (const char *p = path; p != s; p = va_arg(args, const char *)) {
@@ -120,11 +120,6 @@ char *MDS_FileSystemJoinPath(const char *path, ...)
     }
 
     return (MDS_FileSystemNormalizePath(fullpath));
-}
-
-void MDS_FileSystemFreePath(char *path)
-{
-    MDS_FsFree(path);
 }
 
 /* FileSystem -------------------------------------------------------------- */
@@ -224,7 +219,7 @@ static const MDS_FileSystem_t *MDS_FileSystemFindMountPath(const char *abspath)
     return (NULL);
 }
 
-MDS_Err_t MDS_FileSystemMkfs(MDS_FsDevice_t *device, const char *fsName)
+MDS_Err_t MDS_FileSystemMkfs(MDS_FsDevice_t *device, const char *fsName, const MDS_Arg_t *init)
 {
     MDS_ASSERT(device != NULL);
     MDS_ASSERT(fsName != NULL);
@@ -243,7 +238,7 @@ MDS_Err_t MDS_FileSystemMkfs(MDS_FsDevice_t *device, const char *fsName)
         if (ops == NULL) {
             err = MDS_EIO;
         } else if (ops->mkfs != NULL) {
-            err = ops->mkfs(device);
+            err = ops->mkfs(device, init);
         }
     }
 
@@ -252,7 +247,6 @@ MDS_Err_t MDS_FileSystemMkfs(MDS_FsDevice_t *device, const char *fsName)
 
 MDS_Err_t MDS_FileSystemMount(const MDS_FsDevice_t *device, const char *path, const char *fsName)
 {
-    MDS_ASSERT(device != NULL);
     MDS_ASSERT(path != NULL);
     MDS_ASSERT(fsName != NULL);
 
@@ -260,7 +254,7 @@ MDS_Err_t MDS_FileSystemMount(const MDS_FsDevice_t *device, const char *path, co
 
     const MDS_FileSystemOps_t *ops = MDS_FileSystemFindOps(fsName);
     if (ops == NULL) {
-        return (MDS_EIO);
+        return (MDS_ENOENT);
     }
 
     char *abspath = MDS_FileSystemJoinPath("/", path, "./", NULL);
@@ -275,7 +269,7 @@ MDS_Err_t MDS_FileSystemMount(const MDS_FsDevice_t *device, const char *path, co
             break;
         }
 
-        MDS_FileSystem_t *fs = MDS_FsCalloc(1, sizeof(MDS_FileSystem_t));
+        MDS_FileSystem_t *fs = MDS_FileSystemCalloc(1, sizeof(MDS_FileSystem_t));
         if (fs == NULL) {
             err = MDS_ENOMEM;
             break;
@@ -295,13 +289,13 @@ MDS_Err_t MDS_FileSystemMount(const MDS_FsDevice_t *device, const char *path, co
         if (err == MDS_EOK) {
             MDS_FileSystemInsert(fs);
         } else {
-            MDS_FsFree(fs);
+            MDS_FileSystemFree(fs);
         }
     } while (0);
     MDS_FsUnlock();
 
     if (err != MDS_EOK) {
-        MDS_FileSystemFreePath(abspath);
+        MDS_FileSystemFree(abspath);
     }
 
     return (err);
@@ -344,12 +338,12 @@ MDS_Err_t MDS_FileSystemUnmount(const char *path)
 
         MDS_ListRemoveNode(&(fs->fsNode));
         MDS_MutexDeInit(&(fs->lock));
-        MDS_FileSystemFreePath(fs->path);
-        MDS_FsFree(fs);
+        MDS_FileSystemFree(fs->path);
+        MDS_FileSystemFree(fs);
     } while (0);
     MDS_FsUnlock();
 
-    MDS_FileSystemFreePath(abspath);
+    MDS_FileSystemFree(abspath);
 
     return (err);
 }
@@ -371,7 +365,7 @@ MDS_Err_t MDS_FileSystemStatfs(const char *path, MDS_FsStat_t *statfs)
         err = fs->ops->statfs(fs, statfs);
     }
 
-    MDS_FileSystemFreePath(abspath);
+    MDS_FileSystemFree(abspath);
 
     return (err);
 }
@@ -391,11 +385,11 @@ static MDS_FileNode_t *MDS_FileNodeLookup(MDS_FileSystem_t *fs, const char *path
 
 static MDS_FileNode_t *MDS_FileNodeCreate(MDS_FileSystem_t *fs, const char *abspath)
 {
-    MDS_FileNode_t *fnode = MDS_FsCalloc(1, sizeof(MDS_FileNode_t));
+    MDS_FileNode_t *fnode = MDS_FileSystemCalloc(1, sizeof(MDS_FileNode_t));
     if (fnode != NULL) {
-        fnode->path = MDS_FsStrdup(&(abspath[strlen(fs->path)]));
+        fnode->path = MDS_FileSystemStrdup(&(abspath[strlen(fs->path)]));
         if (fnode->path == NULL) {
-            MDS_FsFree(fnode);
+            MDS_FileSystemFree(fnode);
             fnode = NULL;
         } else {
             MDS_ListInitNode(&(fnode->fileNode));
@@ -406,6 +400,21 @@ static MDS_FileNode_t *MDS_FileNodeCreate(MDS_FileSystem_t *fs, const char *absp
     }
 
     return (fnode);
+}
+
+static void MDS_FileNodeDestroy(MDS_FileNode_t *fnode)
+{
+    fnode->refCount -= 1;
+
+    if (fnode->refCount < 0) {
+        MDS_LOG_E("[fs][FileNodeDestory] fnode refCount %d < 0", fnode->refCount);
+    }
+
+    if (fnode->refCount == 0) {
+        MDS_ListRemoveNode(&(fnode->fileNode));
+        MDS_FileSystemFree(fnode->path);
+        MDS_FileSystemFree(fnode);
+    }
 }
 
 MDS_Err_t MDS_FileOpen(MDS_FileDesc_t *fd, const char *path, MDS_Mask_t flags)
@@ -428,7 +437,7 @@ MDS_Err_t MDS_FileOpen(MDS_FileDesc_t *fd, const char *path, MDS_Mask_t flags)
     MDS_FileSystem_t *fs = MDS_FileSystemLookup(abspath);
     MDS_FsUnlock();
     if ((fs == NULL) || (fs->ops == NULL) || (fs->ops->open == NULL)) {
-        MDS_FileSystemFreePath(abspath);
+        MDS_FileSystemFree(abspath);
         return (MDS_ENOENT);
     }
 
@@ -447,24 +456,19 @@ MDS_Err_t MDS_FileOpen(MDS_FileDesc_t *fd, const char *path, MDS_Mask_t flags)
 
         fd->node = fnode;
         fd->pos = 0;
-        fd->flags = flags | MDS_FFLAG_OPEN;
+        fd->flags = flags | MDS_OFLAG_OPEN;
 
         err = fs->ops->open(fd);
         if (err != MDS_EOK) {
-            fnode->refCount -= 1;
-            if (fnode->refCount <= 1) {
-                MDS_ListRemoveNode(&(fnode->fileNode));
-                MDS_FsFree(fnode->path);
-                MDS_FsFree(fnode);
-            }
+            MDS_FileNodeDestroy(fnode);
             fd->node = NULL;
             fd->pos = 0;
-            fd->flags = MDS_FFLAG_NONE;
+            fd->flags = MDS_OFLAG_NONE;
         }
     } while (0);
     MDS_MutexRelease(&(fs->lock));
 
-    MDS_FileSystemFreePath(abspath);
+    MDS_FileSystemFree(abspath);
 
     return (err);
 }
@@ -488,18 +492,10 @@ MDS_Err_t MDS_FileClose(MDS_FileDesc_t *fd)
             break;
         }
 
-        fnode->refCount -= 1;
-        if (fnode->refCount <= 0) {
-            MDS_LOG_E("[fs][FileClose] fnode refCount %d <= 0", fnode->refCount);
-        }
-        if (fnode->refCount <= 1) {
-            MDS_ListRemoveNode(&(fnode->fileNode));
-            MDS_FsFree(fnode->path);
-            MDS_FsFree(fnode);
-        }
+        MDS_FileNodeDestroy(fnode);
         fd->node = NULL;
         fd->pos = 0;
-        fd->flags = MDS_FFLAG_NONE;
+        fd->flags = MDS_OFLAG_NONE;
     } while (0);
     MDS_MutexRelease(&(fs->lock));
 
@@ -510,7 +506,7 @@ MDS_Err_t MDS_FileIoctl(MDS_FileDesc_t *fd, MDS_Item_t cmd, MDS_Arg_t *args)
 {
     MDS_ASSERT(fd != NULL);
 
-    if ((fd->node == NULL) || ((fd->flags & MDS_FFLAG_OPEN) == 0U)) {
+    if ((fd->node == NULL) || ((fd->flags & MDS_OFLAG_OPEN) == 0U)) {
         return (MDS_EACCES);
     }
 
@@ -525,7 +521,8 @@ MDS_FileOffset_t MDS_FileRead(MDS_FileDesc_t *fd, uint8_t *buff, MDS_FileSize_t 
 {
     MDS_ASSERT(fd != NULL);
 
-    if ((fd->node == NULL) || ((fd->flags & MDS_FFLAG_OPEN) == 0U)) {
+    if ((fd->node == NULL) ||
+        ((fd->flags & (MDS_OFLAG_OPEN | MDS_OFLAG_RDWR)) == (MDS_OFLAG_OPEN | MDS_OFLAG_RDONLY))) {
         return (MDS_EACCES);
     }
 
@@ -540,7 +537,8 @@ MDS_FileOffset_t MDS_FilePosRead(MDS_FileDesc_t *fd, uint8_t *buff, MDS_FileSize
 {
     MDS_ASSERT(fd != NULL);
 
-    if ((fd->node == NULL) || ((fd->flags & MDS_FFLAG_OPEN) == 0U)) {
+    if ((fd->node == NULL) ||
+        ((fd->flags & (MDS_OFLAG_OPEN | MDS_OFLAG_RDWR)) == (MDS_OFLAG_OPEN | MDS_OFLAG_RDONLY))) {
         return (MDS_EACCES);
     }
 
@@ -555,7 +553,8 @@ MDS_FileOffset_t MDS_FileWrite(MDS_FileDesc_t *fd, const uint8_t *buff, MDS_File
 {
     MDS_ASSERT(fd != NULL);
 
-    if ((fd->node == NULL) || ((fd->flags & MDS_FFLAG_OPEN) == 0U)) {
+    if ((fd->node == NULL) ||
+        ((fd->flags & (MDS_OFLAG_OPEN | MDS_OFLAG_RDWR)) == (MDS_OFLAG_OPEN | MDS_OFLAG_WRONLY))) {
         return (MDS_EACCES);
     }
 
@@ -570,7 +569,8 @@ MDS_FileOffset_t MDS_FilPosWrite(MDS_FileDesc_t *fd, const uint8_t *buff, MDS_Fi
 {
     MDS_ASSERT(fd != NULL);
 
-    if ((fd->node == NULL) || ((fd->flags & MDS_FFLAG_OPEN) == 0U)) {
+    if ((fd->node == NULL) ||
+        ((fd->flags & (MDS_OFLAG_OPEN | MDS_OFLAG_RDWR)) == (MDS_OFLAG_OPEN | MDS_OFLAG_WRONLY))) {
         return (MDS_EACCES);
     }
 
@@ -585,7 +585,7 @@ MDS_Err_t MDS_FileFlush(MDS_FileDesc_t *fd)
 {
     MDS_ASSERT(fd != NULL);
 
-    if ((fd->node == NULL) || ((fd->flags & MDS_FFLAG_OPEN) == 0U)) {
+    if ((fd->node == NULL) || ((fd->flags & MDS_OFLAG_OPEN) == MDS_OFLAG_NONE)) {
         return (MDS_EACCES);
     }
 
@@ -603,11 +603,11 @@ MDS_FileOffset_t MDS_FilePosition(MDS_FileDesc_t *fd)
     return (fd->pos);
 }
 
-MDS_FileOffset_t MDS_FileSeek(MDS_FileDesc_t *fd, MDS_FileOffset_t offset)
+MDS_FileOffset_t MDS_FileSeek(MDS_FileDesc_t *fd, MDS_FileOffset_t offset, MDS_FileWhence_t whence)
 {
     MDS_ASSERT(fd != NULL);
 
-    if ((fd->node == NULL) || ((fd->flags & MDS_FFLAG_OPEN) == 0U)) {
+    if ((fd->node == NULL) || ((fd->flags & MDS_OFLAG_OPEN) == MDS_OFLAG_NONE)) {
         return (MDS_EACCES);
     }
 
@@ -615,16 +615,17 @@ MDS_FileOffset_t MDS_FileSeek(MDS_FileDesc_t *fd, MDS_FileOffset_t offset)
         return (MDS_EPERM);
     }
 
-    fd->pos = fd->node->fs->ops->seek(fd, offset);
+    fd->pos = fd->node->fs->ops->seek(fd, offset, whence);
 
     return (fd->pos);
 }
 
-MDS_Err_t MDS_FileTruncate(MDS_FileDesc_t *fd, MDS_FileOffset_t len)
+MDS_FileOffset_t MDS_FileTruncate(MDS_FileDesc_t *fd, MDS_FileOffset_t len)
 {
     MDS_ASSERT(fd != NULL);
 
-    if ((fd->node == NULL) || ((fd->flags & MDS_FFLAG_OPEN) == 0U)) {
+    if ((fd->node == NULL) ||
+        ((fd->flags & (MDS_OFLAG_OPEN | MDS_OFLAG_RDWR)) == (MDS_OFLAG_OPEN | MDS_OFLAG_WRONLY))) {
         return (MDS_EACCES);
     }
 
@@ -638,6 +639,21 @@ MDS_Err_t MDS_FileTruncate(MDS_FileDesc_t *fd, MDS_FileOffset_t len)
     }
 
     return (err);
+}
+
+MDS_FileOffset_t MDS_FileTell(MDS_FileDesc_t *fd)
+{
+    return (MDS_FileSeek(fd, 0, MDS_FILE_SEEK_CUR));
+}
+
+MDS_FileOffset_t MDS_FileRewind(MDS_FileDesc_t *fd)
+{
+    return (MDS_FileSeek(fd, 0, MDS_FILE_SEEK_SET));
+}
+
+MDS_FileSize_t MDS_FileSize(MDS_FileDesc_t *fd)
+{
+    return (MDS_FileSeek(fd, 0, MDS_FILE_SEEK_END));
 }
 
 MDS_Err_t MDS_FileMkdir(const char *path)
@@ -654,7 +670,7 @@ MDS_Err_t MDS_FileMkdir(const char *path)
     MDS_FsUnlock();
 
     do {
-        if ((fs == NULL) || (fs->ops == NULL) && (fs->ops->mkdir == NULL)) {
+        if ((fs == NULL) || (fs->ops == NULL) || (fs->ops->mkdir == NULL)) {
             break;
         }
 
@@ -662,16 +678,15 @@ MDS_Err_t MDS_FileMkdir(const char *path)
 
         MDS_MutexAcquire(&(fs->lock), MDS_TICK_FOREVER);
         MDS_FileNode_t *fnode = MDS_FileNodeLookup(fs, fspath);
-        MDS_MutexRelease(&(fs->lock));
-        if (fnode != NULL) {
+        if (fnode == NULL) {
+            err = fs->ops->mkdir(fs, fspath);
+        } else {
             err = MDS_EBUSY;
-            break;
         }
-
-        err = fs->ops->mkdir(fs, fspath);
+        MDS_MutexRelease(&(fs->lock));
     } while (0);
 
-    MDS_FileSystemFreePath(abspath);
+    MDS_FileSystemFree(abspath);
 
     return (err);
 }
@@ -690,7 +705,7 @@ MDS_Err_t MDS_FileRemove(const char *path)
     MDS_FsUnlock();
 
     do {
-        if ((fs == NULL) || (fs->ops == NULL) && (fs->ops->remove == NULL)) {
+        if ((fs == NULL) || (fs->ops == NULL) || (fs->ops->remove == NULL)) {
             break;
         }
 
@@ -698,17 +713,15 @@ MDS_Err_t MDS_FileRemove(const char *path)
 
         MDS_MutexAcquire(&(fs->lock), MDS_TICK_FOREVER);
         MDS_FileNode_t *fnode = MDS_FileNodeLookup(fs, fspath);
-        MDS_MutexRelease(&(fs->lock));
-        if (fnode != NULL) {
+        if (fnode == NULL) {
+            err = fs->ops->remove(fs, fspath);
+        } else {
             err = MDS_EBUSY;
-            break;
         }
-
-        err = fs->ops->remove(fs, fspath);
-
+        MDS_MutexRelease(&(fs->lock));
     } while (0);
 
-    MDS_FileSystemFreePath(abspath);
+    MDS_FileSystemFree(abspath);
 
     return (err);
 }
@@ -753,20 +766,19 @@ MDS_Err_t MDS_FileRename(const char *oldpath, const char *newpath)
 
         MDS_MutexAcquire(&(oldfs->lock), MDS_TICK_FOREVER);
         MDS_FileNode_t *fnode = MDS_FileNodeLookup(oldfs, oldfspath);
-        MDS_MutexRelease(&(oldfs->lock));
-        if (fnode != NULL) {
+        if (fnode == NULL) {
+            err = oldfs->ops->rename(oldfs, oldfspath, newfspath);
+        } else {
             err = MDS_EBUSY;
-            break;
         }
-
-        err = oldfs->ops->rename(oldfs, oldfspath, newfspath);
+        MDS_MutexRelease(&(oldfs->lock));
     } while (0);
 
     if (oldabspath != NULL) {
-        MDS_FileSystemFreePath(oldabspath);
+        MDS_FileSystemFree(oldabspath);
     }
     if (newabspath != NULL) {
-        MDS_FileSystemFreePath(newabspath);
+        MDS_FileSystemFree(newabspath);
     }
 
     return (err);
@@ -774,6 +786,53 @@ MDS_Err_t MDS_FileRename(const char *oldpath, const char *newpath)
 
 MDS_Err_t MDS_FileLink(const char *srcpath, const char *dstpath)
 {
+    MDS_ASSERT(srcpath != NULL);
+    MDS_ASSERT(dstpath != NULL);
+
+    MDS_Err_t err = MDS_EPERM;
+    char *srcabspath = NULL;
+    char *dstabspath = NULL;
+
+    do {
+        srcabspath = MDS_FileSystemJoinPath("/", srcpath, NULL);
+        if (srcabspath == NULL) {
+            err = MDS_ENOMEM;
+            break;
+        }
+
+        dstabspath = MDS_FileSystemJoinPath("/", dstpath, NULL);
+        if (dstabspath == NULL) {
+            err = MDS_ENOMEM;
+            break;
+        }
+
+        MDS_FsLock();
+        MDS_FileSystem_t *srcfs = MDS_FileSystemLookup(srcabspath);
+        MDS_FileSystem_t *dstfs = MDS_FileSystemLookup(dstabspath);
+        MDS_FsUnlock();
+        if (srcfs != dstfs) {
+            // cross
+            break;
+        }
+
+        if ((srcfs == NULL) || (srcfs->ops == NULL) || (srcfs->ops->link == NULL)) {
+            break;
+        }
+
+        const char *srcfspath = &(srcabspath[strlen(srcfs->path)]);
+        const char *dstfspath = &(dstabspath[strlen(dstfs->path)]);
+
+        err = srcfs->ops->link(srcfs, srcfspath, dstfspath);
+    } while (0);
+
+    if (srcabspath != NULL) {
+        MDS_FileSystemFree(srcabspath);
+    }
+    if (dstabspath != NULL) {
+        MDS_FileSystemFree(dstabspath);
+    }
+
+    return (err);
 }
 
 MDS_Err_t MDS_FileStat(const char *path, MDS_FileStat_t *stat)
@@ -795,7 +854,7 @@ MDS_Err_t MDS_FileStat(const char *path, MDS_FileStat_t *stat)
         err = fs->ops->stat(fs, &(abspath[strlen(fs->path)]), stat);
     }
 
-    MDS_FileSystemFreePath(abspath);
+    MDS_FileSystemFree(abspath);
 
     return (err);
 }

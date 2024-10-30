@@ -1,0 +1,5 @@
+source_set("mds_component_fs_devfs") {
+  sources = [ "mds_devfs.c" ]
+
+  deps = [ "../:mds" ]
+}

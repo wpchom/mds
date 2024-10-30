@@ -40,7 +40,6 @@ struct DEV_STORAGE_Adaptr {
 };
 
 typedef struct DEV_STORAGE_Object {
-    MDS_Tick_t optick;
     size_t blockBase;
     size_t blockNums;
 } DEV_STORAGE_Object_t;

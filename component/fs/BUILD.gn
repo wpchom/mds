@@ -1,5 +1,14 @@
 declare_args() {
+  # fs feature
   mds_component_fs_large_size = false
+
+  # fs support
+  mds_component_fs_devfs = false
+  mds_component_fs_emfs = false
+}
+
+pkggroup("mds") {
+  deps = [ ":device" ]
 }
 
 config("mds_component_fs_config") {
@@ -7,15 +16,22 @@ config("mds_component_fs_config") {
 }
 
 source_set("mds_component_fs") {
-  deps = [ "../../kernel:mds_kernel" ]
-
   sources = [ "mds_fs.c" ]
 
   defines = []
-
   if (mds_component_fs_large_size) {
     defines += [ "MDS_FILESYSTEM_WITH_LARGE=1" ]
   }
 
+  deps = []
+  if (mds_component_fs_devfs) {
+    deps += [ "devfs/:mds_component_fs_devfs" ]
+  }
+  if (mds_component_fs_emfs) {
+    deps += [ "emfs/:mds_component_fs_emfs" ]
+  }
+
   public_configs = [ ":mds_component_fs_config" ]
+
+  public_deps = [ ":mds" ]
 }

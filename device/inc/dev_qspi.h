@@ -35,7 +35,6 @@ typedef enum DEV_QSPI_BusCS {
 } DEV_QSPI_BusCS_t;
 
 typedef struct DEV_QSPI_Object {
-    MDS_Tick_t optick;
     DEV_GPIO_Pin_t *cs;
     uint32_t clock;  // Hz
     DEV_QSPI_BusCS_t busCS       : 8;
@@ -110,8 +109,8 @@ typedef struct DEV_QSPI_Driver {
     MDS_Err_t (*control)(const DEV_QSPI_Adaptr_t *qspi, MDS_Item_t cmd, MDS_Arg_t *arg);
     MDS_Err_t (*command)(const DEV_QSPI_Periph_t *periph, const DEV_QSPI_Command_t *cmd,
                          const DEV_QSPI_Polling_t *poll);
-    MDS_Err_t (*transmit)(const DEV_QSPI_Periph_t *periph, const uint8_t *tx, size_t size);
-    MDS_Err_t (*recvice)(const DEV_QSPI_Periph_t *periph, uint8_t *rx, size_t size);
+    MDS_Err_t (*transmit)(const DEV_QSPI_Periph_t *periph, const uint8_t *tx, size_t size, MDS_Tick_t timeout);
+    MDS_Err_t (*recvice)(const DEV_QSPI_Periph_t *periph, uint8_t *rx, size_t size, MDS_Tick_t timeout);
 } DEV_QSPI_Driver_t;
 
 struct DEV_QSPI_Adaptr {

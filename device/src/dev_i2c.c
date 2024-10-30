@@ -39,9 +39,7 @@ MDS_Err_t DEV_I2C_AdaptrDestroy(DEV_I2C_Adaptr_t *i2c)
 MDS_Err_t DEV_I2C_PeriphInit(DEV_I2C_Periph_t *periph, const char *name, DEV_I2C_Adaptr_t *i2c)
 {
     MDS_Err_t err = MDS_DevPeriphInit((MDS_DevPeriph_t *)periph, name, (MDS_DevAdaptr_t *)i2c);
-    if (err == MDS_EOK) {
-        periph->object.optick = MDS_DEVICE_PERIPH_TIMEOUT;
-    }
+
     return (err);
 }
 
@@ -54,9 +52,6 @@ DEV_I2C_Periph_t *DEV_I2C_PeriphCreate(const char *name, DEV_I2C_Adaptr_t *i2c)
 {
     DEV_I2C_Periph_t *periph = (DEV_I2C_Periph_t *)MDS_DevPeriphCreate(sizeof(DEV_I2C_Periph_t), name,
                                                                        (MDS_DevAdaptr_t *)i2c);
-    if (periph != NULL) {
-        periph->object.optick = MDS_DEVICE_PERIPH_TIMEOUT;
-    }
 
     return (periph);
 }
@@ -133,7 +128,9 @@ MDS_Err_t DEV_I2C_PeriphMasterTransfer(DEV_I2C_Periph_t *periph, const DEV_I2C_M
 
     for (size_t retry = 0; (err != MDS_EOK) && (retry <= periph->object.retry); retry++) {
         for (size_t cnt = 0; cnt < num; cnt++) {
-            err = i2c->driver->master(periph, &(msg[cnt]));
+            MDS_Tick_t optick = (periph->object.optick > 0) ? (periph->object.optick)
+                                                            : (msg->len / ((periph->object.clock >> 0x0E) + 0x01));
+            err = i2c->driver->master(periph, &(msg[cnt]), optick);
             if (err != MDS_EOK) {
                 break;
             }

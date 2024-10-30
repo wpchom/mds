@@ -7,5 +7,5 @@ source_set("mds_component_fs_emfs") {
 
   public_configs = [ ":mds_component_fs_emfs_config" ]
 
-  public_deps = [ "../../../device:mds_device" ]
+  public_deps = [ "../:mds" ]
 }

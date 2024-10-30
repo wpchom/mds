@@ -51,9 +51,6 @@ static void DEV_QSPI_PeriphCS(DEV_QSPI_Periph_t *periph, bool chosen)
 MDS_Err_t DEV_QSPI_PeriphInit(DEV_QSPI_Periph_t *periph, const char *name, DEV_QSPI_Adaptr_t *qspi)
 {
     MDS_Err_t err = MDS_DevPeriphInit((MDS_DevPeriph_t *)periph, name, (MDS_DevAdaptr_t *)qspi);
-    if (err == MDS_EOK) {
-        periph->object.optick = MDS_DEVICE_PERIPH_TIMEOUT;
-    }
 
     return (err);
 }
@@ -67,9 +64,6 @@ DEV_QSPI_Periph_t *DEV_QSPI_PeriphCreate(const char *name, DEV_QSPI_Adaptr_t *qs
 {
     DEV_QSPI_Periph_t *periph = (DEV_QSPI_Periph_t *)MDS_DevPeriphCreate(sizeof(DEV_QSPI_Periph_t), name,
                                                                          (MDS_DevAdaptr_t *)qspi);
-    if (periph != NULL) {
-        periph->object.optick = MDS_DEVICE_PERIPH_TIMEOUT;
-    }
 
     return (periph);
 }
@@ -155,7 +149,9 @@ MDS_Err_t DEV_QSPI_PeriphTransmit(DEV_QSPI_Periph_t *periph, const uint8_t *tx, 
         return (MDS_EIO);
     }
 
-    MDS_Err_t err = qspi->driver->transmit(periph, tx, size);
+    MDS_Tick_t optick = size / ((periph->object.clock / 0x0E) + 0x01);
+
+    MDS_Err_t err = qspi->driver->transmit(periph, tx, size, optick);
 
     return (err);
 }
@@ -173,7 +169,9 @@ MDS_Err_t DEV_QSPI_PeriphReceive(DEV_QSPI_Periph_t *periph, uint8_t *rx, size_t 
         return (MDS_EIO);
     }
 
-    MDS_Err_t err = qspi->driver->recvice(periph, rx, size);
+    MDS_Tick_t optick = size / ((periph->object.clock / 0x0E) + 0x01);
+
+    MDS_Err_t err = qspi->driver->recvice(periph, rx, size, optick);
 
     return (err);
 }

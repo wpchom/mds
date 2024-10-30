@@ -1,3 +1,7 @@
+pkggroup("mds") {
+  deps = [ ":kernel" ]
+}
+
 config("mds_device_config") {
   include_dirs = [ "inc" ]
 }
@@ -26,5 +30,5 @@ source_set("mds_device") {
 
   public_configs = [ ":mds_device_config" ]
 
-  public_deps = [ "../kernel:mds_kernel" ]
+  public_deps = [ ":mds" ]
 }

@@ -123,7 +123,7 @@ __attribute__((weak)) size_t MDS_SchedulerFFS(size_t value)
 MDS_Thread_t *MDS_SchedulerGetHighestPriorityThread(void)
 {
     MDS_Thread_t *thread = NULL;
-    size_t highestPrio   = MDS_SchedulerFFS(g_sysThreadPrioMask);
+    size_t highestPrio = MDS_SchedulerFFS(g_sysThreadPrioMask);
     if (highestPrio != 0U) {
         thread = CONTAINER_OF(g_sysSchedulerTable[highestPrio - 1].next, MDS_Thread_t, node);
     }

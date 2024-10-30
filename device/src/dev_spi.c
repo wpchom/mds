@@ -39,9 +39,6 @@ MDS_Err_t DEV_SPI_AdaptrDestroy(DEV_SPI_Adaptr_t *spi)
 MDS_Err_t DEV_SPI_PeriphInit(DEV_SPI_Periph_t *periph, const char *name, DEV_SPI_Adaptr_t *spi)
 {
     MDS_Err_t err = MDS_DevPeriphInit((MDS_DevPeriph_t *)periph, name, (MDS_DevAdaptr_t *)spi);
-    if (err == MDS_EOK) {
-        periph->object.optick = MDS_DEVICE_PERIPH_TIMEOUT;
-    }
 
     return (err);
 }
@@ -55,9 +52,6 @@ DEV_SPI_Periph_t *DEV_SPI_PeriphCreate(const char *name, DEV_SPI_Adaptr_t *spi)
 {
     DEV_SPI_Periph_t *periph = (DEV_SPI_Periph_t *)MDS_DevPeriphCreate(sizeof(DEV_SPI_Periph_t), name,
                                                                        (MDS_DevAdaptr_t *)spi);
-    if (periph != NULL) {
-        periph->object.optick = MDS_DEVICE_PERIPH_TIMEOUT;
-    }
 
     return (periph);
 }
@@ -116,7 +110,9 @@ MDS_Err_t DEV_SPI_PeriphTransferMsg(DEV_SPI_Periph_t *periph, const DEV_SPI_Msg_
 
         DEV_SPI_PeriphCS(periph, true);
         while (cur != NULL) {
-            err = spi->driver->transfer(periph, cur->tx, cur->rx, cur->size);
+            MDS_Tick_t optick = (periph->object.optick > 0) ? (periph->object.optick)
+                                                            : (cur->size / ((periph->object.clock >> 0x0E) + 0x01));
+            err = spi->driver->transfer(periph, cur->tx, cur->rx, cur->size, optick);
             if (err != MDS_EOK) {
                 break;
             }

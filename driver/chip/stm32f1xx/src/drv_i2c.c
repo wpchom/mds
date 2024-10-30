@@ -366,20 +366,21 @@ static MDS_Err_t DDRV_I2C_Control(const DEV_I2C_Adaptr_t *i2c, MDS_Item_t cmd, M
     return (MDS_EACCES);
 }
 
-static MDS_Err_t DDRV_I2C_MasterTransfer(const DEV_I2C_Periph_t *periph, const DEV_I2C_Msg_t *msg)
+static MDS_Err_t DDRV_I2C_MasterTransfer(const DEV_I2C_Periph_t *periph, const DEV_I2C_Msg_t *msg, MDS_Tick_t tickout)
 {
     DRV_I2C_Handle_t *hi2c = (DRV_I2C_Handle_t *)(periph->mount->handle);
 
-    return (DRV_I2C_MasterTransfer(hi2c, msg, periph->object.optick));
+    return (DRV_I2C_MasterTransfer(hi2c, msg, tickout));
 }
 
-static MDS_Err_t DDRV_I2C_MasterTransferINT(const DEV_I2C_Periph_t *periph, const DEV_I2C_Msg_t *msg)
+static MDS_Err_t DDRV_I2C_MasterTransferINT(const DEV_I2C_Periph_t *periph, const DEV_I2C_Msg_t *msg,
+                                            MDS_Tick_t tickout)
 {
     DRV_I2C_Handle_t *hi2c = (DRV_I2C_Handle_t *)(periph->mount->handle);
 
     MDS_Err_t err = DRV_I2C_MasterTransferINT(hi2c, msg);
     if (err == MDS_EOK) {
-        err = DRV_I2C_MasterWait(hi2c, periph->object.optick);
+        err = DRV_I2C_MasterWait(hi2c, tickout);
     } else {
         DRV_I2C_MasterAbort(hi2c);
     }

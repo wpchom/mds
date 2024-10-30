@@ -86,7 +86,7 @@ typedef struct DEV_UART_Periph DEV_UART_Periph_t;
 
 typedef struct DEV_UART_Driver {
     MDS_Err_t (*control)(const DEV_UART_Adaptr_t *uart, MDS_Item_t cmd, MDS_Arg_t *arg);
-    MDS_Err_t (*transmit)(const DEV_UART_Periph_t *periph, const uint8_t *buff, size_t len);
+    MDS_Err_t (*transmit)(const DEV_UART_Periph_t *periph, const uint8_t *buff, size_t len, MDS_Tick_t timeout);
     MDS_Err_t (*receive)(const DEV_UART_Periph_t *periph, uint8_t *buff, size_t size, MDS_Tick_t timeout);
 } DEV_UART_Driver_t;
 

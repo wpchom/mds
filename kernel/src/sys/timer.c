@@ -53,8 +53,8 @@ struct MDS_SoftTimer {
 static int TIMER_SkipListCompare(const MDS_ListNode_t *node, const void *value)
 {
     const MDS_Timer_t *timer = CONTAINER_OF(node, MDS_Timer_t, node);
-    MDS_Tick_t ticklimit     = *((const MDS_Tick_t *)(value));
-    MDS_Tick_t diffTick      = timer->ticklimit - ticklimit;
+    MDS_Tick_t ticklimit = *((const MDS_Tick_t *)(value));
+    MDS_Tick_t diffTick = timer->ticklimit - ticklimit;
 
     return ((diffTick != 0) && (diffTick < MDS_TIMER_TICK_MAX)) ? (1) : (-1);
 }
@@ -65,12 +65,12 @@ static void TIMER_Check(MDS_ListNode_t timerList[], size_t size, bool isSoft)
         return;
     }
 
-    MDS_ListNode_t runList   = {.prev = &runList, .next = &runList};
+    MDS_ListNode_t runList = {.prev = &runList, .next = &runList};
     register MDS_Item_t lock = MDS_CoreInterruptLock();
 
     while (!MDS_ListIsEmpty(&timerList[size - 1])) {
         MDS_Tick_t currTick = MDS_SysTickGetCount();
-        MDS_Timer_t *t      = CONTAINER_OF(timerList[size - 1].next, MDS_Timer_t, node[size - 1]);
+        MDS_Timer_t *t = CONTAINER_OF(timerList[size - 1].next, MDS_Timer_t, node[size - 1]);
 
         if ((currTick - t->ticklimit) >= MDS_TIMER_TICK_MAX) {
             break;
@@ -90,7 +90,7 @@ static void TIMER_Check(MDS_ListNode_t timerList[], size_t size, bool isSoft)
                 g_softTimer.isBusy = true;
                 MDS_CoreInterruptRestore(lock);
                 t->entry(t->arg);
-                lock               = MDS_CoreInterruptLock();
+                lock = MDS_CoreInterruptLock();
                 g_softTimer.isBusy = false;
             } else {
                 t->entry(t->arg);
@@ -123,7 +123,7 @@ static void TIMER_Check(MDS_ListNode_t timerList[], size_t size, bool isSoft)
 
 static MDS_Timer_t *TIMER_NextTickoutTimer(MDS_ListNode_t timerList[], size_t size)
 {
-    MDS_Timer_t *timer       = NULL;
+    MDS_Timer_t *timer = NULL;
     register MDS_Item_t lock = MDS_CoreInterruptLock();
 
     if (!MDS_ListIsEmpty(&(timerList[size - 1]))) {
@@ -140,10 +140,9 @@ static __attribute__((noreturn)) void TIMER_ThreadEntry(MDS_Arg_t *arg)
 {
     UNUSED(arg);
 
-    MDS_LOOP
-    {
+    MDS_LOOP {
         MDS_Timer_t *nextTimer = TIMER_NextTickoutTimer(g_softTimer.skipList, ARRAY_SIZE(g_softTimer.skipList));
-        MDS_Tick_t nextTick    = (nextTimer != NULL) ? (nextTimer->ticklimit) : (MDS_TICK_FOREVER);
+        MDS_Tick_t nextTick = (nextTimer != NULL) ? (nextTimer->ticklimit) : (MDS_TICK_FOREVER);
 
         MDS_TIMER_PRINT("soft timer thread take a next check:%u", nextTick);
 
@@ -172,7 +171,7 @@ MDS_Err_t MDS_TimerInit(MDS_Timer_t *timer, const char *name, MDS_Mask_t type, M
     if (err == MDS_EOK) {
         MDS_SkipListInitNode(timer->node, ARRAY_SIZE(timer->node));
         timer->entry = entry;
-        timer->arg   = arg;
+        timer->arg = arg;
         timer->flags = type & (~MDS_TIMER_FLAG_ACTIVED);
     }
 
@@ -192,7 +191,7 @@ MDS_Timer_t *MDS_TimerCreate(const char *name, MDS_Mask_t type, MDS_TimerEntry_t
     if (timer != NULL) {
         MDS_SkipListInitNode(timer->node, ARRAY_SIZE(timer->node));
         timer->entry = entry;
-        timer->arg   = arg;
+        timer->arg = arg;
         timer->flags = type & (~MDS_TIMER_FLAG_ACTIVED);
     } else {
         MDS_TIMER_PRINT("timer entry:%p type:%x create failed", entry, type);
@@ -219,8 +218,8 @@ MDS_Err_t MDS_TimerStart(MDS_Timer_t *timer, MDS_Tick_t timeout)
 
     static size_t skipRand = 0;
 #ifdef MDS_THREAD_TIMER_ENABLE
-    MDS_ListNode_t *timerList =
-        ((timer->flags & MDS_TIMER_TYPE_SYSTEM) == 0U) ? (g_softTimer.skipList) : (g_sysTimerSkipList);
+    MDS_ListNode_t *timerList = ((timer->flags & MDS_TIMER_TYPE_SYSTEM) == 0U) ? (g_softTimer.skipList)
+                                                                               : (g_sysTimerSkipList);
 #else
     MDS_ListNode_t *timerList = g_sysTimerSkipList;
 #endif
@@ -239,8 +238,8 @@ MDS_Err_t MDS_TimerStart(MDS_Timer_t *timer, MDS_Tick_t timeout)
 
             MDS_HOOK_CALL(TIMER_START, timer);
 
-            MDS_ListNode_t *skipList =
-                MDS_SkipListSearchNode(timerList, ARRAY_SIZE(timer->node), &(timer->ticklimit), TIMER_SkipListCompare);
+            MDS_ListNode_t *skipList = MDS_SkipListSearchNode(timerList, ARRAY_SIZE(timer->node), &(timer->ticklimit),
+                                                              TIMER_SkipListCompare);
 
             skipRand = skipRand + timer->tickstart + 1;
             MDS_SkipListInsertNode(skipList, timer->node, ARRAY_SIZE(timer->node), skipRand, MDS_TIMER_SKIPLIST_SHIFT);
@@ -294,7 +293,7 @@ bool MDS_TimerIsActived(const MDS_Timer_t *timer)
     MDS_ASSERT(MDS_ObjectGetType(&(timer->object)) == MDS_OBJECT_TYPE_TIMER);
 
     register MDS_Item_t lock = MDS_CoreInterruptLock();
-    bool isActived           = ((timer->flags & MDS_TIMER_FLAG_ACTIVED) != 0U) ? (true) : (false);
+    bool isActived = ((timer->flags & MDS_TIMER_FLAG_ACTIVED) != 0U) ? (true) : (false);
     MDS_CoreInterruptRestore(lock);
 
     return (isActived);

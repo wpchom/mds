@@ -88,7 +88,7 @@ typedef struct DEV_I2S_Periph DEV_I2S_Periph_t;
 
 typedef struct DEV_I2S_Driver {
     MDS_Err_t (*control)(const DEV_I2S_Adaptr_t *i2s, MDS_Item_t cmd, MDS_Arg_t *arg);
-    MDS_Err_t (*transmit)(const DEV_I2S_Periph_t *periph, const uint8_t *buff, size_t len);
+    MDS_Err_t (*transmit)(const DEV_I2S_Periph_t *periph, const uint8_t *buff, size_t len, MDS_Tick_t timeout);
     MDS_Err_t (*receive)(const DEV_I2S_Periph_t *periph, uint8_t *buff, size_t size, size_t *recv, MDS_Tick_t timeout);
 } DEV_I2S_Driver_t;
 

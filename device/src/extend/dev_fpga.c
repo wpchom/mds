@@ -39,9 +39,6 @@ MDS_Err_t DEV_FPGA_AdaptrDestroy(DEV_FPGA_Adaptr_t *fpga)
 MDS_Err_t DEV_FPGA_PeriphInit(DEV_FPGA_Periph_t *periph, const char *name, DEV_FPGA_Adaptr_t *fpga)
 {
     MDS_Err_t err = MDS_DevPeriphInit((MDS_DevPeriph_t *)periph, name, (MDS_DevAdaptr_t *)fpga);
-    if (err == MDS_EOK) {
-        periph->object.optick = MDS_DEVICE_PERIPH_TIMEOUT;
-    }
 
     return (err);
 }
@@ -55,9 +52,6 @@ DEV_FPGA_Periph_t *DEV_FPGA_PeriphCreate(const char *name, DEV_FPGA_Adaptr_t *fp
 {
     DEV_FPGA_Periph_t *periph = (DEV_FPGA_Periph_t *)MDS_DevPeriphCreate(sizeof(DEV_FPGA_Periph_t), name,
                                                                          (MDS_DevAdaptr_t *)fpga);
-    if (periph != NULL) {
-        periph->object.optick = MDS_DEVICE_PERIPH_TIMEOUT;
-    }
 
     return (periph);
 }
@@ -106,7 +100,10 @@ MDS_Err_t DEV_FPGA_PeriphTransmit(DEV_FPGA_Periph_t *periph, const uint8_t *buff
         return (MDS_EIO);
     }
 
-    return (fpga->driver->transmit(periph, buff, len));
+    MDS_Tick_t optick = (periph->object.optick > 0) ? (periph->object.optick)
+                                                    : (len / ((periph->object.clock >> 0x0E) + 0x01));
+
+    return (fpga->driver->transmit(periph, buff, len, optick));
 }
 
 MDS_Err_t DEV_FPGA_PeriphFinish(DEV_FPGA_Periph_t *periph)

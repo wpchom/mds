@@ -39,10 +39,6 @@ MDS_Err_t DEV_ADC_AdaptrDestroy(DEV_ADC_Adaptr_t *adc)
 MDS_Err_t DEV_ADC_PeriphInit(DEV_ADC_Periph_t *periph, const char *name, DEV_ADC_Adaptr_t *adc)
 {
     MDS_Err_t err = MDS_DevPeriphInit((MDS_DevPeriph_t *)periph, name, (MDS_DevAdaptr_t *)adc);
-    if (err == MDS_EOK) {
-        periph->object.optick = MDS_DEVICE_PERIPH_TIMEOUT;
-    }
-
     return (err);
 }
 
@@ -55,9 +51,6 @@ DEV_ADC_Periph_t *DEV_ADC_PeriphCreate(const char *name, DEV_ADC_Adaptr_t *adc)
 {
     DEV_ADC_Periph_t *periph = (DEV_ADC_Periph_t *)MDS_DevPeriphCreate(sizeof(DEV_ADC_Periph_t), name,
                                                                        (MDS_DevAdaptr_t *)adc);
-    if (periph != NULL) {
-        periph->object.optick = MDS_DEVICE_PERIPH_TIMEOUT;
-    }
 
     return (periph);
 }

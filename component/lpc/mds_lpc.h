@@ -20,12 +20,6 @@ extern "C" {
 #endif
 
 /* Define ------------------------------------------------------------------ */
-#ifdef MDS_LPC_VOTE_TYPE
-typedef MDS_LPC_VOTE_TYPE MDS_LPC_Vote_t;
-#else
-typedef uint8_t MDS_LPC_Vote_t;
-#endif
-
 #ifndef MDS_LPC_LIST_OF_SLEEP
 #define MDS_LPC_LIST_OF_SLEEP                                                                                          \
     MDS_LPC_SLEEP(LIGHT)                                                                                               \

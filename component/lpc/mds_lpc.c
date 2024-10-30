@@ -21,18 +21,18 @@ typedef struct MDS_LPC_Manager {
     MDS_Condition_t runCond;
     MDS_Mutex_t runMutex;
 
+#if (defined(MDS_LPC_STATISTIC) && (MDS_LPC_STATISTIC > 0))
+    MDS_Tick_t lastTick;
+    MDS_Tick_t runTime[MDS_LPC_RUN_NUMS];
+#endif
+
     MDS_Tick_t sleepThreshold;
     MDS_LPC_Sleep_t sleepDefault : 8;
     MDS_LPC_Run_t runDefault     : 8;
     MDS_LPC_Run_t runMode        : 8;
 
-    MDS_LPC_Vote_t sleepVote[MDS_LPC_SLEEP_NUMS];
-    MDS_LPC_Vote_t runVote[MDS_LPC_RUN_NUMS];
-
-#if (defined(MDS_LPC_STATISTIC) && (MDS_LPC_STATISTIC > 0))
-    MDS_Tick_t lastTick;
-    MDS_Tick_t runTime[MDS_LPC_RUN_NUMS];
-#endif
+    uint8_t sleepVote[MDS_LPC_SLEEP_NUMS];
+    uint8_t runVote[MDS_LPC_RUN_NUMS];
 } MDS_LPC_Manager_t;
 
 /* Variable ---------------------------------------------------------------- */
@@ -241,13 +241,12 @@ void MDS_LPC_SleepModeRequest(MDS_LPC_Sleep_t sleep)
     }
 
     register MDS_Item_t lock = MDS_CoreInterruptLock();
-    if (g_lpcMgr.sleepVote[sleep] < ((MDS_LPC_Vote_t)(-1))) {
+    if ((g_lpcMgr.sleepVote[sleep] + 1) > 0) {
         g_lpcMgr.sleepVote[sleep] += 1;
-        MDS_CoreInterruptRestore(lock);
     } else {
-        MDS_CoreInterruptRestore(lock);
         MDS_LOG_E("[lpc] request sleep(%d) vote is full", sleep);
     }
+    MDS_CoreInterruptRestore(lock);
 }
 
 void MDS_LPC_SleepModeRelease(MDS_LPC_Sleep_t sleep)
@@ -261,11 +260,10 @@ void MDS_LPC_SleepModeRelease(MDS_LPC_Sleep_t sleep)
     register MDS_Item_t lock = MDS_CoreInterruptLock();
     if (g_lpcMgr.sleepVote[sleep] > 0) {
         g_lpcMgr.sleepVote[sleep] -= 1;
-        MDS_CoreInterruptRestore(lock);
     } else {
-        MDS_CoreInterruptRestore(lock);
-        MDS_LOG_E("[lpc] request sleep(%d) vote is empty", sleep);
+        MDS_LOG_E("[lpc] release sleep(%d) vote is empty", sleep);
     }
+    MDS_CoreInterruptRestore(lock);
 }
 
 void MDS_LPC_SleepModeForce(MDS_LPC_Sleep_t sleep, MDS_Tick_t tickSleep)
@@ -295,9 +293,11 @@ void MDS_LPC_RunModeRequest(MDS_LPC_Run_t run)
     }
 
     register MDS_Item_t lock = MDS_CoreInterruptLock();
-    if (g_lpcMgr.runVote[run] < ((MDS_LPC_Vote_t)(-1))) {
+    if ((g_lpcMgr.runVote[run] + 1) > 0) {
         g_lpcMgr.runVote[run] += 1;
         LPC_RunModeSwitch(&g_lpcMgr);
+    } else {
+        MDS_LOG_E("[lpc] request run(%d) vote is full", run);
     }
     MDS_CoreInterruptRestore(lock);
 }
@@ -314,6 +314,8 @@ void MDS_LPC_RunModeRelease(MDS_LPC_Run_t run)
     if (g_lpcMgr.runVote[run] > 0) {
         g_lpcMgr.runVote[run] -= 1;
         LPC_RunModeSwitch(&g_lpcMgr);
+    } else {
+        MDS_LOG_E("[lpc] release run(%d) vote is empty", run);
     }
     MDS_CoreInterruptRestore(lock);
 }

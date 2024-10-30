@@ -31,36 +31,23 @@ typedef int64_t MDS_FileOffset_t;
 #endif
 
 enum MDS_OpenFlag {
+    MDS_OFLAG_NONE = 0x0000U,
     MDS_OFLAG_RDONLY = 0x0001U,
     MDS_OFLAG_WRONLY = 0x0002U,
     MDS_OFLAG_RDWR = 0x0003U,
+    MDS_OFLAG_OPEN = 0x0008U,
 
     MDS_OFLAG_APPEND = 0x0010U,
-    MDS_OFLAG_CREAT = 0x0020U,
-    MDS_OFLAG_TRUNC = 0x0040U,
+    MDS_OFLAG_EXCL = 0x0020U,
+    MDS_OFLAG_CREAT = 0x0040U,
+    MDS_OFLAG_TRUNC = 0x0080U,
 };
 
-enum MDS_FileFlag {
-    MDS_FFLAG_NONE = 0x0000U,
-    MDS_FFLAG_RDONLY = MDS_OFLAG_RDONLY,
-    MDS_FFLAG_WRONLY = MDS_OFLAG_WRONLY,
-    MDS_FFLAG_RDWR = MDS_OFLAG_RDWR,
-    MDS_FFLAG_OPEN = 0x0008U,
-
-    MDS_FFLAG_APPEND = MDS_OFLAG_APPEND,
-    MDS_FFLAG_CREAT = MDS_OFLAG_CREAT,
-    MDS_FFLAG_TRUNC = MDS_OFLAG_TRUNC,
-    MDS_FFLAG_EOF = 0x0080U,
-};
-
-typedef enum MDS_FileType {
-    MDS_FTYPE_REGULAR,
-    MDS_FTYPE_DIRECTORY,
-    MDS_FTYPE_SYMLINK,
-    MDS_FTYPE_SOCKET,
-    MDS_FTYPE_DEVCHAR,
-    MDS_FTYPE_DEVBLOCK,
-} MDS_FileType_t;
+typedef enum MDS_FileWhence {
+    MDS_FILE_SEEK_SET = 0,
+    MDS_FILE_SEEK_CUR = 1,
+    MDS_FILE_SEEK_END = 2,
+} MDS_FileWhence_t;
 
 typedef MDS_Arg_t MDS_FsDevice_t;
 typedef struct MDS_FileSystem MDS_FileSystem_t;
@@ -94,7 +81,7 @@ typedef struct MDS_FsStat {
 typedef struct MDS_FileSystemOps {
     const char *name;
 
-    MDS_Err_t (*mkfs)(MDS_Arg_t *device);
+    MDS_Err_t (*mkfs)(MDS_FsDevice_t *device, const MDS_Arg_t *init);
     MDS_Err_t (*mount)(MDS_FileSystem_t *fs);
     MDS_Err_t (*unmount)(MDS_FileSystem_t *fs);
     MDS_Err_t (*statfs)(MDS_FileSystem_t *fs, MDS_FsStat_t *stat);
@@ -109,15 +96,16 @@ typedef struct MDS_FileSystemOps {
     MDS_Err_t (*close)(MDS_FileDesc_t *fd);
     MDS_Err_t (*flush)(MDS_FileDesc_t *fd);
     MDS_Err_t (*ioctl)(MDS_FileDesc_t *fd, MDS_Item_t cmd, MDS_Arg_t *args);
-    MDS_FileSize_t (*read)(MDS_FileDesc_t *fd, uint8_t *buff, MDS_FileSize_t len, MDS_FileOffset_t *pos);
-    MDS_FileSize_t (*write)(MDS_FileDesc_t *fd, const uint8_t *buff, MDS_FileSize_t len, MDS_FileOffset_t *pos);
-    MDS_FileSize_t (*seek)(MDS_FileDesc_t *fd, MDS_FileOffset_t ofs);
-    MDS_Err_t (*truncate)(MDS_FileDesc_t *fd, MDS_FileOffset_t len);
+    MDS_FileOffset_t (*read)(MDS_FileDesc_t *fd, uint8_t *buff, MDS_FileSize_t len, MDS_FileOffset_t *pos);
+    MDS_FileOffset_t (*write)(MDS_FileDesc_t *fd, const uint8_t *buff, MDS_FileSize_t len, MDS_FileOffset_t *pos);
+    MDS_FileOffset_t (*seek)(MDS_FileDesc_t *fd, MDS_FileOffset_t ofs, MDS_FileWhence_t whence);
+    MDS_FileOffset_t (*truncate)(MDS_FileDesc_t *fd, MDS_FileOffset_t len);
 } MDS_FileSystemOps_t;
 
 #define MDS_FILE_SYSTEM_SECTION ".mds.fs."
-#define MDS_FILE_SYSTEM_EXPORT(name, ops)                                                                              \
-    __attribute__((section(MDS_FILE_SYSTEM_SECTION #name))) static const MDS_FileSystemOps_t *G_FS_OPS_##name = &(ops);
+#define MDS_FILE_SYSTEM_EXPORT(ops)                                                                                    \
+    __attribute__((used,                                                                                               \
+                   section(MDS_FILE_SYSTEM_SECTION))) static const MDS_FileSystemOps_t *__FsOps_##ops##__ = &(ops);
 
 struct MDS_FileSystem {
     MDS_Mutex_t lock;
@@ -148,10 +136,11 @@ struct MDS_FileDesc {
 };
 
 /* Function ---------------------------------------------------------------- */
+extern void *MDS_FileSystemMalloc(size_t size);
+extern void MDS_FileSystemFree(void *ptr);
 extern char *MDS_FileSystemJoinPath(const char *path, ...);
-extern void MDS_FileSystemFreePath(char *path);
 
-extern MDS_Err_t MDS_FileSystemMkfs(MDS_FsDevice_t *device, const char *fsName);
+extern MDS_Err_t MDS_FileSystemMkfs(MDS_FsDevice_t *device, const char *fsName, const MDS_Arg_t *init);
 extern MDS_Err_t MDS_FileSystemMount(const MDS_FsDevice_t *device, const char *path, const char *fsName);
 extern MDS_Err_t MDS_FileSystemUnmount(const char *path);
 extern MDS_Err_t MDS_FileSystemStatfs(const char *path, MDS_FsStat_t *stat);
@@ -160,14 +149,18 @@ extern MDS_Err_t MDS_FileOpen(MDS_FileDesc_t *fd, const char *path, MDS_Mask_t f
 extern MDS_Err_t MDS_FileClose(MDS_FileDesc_t *fd);
 extern MDS_Err_t MDS_FileFlush(MDS_FileDesc_t *fd);
 extern MDS_Err_t MDS_FileIoctl(MDS_FileDesc_t *fd, MDS_Item_t cmd, MDS_Arg_t *args);
-extern MDS_FileSize_t MDS_FilePosRead(MDS_FileDesc_t *fd, uint8_t *buff, MDS_FileSize_t len, MDS_FileOffset_t ofs);
-extern MDS_FileSize_t MDS_FileRead(MDS_FileDesc_t *fd, uint8_t *buff, MDS_FileSize_t len);
-extern MDS_FileSize_t MDS_FilePosWrite(MDS_FileDesc_t *fd, const uint8_t *buff, MDS_FileSize_t len,
-                                       MDS_FileOffset_t ofs);
-extern MDS_FileSize_t MDS_FileWrite(MDS_FileDesc_t *fd, const uint8_t *buff, MDS_FileSize_t len);
+extern MDS_FileOffset_t MDS_FilePosRead(MDS_FileDesc_t *fd, uint8_t *buff, MDS_FileSize_t len, MDS_FileOffset_t ofs);
+extern MDS_FileOffset_t MDS_FileRead(MDS_FileDesc_t *fd, uint8_t *buff, MDS_FileSize_t len);
+extern MDS_FileOffset_t MDS_FilePosWrite(MDS_FileDesc_t *fd, const uint8_t *buff, MDS_FileSize_t len,
+                                         MDS_FileOffset_t ofs);
+extern MDS_FileOffset_t MDS_FileWrite(MDS_FileDesc_t *fd, const uint8_t *buff, MDS_FileSize_t len);
 extern MDS_FileOffset_t MDS_FilePosition(MDS_FileDesc_t *fd);
-extern MDS_FileOffset_t MDS_FileSeek(MDS_FileDesc_t *fd, MDS_FileOffset_t offset);
-extern MDS_Err_t MDS_FileTruncate(MDS_FileDesc_t *fd, MDS_FileOffset_t len);
+extern MDS_FileOffset_t MDS_FileSeek(MDS_FileDesc_t *fd, MDS_FileOffset_t offset, MDS_FileWhence_t whence);
+extern MDS_FileOffset_t MDS_FileTruncate(MDS_FileDesc_t *fd, MDS_FileOffset_t len);
+
+extern MDS_FileOffset_t MDS_FileTell(MDS_FileDesc_t *fd);
+extern MDS_FileOffset_t MDS_FileRewind(MDS_FileDesc_t *fd);
+extern MDS_FileSize_t MDS_FileSize(MDS_FileDesc_t *fd);
 
 extern MDS_Err_t MDS_FileMkdir(const char *path);
 extern MDS_Err_t MDS_FileRemove(const char *path);

@@ -40,9 +40,6 @@ MDS_Err_t DEV_STORAGE_AdaptrDestroy(DEV_STORAGE_Adaptr_t *storage)
 MDS_Err_t DEV_STORAGE_PeriphInit(DEV_STORAGE_Periph_t *periph, const char *name, DEV_STORAGE_Adaptr_t *storage)
 {
     MDS_Err_t err = MDS_DevPeriphInit((MDS_DevPeriph_t *)periph, name, (MDS_DevAdaptr_t *)storage);
-    if (err == MDS_EOK) {
-        periph->object.optick = MDS_DEVICE_PERIPH_TIMEOUT;
-    }
 
     return (err);
 }
@@ -56,9 +53,6 @@ DEV_STORAGE_Periph_t *DEV_STORAGE_PeriphCreate(const char *name, DEV_STORAGE_Ada
 {
     DEV_STORAGE_Periph_t *periph = (DEV_STORAGE_Periph_t *)MDS_DevPeriphCreate(sizeof(DEV_STORAGE_Periph_t), name,
                                                                                (MDS_DevAdaptr_t *)storage);
-    if (periph != NULL) {
-        periph->object.optick = MDS_DEVICE_PERIPH_TIMEOUT;
-    }
 
     return (periph);
 }

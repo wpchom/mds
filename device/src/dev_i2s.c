@@ -39,9 +39,6 @@ MDS_Err_t DEV_I2S_AdaptrDestroy(DEV_I2S_Adaptr_t *i2s)
 MDS_Err_t DEV_I2S_PeriphInit(DEV_I2S_Periph_t *periph, const char *name, DEV_I2S_Adaptr_t *i2s)
 {
     MDS_Err_t err = MDS_DevPeriphInit((MDS_DevPeriph_t *)periph, name, (MDS_DevAdaptr_t *)i2s);
-    if (err == MDS_EOK) {
-        periph->object.optick = MDS_DEVICE_PERIPH_TIMEOUT;
-    }
 
     return (err);
 }
@@ -55,9 +52,6 @@ DEV_I2S_Periph_t *DEV_I2S_PeriphCreate(const char *name, DEV_I2S_Adaptr_t *i2s)
 {
     DEV_I2S_Periph_t *periph = (DEV_I2S_Periph_t *)MDS_DevPeriphCreate(sizeof(DEV_I2S_Periph_t), name,
                                                                        (MDS_DevAdaptr_t *)i2s);
-    if (periph != NULL) {
-        periph->object.optick = MDS_DEVICE_PERIPH_TIMEOUT;
-    }
 
     return (periph);
 }
@@ -111,7 +105,9 @@ MDS_Err_t DEV_I2S_PeriphTransmit(DEV_I2S_Periph_t *periph, const uint8_t *buff, 
         return (MDS_EIO);
     }
 
-    err = i2s->driver->transmit(periph, buff, size);
+    MDS_Tick_t optick = (periph->object.optick > 0) ? (periph->object.optick)
+                                                    : (size / ((periph->object.audioFreq >> 0x0E) + 0x01));
+    err = i2s->driver->transmit(periph, buff, size, optick);
 
     return (err);
 }

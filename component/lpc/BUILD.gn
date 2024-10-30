@@ -1,12 +1,13 @@
 declare_args() {
-  mds_component_lpc_vote_type = "uint8_t"
   mds_component_lpc_statistic = false
+}
+
+pkggroup("mds") {
+  deps = [ ":kernel" ]
 }
 
 config("mds_component_lpc_config") {
   include_dirs = [ "./" ]
-
-  defines = [ "MDS_LPC_VOTE_TYPE=${mds_component_lpc_vote_type}" ]
 }
 
 source_set("mds_component_lpc") {
@@ -20,5 +21,5 @@ source_set("mds_component_lpc") {
 
   public_configs = [ ":mds_component_lpc_config" ]
 
-  public_deps = [ "../../kernel:mds_kernel" ]
+  public_deps = [ ":mds" ]
 }

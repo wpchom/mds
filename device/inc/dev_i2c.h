@@ -57,7 +57,7 @@ typedef struct DEV_I2C_Periph DEV_I2C_Periph_t;
 
 typedef struct DEV_I2C_Driver {
     MDS_Err_t (*control)(const DEV_I2C_Adaptr_t *i2c, MDS_Item_t cmd, MDS_Arg_t *arg);
-    MDS_Err_t (*master)(const DEV_I2C_Periph_t *periph, const DEV_I2C_Msg_t *msg);
+    MDS_Err_t (*master)(const DEV_I2C_Periph_t *periph, const DEV_I2C_Msg_t *msg, MDS_Tick_t timeout);
     MDS_Err_t (*slave)(const DEV_I2C_Periph_t *periph, DEV_I2C_Msg_t *msg, size_t *len, MDS_Tick_t timeout);
 } DEV_I2C_Driver_t;
 

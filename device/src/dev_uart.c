@@ -39,9 +39,6 @@ MDS_Err_t DEV_UART_AdaptrDestroy(DEV_UART_Adaptr_t *uart)
 MDS_Err_t DEV_UART_PeriphInit(DEV_UART_Periph_t *periph, const char *name, DEV_UART_Adaptr_t *uart)
 {
     MDS_Err_t err = MDS_DevPeriphInit((MDS_DevPeriph_t *)periph, name, (MDS_DevAdaptr_t *)uart);
-    if (err == MDS_EOK) {
-        periph->object.optick = MDS_DEVICE_PERIPH_TIMEOUT;
-    }
 
     return (err);
 }
@@ -55,9 +52,6 @@ DEV_UART_Periph_t *DEV_UART_PeriphCreate(const char *name, DEV_UART_Adaptr_t *ua
 {
     DEV_UART_Periph_t *periph = (DEV_UART_Periph_t *)MDS_DevPeriphCreate(sizeof(DEV_UART_Periph_t), name,
                                                                          (MDS_DevAdaptr_t *)uart);
-    if (periph != NULL) {
-        periph->object.optick = MDS_DEVICE_PERIPH_TIMEOUT;
-    }
 
     return (periph);
 }
@@ -106,7 +100,9 @@ MDS_Err_t DEV_UART_PeriphTransmitMsg(DEV_UART_Periph_t *periph, const MDS_MsgLis
         uart->driver->control(uart, DEV_UART_CMD_DIRECT, (MDS_Arg_t *)(&dir));
     }
     for (const MDS_MsgList_t *cur = msg; cur != NULL; cur = cur->next) {
-        err = uart->driver->transmit(periph, cur->buff, cur->len);
+        MDS_Tick_t optick = (periph->object.optick > 0) ? (periph->object.optick)
+                                                        : (msg->len / ((periph->object.baudrate >> 0x0E) + 0x01));
+        err = uart->driver->transmit(periph, cur->buff, cur->len, optick);
         if (err != MDS_EOK) {
             break;
         }

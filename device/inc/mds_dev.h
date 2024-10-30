@@ -118,16 +118,13 @@ extern MDS_Err_t MDS_DevPeriphClose(MDS_DevPeriph_t *periph);
 extern MDS_DevPeriph_t *MDS_DevPeriphOpenForce(MDS_DevPeriph_t *periph);
 extern bool MDS_DevPeriphIsAccessible(MDS_DevPeriph_t *periph);
 
+extern bool MDS_DeviceIsPeriph(const MDS_Device_t *device);
 extern const MDS_DevProbeId_t *MDS_DeviceGetId(const MDS_Device_t *device);
 extern MDS_Err_t MDS_DevModuleDump(const MDS_Device_t *device, MDS_DevDumpData_t *dump);
 extern MDS_Device_t *MDS_DeviceProbeDrivers(const MDS_DevDriver_t **driver, const MDS_Device_t *device,
                                             const MDS_DevProbeTable_t drvList[], size_t drvSize);
 
 /* Define ------------------------------------------------------------------ */
-#ifndef MDS_DEVICE_PERIPH_TIMEOUT
-#define MDS_DEVICE_PERIPH_TIMEOUT 2000
-#endif
-
 #define MDS_DEVICE_ARG_HANDLE_SIZE(arg, handleT)                                                                       \
     if ((arg) != NULL) {                                                                                               \
         *((size_t *)(arg)) = sizeof(handleT);                                                                          \
