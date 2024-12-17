@@ -11,9 +11,10 @@
  **/
 /* Include ----------------------------------------------------------------- */
 #include "mds_sys.h"
+#include "mds_log.h"
 
 /* Function ---------------------------------------------------------------- */
-MDS_Err_t MDS_MemHeapInit(MDS_MemHeap_t *memheap, const char *name, void *begin, void *limit,
+MDS_Err_t MDS_MemHeapInit(MDS_MemHeap_t *memheap, const char *name, void *base, size_t size,
                           const MDS_MemHeapOps_t *ops)
 {
     MDS_ASSERT(memheap != NULL);
@@ -31,17 +32,17 @@ MDS_Err_t MDS_MemHeapInit(MDS_MemHeap_t *memheap, const char *name, void *begin,
         }
 
         if ((ops != NULL) && (ops->setup != NULL)) {
-            err = ops->setup(memheap, begin, limit);
+            err = ops->setup(memheap, base, size);
         } else {
             err = MDS_ENOENT;
         }
 
         if (err == MDS_EOK) {
             memheap->ops = ops;
-#if (defined(MDS_MEMHEAP_STATS) && (MDS_MEMHEAP_STATS > 0))
+#if (defined(MDS_KERNEL_STATS_ENABLE) && (MDS_KERNEL_STATS_ENABLE > 0))
             memheap->size.max = 0;
             memheap->size.cur = 0;
-            memheap->size.total = (uintptr_t)limit - (uintptr_t)begin;
+            memheap->size.total = size;
 #endif
         } else {
             MDS_SemaphoreDeInit(&(memheap->lock));
@@ -78,7 +79,7 @@ void MDS_MemHeapFree(MDS_MemHeap_t *memheap, void *ptr)
         return;
     }
 
-    MDS_Err_t err = MDS_SemaphoreAcquire(&(memheap->lock), MDS_TICK_FOREVER);
+    MDS_Err_t err = MDS_SemaphoreAcquire(&(memheap->lock), MDS_CLOCK_TICK_FOREVER);
     if (err == MDS_EOK) {
         if ((memheap->ops != NULL) && (memheap->ops->free != NULL)) {
             memheap->ops->free(memheap, ptr);
@@ -95,7 +96,7 @@ void *MDS_MemHeapAlloc(MDS_MemHeap_t *memheap, size_t size)
 
     void *pbuf = NULL;
 
-    MDS_Err_t err = MDS_SemaphoreAcquire(&(memheap->lock), MDS_TICK_FOREVER);
+    MDS_Err_t err = MDS_SemaphoreAcquire(&(memheap->lock), MDS_CLOCK_TICK_FOREVER);
     if (err == MDS_EOK) {
         if ((memheap->ops != NULL) && (memheap->ops->alloc != NULL)) {
             pbuf = memheap->ops->alloc(memheap, size);
@@ -121,7 +122,7 @@ void *MDS_MemHeapRealloc(MDS_MemHeap_t *memheap, void *ptr, size_t size)
 
     void *pbuf = NULL;
 
-    MDS_Err_t err = MDS_SemaphoreAcquire(&(memheap->lock), MDS_TICK_FOREVER);
+    MDS_Err_t err = MDS_SemaphoreAcquire(&(memheap->lock), MDS_CLOCK_TICK_FOREVER);
     if (err == MDS_EOK) {
         if ((memheap->ops != NULL) && (memheap->ops->realloc != NULL)) {
             pbuf = memheap->ops->realloc(memheap, ptr, size);
@@ -157,20 +158,7 @@ extern void MDS_MemHeapSize(MDS_MemHeap_t *memheap, MDS_MemHeapSize_t *size)
 
 /* SysMem ------------------------------------------------------------------ */
 static MDS_MemHeap_t g_sysMemHeap;
-
-__attribute__((weak)) void MDS_SysMemAddress(void **heapBegin, void **heapLimit)
-{
-#if defined(__IAR_SYSTEMS_ICC__)
-#pragma section(".heap")
-    *heapBegin = __section_start(".heap");
-    *heapLimit = __section_end(".heap");
-#else
-    extern uintptr_t __HeapBase;
-    extern uintptr_t __HeapLimit;
-    *heapBegin = &__HeapBase;
-    *heapLimit = &__HeapLimit;
-#endif
-}
+static __attribute__((section(MDS_SYSMEM_HEAP_SECTION))) uint8_t g_sysMemBuff[MDS_SYSMEM_HEAP_SIZE];
 
 void MDS_SysMemInit(void)
 {
@@ -178,10 +166,7 @@ void MDS_SysMemInit(void)
         return;
     }
 
-    void *heapBase, *heapLimit;
-    MDS_SysMemAddress(&heapBase, &heapLimit);
-
-    MDS_MemHeapInit(&g_sysMemHeap, "sysmem", heapBase, heapLimit, &G_MDS_MEMHEAP_OPS_LLFF);
+    MDS_MemHeapInit(&g_sysMemHeap, "sysmem", g_sysMemBuff, sizeof(g_sysMemBuff), &G_MDS_MEMHEAP_OPS_LLFF);
 }
 
 void MDS_SysMemFree(void *ptr)
@@ -211,8 +196,3 @@ void *MDS_SysMemRealloc(void *ptr, size_t size)
 
     return (MDS_MemHeapRealloc(&g_sysMemHeap, ptr, size));
 }
-
-__attribute__((alias("MDS_SysMemFree"))) void free(void *ptr);
-__attribute__((alias("MDS_SysMemAlloc"))) void *malloc(size_t size);
-__attribute__((alias("MDS_SysMemCalloc"))) void *calloc(size_t nmemb, size_t size);
-__attribute__((alias("MDS_SysMemRealloc"))) void *realloc(void *ptr, size_t size);

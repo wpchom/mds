@@ -11,10 +11,7 @@
  **/
 /* Include ----------------------------------------------------------------- */
 #include "mds_sys.h"
-
-/* Hook -------------------------------------------------------------------- */
-MDS_HOOK_INIT(INTERRUPT_ENTER, MDS_Item_t irq);
-MDS_HOOK_INIT(INTERRUPT_EXIT, MDS_Item_t irq);
+#include "mds_log.h"
 
 /* Define ----------------------------------------------------------------- */
 #if ((defined(__CC_ARM) && defined(__TARGET_FPU_VFP)) ||                                                               \
@@ -222,16 +219,16 @@ bool MDS_CoreThreadStackCheck(MDS_Thread_t *thread)
     if (((*(uint8_t *)(thread->stackBase)) != '@') ||
         ((uintptr_t)(thread->stackPoint) <= (uintptr_t)(thread->stackBase)) ||
         ((uintptr_t)(thread->stackPoint) > ((uintptr_t)(thread->stackBase) + (uintptr_t)(thread->stackSize)))) {
-        MDS_LOG_F("[CORE] thread(%p) entry:%p stackpoint:%p stackbase:%p stacksize:%u overflow", thread, thread->entry,
-                  thread->stackPoint, thread->stackBase, thread->stackSize);
         return (false);
     }
+
+#if (defined(MDS_KERNEL_STATS_ENABLE) && (MDS_KERNEL_STATS_ENABLE > 0))
+#endif
 
     return (true);
 }
 
 /* CoreScheduler ----------------------------------------------------------- */
-#if (defined(MDS_THREAD_PRIORITY_NUMS) && (MDS_THREAD_PRIORITY_NUMS > 0))
 static struct CoreScheduler {
     uintptr_t swflag;
     uintptr_t *fromSP;
@@ -327,7 +324,6 @@ void PendSV_Handler(void)
 
     __asm volatile("orr         lr, lr, #0x04");
 }
-#endif
 
 /* Backtrace --------------------------------------------------------------- */
 __attribute__((weak)) bool MDS_CoreStackPointerInCode(uintptr_t pc)
@@ -363,7 +359,7 @@ static bool CORE_DisassemblyInsIsBL(uintptr_t addr)
     }
 }
 
-__attribute__((weak)) void MDS_CoreBackTrace(uintptr_t stackPoint, uintptr_t stackLimit)
+void MDS_CoreBackTrace(uintptr_t stackPoint, uintptr_t stackLimit)
 {
 #ifndef MDS_CORE_BACKTRACE_DEPTH
 #define MDS_CORE_BACKTRACE_DEPTH 16
@@ -379,19 +375,19 @@ __attribute__((weak)) void MDS_CoreBackTrace(uintptr_t stackPoint, uintptr_t sta
     }
 }
 
-/* Interrupt --------------------------------------------------------------- */
-#if (defined(MDS_CORE_BACKTRACE) && (MDS_CORE_BACKTRACE > 0))
+/* Exception --------------------------------------------------------------- */
 static struct StackFrame *g_exceptionContext = NULL;
 
-__attribute__((weak)) void MDS_CoreExceptionCallback(void)
+__attribute__((weak)) void MDS_CoreExceptionCallback(bool exit)
 {
 }
 
 static __attribute__((noreturn)) void MDS_CoreHardFaultException(struct ExceptionInfo *excInfo)
 {
+    MDS_CoreExceptionCallback(false);
+
     if (g_exceptionContext == NULL) {
         g_exceptionContext = &(excInfo->stack);
-        MDS_Thread_t *thread = MDS_KernelCurrentThread();
 
         MDS_LOG_F("[HARDFAULT] on ipsr:%u", MDS_CoreInterruptCurrent());
         MDS_LOG_F("r0 :%p r1 :%p r2 :%p r3 :%p ", g_exceptionContext->exception.r0, g_exceptionContext->exception.r1,
@@ -412,6 +408,7 @@ static __attribute__((noreturn)) void MDS_CoreHardFaultException(struct Exceptio
             MDS_CoreBackTrace(msp, **SCB_VTOR_STACK);
         }
 
+        MDS_Thread_t *thread = MDS_KernelCurrentThread();
         if (thread != NULL) {
             uintptr_t psp = CORE_GetPSP();
 
@@ -422,7 +419,7 @@ static __attribute__((noreturn)) void MDS_CoreHardFaultException(struct Exceptio
         }
     }
 
-    MDS_CoreExceptionCallback();
+    MDS_CoreExceptionCallback(true);
 
     for (;;) {
     }
@@ -457,4 +454,3 @@ __attribute__((naked, noreturn)) void HardFault_Handler(void)
 __attribute((noreturn, alias("HardFault_Handler"))) void MemManage_Handler(void);
 __attribute((noreturn, alias("HardFault_Handler"))) void BusFault_Handler(void);
 __attribute((noreturn, alias("HardFault_Handler"))) void UsageFault_Handler(void);
-#endif

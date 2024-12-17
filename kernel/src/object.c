@@ -11,6 +11,7 @@
  **/
 /* Include ----------------------------------------------------------------- */
 #include "mds_sys.h"
+#include "mds_log.h"
 
 /* Define ------------------------------------------------------------------ */
 #define OBJECT_FLAG_TYPEMASK  0x7FU
@@ -19,31 +20,15 @@
 
 /* Variable ---------------------------------------------------------------- */
 static MDS_ListNode_t g_objectList[] = {
-    OBJECT_LIST_INIT(MDS_OBJECT_TYPE_DEVICE),
-#ifndef MDS_TIMER_TYPE
-    OBJECT_LIST_INIT(MDS_OBJECT_TYPE_TIMER),
-#endif
-#ifndef MDS_THREAD_TYPE
-    OBJECT_LIST_INIT(MDS_OBJECT_TYPE_THREAD),
-#endif
-#ifndef MDS_SEMAPHORE_TYPE
-    OBJECT_LIST_INIT(MDS_OBJECT_TYPE_SEMAPHORE),
-#endif
-#ifndef MDS_MUTEX_TYPE
-    OBJECT_LIST_INIT(MDS_OBJECT_TYPE_MUTEX),
-#endif
-#ifndef MDS_EVENT_TYPE
-    OBJECT_LIST_INIT(MDS_OBJECT_TYPE_EVENT),
-#endif
-#ifndef MDS_MSGQUEUE_TYPE
-    OBJECT_LIST_INIT(MDS_OBJECT_TYPE_MSGQUEUE),
-#endif
-#ifndef MDS_MEMPOOL_TYPE
-    OBJECT_LIST_INIT(MDS_OBJECT_TYPE_MEMPOOL),
-#endif
-#ifndef MDS_MEMHEAP_TYPE
-    OBJECT_LIST_INIT(MDS_OBJECT_TYPE_MEMHEAP),
-#endif
+    OBJECT_LIST_INIT(MDS_OBJECT_TYPE_DEVICE),     //
+    OBJECT_LIST_INIT(MDS_OBJECT_TYPE_TIMER),      //
+    OBJECT_LIST_INIT(MDS_OBJECT_TYPE_THREAD),     //
+    OBJECT_LIST_INIT(MDS_OBJECT_TYPE_SEMAPHORE),  //
+    OBJECT_LIST_INIT(MDS_OBJECT_TYPE_MUTEX),      //
+    OBJECT_LIST_INIT(MDS_OBJECT_TYPE_EVENT),      //
+    OBJECT_LIST_INIT(MDS_OBJECT_TYPE_MSGQUEUE),   //
+    OBJECT_LIST_INIT(MDS_OBJECT_TYPE_MEMPOOL),    //
+    OBJECT_LIST_INIT(MDS_OBJECT_TYPE_MEMHEAP),    //
 };
 
 /* Function ---------------------------------------------------------------- */
@@ -62,7 +47,7 @@ MDS_Err_t MDS_ObjectInit(MDS_Object_t *object, MDS_ObjectType_t type, const char
     }
     object->flags = type;
 
-    register MDS_Item_t lock = MDS_CoreInterruptLock();
+    MDS_Item_t lock = MDS_CoreInterruptLock();
     MDS_ListInsertNodePrev(&(g_objectList[type]), &(object->node));
     MDS_CoreInterruptRestore(lock);
 
@@ -73,7 +58,7 @@ MDS_Err_t MDS_ObjectDeInit(MDS_Object_t *object)
 {
     MDS_ASSERT(object != NULL);
 
-    register MDS_Item_t lock = MDS_CoreInterruptLock();
+    MDS_Item_t lock = MDS_CoreInterruptLock();
     MDS_ListRemoveNode(&(object->node));
     object->flags = MDS_OBJECT_TYPE_NONE;
     MDS_CoreInterruptRestore(lock);
@@ -178,12 +163,12 @@ MDS_ObjectType_t MDS_ObjectGetType(const MDS_Object_t *object)
 {
     MDS_ASSERT(object != NULL);
 
-    return (object->flags & OBJECT_FLAG_TYPEMASK);
+    return ((MDS_ObjectType_t)(object->flags & OBJECT_FLAG_TYPEMASK));
 }
 
 bool MDS_ObjectIsCreated(const MDS_Object_t *object)
 {
     MDS_ASSERT(object != NULL);
 
-    return ((object->flags & OBJECT_FLAG_CREATED) != 0);
+    return ((object->flags & OBJECT_FLAG_CREATED) != 0U);
 }

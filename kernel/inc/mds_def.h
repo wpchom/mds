@@ -25,7 +25,6 @@ extern "C" {
 
 /* Typedef ----------------------------------------------------------------- */
 typedef int64_t MDS_Time_t;
-typedef size_t MDS_Tick_t;
 typedef intptr_t MDS_Item_t;
 typedef uintptr_t MDS_Mask_t;
 typedef union MDS_Arg {
@@ -55,30 +54,13 @@ typedef enum MDS_Err {
 } MDS_Err_t;
 
 /* Define ------------------------------------------------------------------ */
-#define MDS_LOOP         for (;;)
-#define MDS_TICK_FOREVER ((MDS_Tick_t)(-1))
+#define MDS_LOOP for (;;)
 
 #define MDS_BITS_OF_BYTE 8U
 #define MDS_NUM_BIN_BASE 2U
 #define MDS_NUM_OCT_BASE 8U
 #define MDS_NUM_DEC_BASE 10U
 #define MDS_NUM_HEX_BASE 16U
-
-#define MDS_TIME_NSEC_OF_SEC  1000000000
-#define MDS_TIME_USEC_OF_SEC  1000000
-#define MDS_TIME_MSEC_OF_SEC  1000
-#define MDS_TIME_USEC_OF_MSEC 1000
-#define MDS_TIME_SEC_OF_MIN   60
-#define MDS_TIME_MSEC_OF_MIN  (MDS_TIME_MSEC_OF_SEC * MDS_TIME_SEC_OF_MIN)
-#define MDS_TIME_MIN_OF_HOUR  60
-#define MDS_TIME_SEC_OF_HOUR  (MDS_TIME_SEC_OF_MIN * MDS_TIME_MIN_OF_HOUR)
-#define MDS_TIME_MSEC_OF_HOUR (MDS_TIME_MSEC_OF_SEC * MDS_TIME_SEC_OF_HOUR)
-#define MDS_TIME_HOUR_OF_DAY  24
-#define MDS_TIME_MIN_OF_DAY   (MDS_TIME_MIN_OF_HOUR * MDS_TIME_HOUR_OF_DAY)
-#define MDS_TIME_SEC_OF_DAY   (MDS_TIME_SEC_OF_MIN * MDS_TIME_MIN_OF_DAY)
-#define MDS_TIME_MSEC_OF_DAY  (MDS_TIME_MSEC_OF_SEC * MDS_TIME_SEC_OF_DAY)
-#define MDS_TIME_DAY_OF_WEEK  7
-#define MDS_TIME_DAY_OF_YEAR  365
 
 #ifndef UNUSED
 #define UNUSED(x) (void)(x)
@@ -102,20 +84,6 @@ typedef enum MDS_Err {
 
 #ifndef VALUE_ALIGN
 #define VALUE_ALIGN(val, align) ((val) & (~((align) - (1ULL))))
-#endif
-
-/* Assert ------------------------------------------------------------------ */
-#if (defined(MDS_USE_ASSERT) && (MDS_USE_ASSERT > 0))
-extern __attribute__((noreturn)) void MDS_AssertPrintf(const char *assertion, const char *function, void *caller);
-#define MDS_ASSERT(condition)                                                                                          \
-    do {                                                                                                               \
-        if (!(condition)) {                                                                                            \
-            static const char __attribute__((section(".logstr.assert"))) cond[] = #condition;                          \
-            MDS_AssertPrintf(cond, __FUNCTION__, __builtin_return_address(0));                                         \
-        }                                                                                                              \
-    } while (0)
-#elif (!defined(MDS_ASSERT))
-#define MDS_ASSERT(condition) (void)(0)
 #endif
 
 /* Data -------------------------------------------------------------------- */
@@ -174,22 +142,6 @@ static inline void MDS_PutU32LE(uint8_t *array, uint32_t value)
     array[0x02] = (uint8_t)(value >> (MDS_BITS_OF_BYTE * 0x02));
     array[0x03] = (uint8_t)(value >> (MDS_BITS_OF_BYTE * 0x03));
 }
-
-/* Memory ------------------------------------------------------------------ */
-extern bool MDS_MemAddrIsAligned(const void *address, uintptr_t align);
-extern void *MDS_MemBuffSet(void *dst, int c, size_t len);
-extern size_t MDS_MemBuffCopy(void *dst, size_t size, const void *src, size_t len);
-extern void *MDS_MemBuffCcpy(void *dst, const void *src, int c, size_t size);
-
-/* Message ----------------------------------------------------------------- */
-typedef struct MDS_MsgList {
-    const void *buff;
-    size_t len;
-    struct MDS_MsgList *next;
-} MDS_MsgList_t;
-
-extern size_t MDS_MsgListGetLength(const MDS_MsgList_t *msg);
-extern size_t MDS_MsgListCopyBuff(void *buff, size_t size, const MDS_MsgList_t *msg);
 
 /* Linked List ------------------------------------------------------------- */
 typedef struct MDS_ListNode {
@@ -263,6 +215,22 @@ extern MDS_TreeNode_t *MDS_TreeRemoveNode(MDS_TreeNode_t *node);
 extern size_t MDS_TreeForeachNode(const MDS_TreeNode_t *tree, void (*func)(const MDS_TreeNode_t *, MDS_Arg_t *),
                                   MDS_Arg_t *arg);
 
+/* Message ----------------------------------------------------------------- */
+typedef struct MDS_MsgList {
+    const void *buff;
+    size_t len;
+    struct MDS_MsgList *next;
+} MDS_MsgList_t;
+
+extern size_t MDS_MsgListGetLength(const MDS_MsgList_t *msg);
+extern size_t MDS_MsgListCopyBuff(void *buff, size_t size, const MDS_MsgList_t *msg);
+
+/* Memory ------------------------------------------------------------------ */
+extern bool MDS_MemAddrIsAligned(const void *address, uintptr_t align);
+extern void *MDS_MemBuffSet(void *dst, int c, size_t len);
+extern size_t MDS_MemBuffCopy(void *dst, size_t size, const void *src, size_t len);
+extern void *MDS_MemBuffCcpy(void *dst, const void *src, int c, size_t size);
+
 /* String ------------------------------------------------------------------ */
 extern size_t MDS_StrAscLetterLength(const char *str);
 extern size_t MDS_StrAscNumberLength(const char *str, int base);
@@ -270,6 +238,22 @@ extern size_t MDS_StrAsc2Hex(uint8_t *hex, size_t size, const char *asc, bool ri
 extern size_t MDS_StrHex2Asc(char *asc, size_t size, const uint8_t *hex, size_t len, bool lowCase);
 
 /* Time ----------------------------------------------------------------- */
+#define MDS_TIME_NSEC_OF_SEC  1000000000
+#define MDS_TIME_USEC_OF_SEC  1000000
+#define MDS_TIME_MSEC_OF_SEC  1000
+#define MDS_TIME_USEC_OF_MSEC 1000
+#define MDS_TIME_SEC_OF_MIN   60
+#define MDS_TIME_MSEC_OF_MIN  (MDS_TIME_MSEC_OF_SEC * MDS_TIME_SEC_OF_MIN)
+#define MDS_TIME_MIN_OF_HOUR  60
+#define MDS_TIME_SEC_OF_HOUR  (MDS_TIME_SEC_OF_MIN * MDS_TIME_MIN_OF_HOUR)
+#define MDS_TIME_MSEC_OF_HOUR (MDS_TIME_MSEC_OF_SEC * MDS_TIME_SEC_OF_HOUR)
+#define MDS_TIME_HOUR_OF_DAY  24
+#define MDS_TIME_MIN_OF_DAY   (MDS_TIME_MIN_OF_HOUR * MDS_TIME_HOUR_OF_DAY)
+#define MDS_TIME_SEC_OF_DAY   (MDS_TIME_SEC_OF_MIN * MDS_TIME_MIN_OF_DAY)
+#define MDS_TIME_MSEC_OF_DAY  (MDS_TIME_MSEC_OF_SEC * MDS_TIME_SEC_OF_DAY)
+#define MDS_TIME_DAY_OF_WEEK  7
+#define MDS_TIME_DAY_OF_YEAR  365
+
 typedef struct MDS_TimeDate {
     int16_t msec;   // microseconds [0~999]
     int8_t second;  // seconds [0~60]
@@ -310,8 +294,6 @@ typedef enum MDS_TIME_Month {
 extern MDS_Time_t MDS_TIME_ChangeTimeStamp(MDS_TimeDate_t *tm, int8_t tz);
 extern void MDS_TIME_ChangeTimeDate(MDS_TimeDate_t *tm, MDS_Time_t timestamp, int8_t tz);
 extern MDS_Time_t MDS_TIME_DiffTimeMs(MDS_TimeDate_t *tm1, MDS_TimeDate_t *tm2);
-extern MDS_Time_t MDS_TIME_GetTimeStamp(int8_t *tz);
-extern void MDS_TIME_SetTimeStamp(MDS_Time_t ts, int8_t tz);
 
 /* Init -------------------------------------------------------------------- */
 #ifndef MDS_INIT_SECTION
@@ -332,13 +314,12 @@ extern void MDS_TIME_SetTimeStamp(MDS_Time_t ts, int8_t tz);
 typedef void (*MDS_InitFunc_t)(void);
 
 #define MDS_INIT_IMPORT(priority, func)                                                                                \
-    static const                                                                                                       \
-        __attribute__((used, section(MDS_INIT_SECTION priority #func))) MDS_InitFunc_t __MDS_INIT_##func = (func)
+    static const __attribute__((section(MDS_INIT_SECTION priority #func))) MDS_InitFunc_t __MDS_INIT_##func = (func)
 
 static inline void MDS_InitPorting(void)
 {
-    static const void *initBegin __attribute__((section(MDS_INIT_SECTION "\000"))) = NULL;
-    static const void *initLimit __attribute__((section(MDS_INIT_SECTION "\177"))) = NULL;
+    static const __attribute__((section(MDS_INIT_SECTION "\000"))) void *initBegin = NULL;
+    static const __attribute__((section(MDS_INIT_SECTION "\177"))) void *initLimit = NULL;
     const MDS_InitFunc_t *initStart = (const MDS_InitFunc_t *)((uintptr_t)(&initBegin) + sizeof(void *));
     const MDS_InitFunc_t *initEnd = (const MDS_InitFunc_t *)((uintptr_t)(&initLimit));
 

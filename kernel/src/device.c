@@ -11,12 +11,13 @@
  **/
 /* Include ----------------------------------------------------------------- */
 #include "mds_dev.h"
+#include "mds_log.h"
 
 /* Define ------------------------------------------------------------------ */
-#if (defined(MDS_DEBUG_DEVICE) && (MDS_DEBUG_DEVICE > 0))
-#define MDS_DEVICE_PRINT(fmt, ...) MDS_LOG_D("[DEVICE]" fmt, ##__VA_ARGS__)
+#if (defined(MDS_DEVICE_DEBUG_ENABLE) && (MDS_DEVICE_DEBUG_ENABLE > 0))
+#define MDS_DEVICE_DEBUG(fmt, ...) MDS_LOG_D("[DEVICE]" fmt, ##__VA_ARGS__)
 #else
-#define MDS_DEVICE_PRINT(fmt, ...)
+#define MDS_DEVICE_DEBUG(fmt, ...)
 #endif
 
 /* Typedef ----------------------------------------------------------------- */
@@ -295,7 +296,7 @@ MDS_Err_t MDS_DevPeriphInit(MDS_DevPeriph_t *periph, const char *name, MDS_DevAd
         periph->device.flags = MDS_DEVICE_FLAG_PERIPH;
         periph->mount = adaptr;
 
-        register MDS_Item_t lock = MDS_CoreInterruptLock();
+        MDS_Item_t lock = MDS_CoreInterruptLock();
         MDS_ListRemoveNode(&(periph->device.object.node));
         MDS_ListInsertNodeNext(&(adaptr->device.object.node), &(periph->device.object.node));
         MDS_CoreInterruptRestore(lock);
@@ -327,7 +328,7 @@ MDS_DevPeriph_t *MDS_DevPeriphCreate(size_t typesz, const char *name, MDS_DevAda
         periph->device.flags = MDS_DEVICE_FLAG_PERIPH;
         periph->mount = adaptr;
 
-        register MDS_Item_t lock = MDS_CoreInterruptLock();
+        MDS_Item_t lock = MDS_CoreInterruptLock();
         MDS_ListRemoveNode(&(periph->device.object.node));
         MDS_ListInsertNodeNext(&(adaptr->device.object.node), &(periph->device.object.node));
         MDS_CoreInterruptRestore(lock);
@@ -374,7 +375,7 @@ MDS_Err_t MDS_DevPeriphOpen(MDS_DevPeriph_t *periph, MDS_Tick_t timeout)
         err = adaptr->driver->control(&(adaptr->device), MDS_DEVICE_CMD_OPEN, (MDS_Arg_t *)periph);
         if (err != MDS_EOK) {
             MDS_MutexRelease(&(adaptr->mutex));
-            MDS_DEVICE_PRINT("periph(%p) open adaptr(%p) failed err=%d", periph->device.object.name, periph,
+            MDS_DEVICE_DEBUG("periph(%p) open adaptr(%p) failed err=%d", periph->device.object.name, periph,
                              adaptr->device.object.name, adaptr);
             return (err);
         }
@@ -398,7 +399,7 @@ MDS_Err_t MDS_DevPeriphClose(MDS_DevPeriph_t *periph)
         if ((adaptr->driver != NULL) && (adaptr->driver->control != NULL)) {
             err = adaptr->driver->control(&(adaptr->device), MDS_DEVICE_CMD_CLOSE, NULL);
             if (err != MDS_EOK) {
-                MDS_DEVICE_PRINT("periph(%p) close adaptr(%p) failed err:%d", periph, adaptr);
+                MDS_DEVICE_DEBUG("periph(%p) close adaptr(%p) failed err:%d", periph, adaptr);
             }
             if (adaptr->device.hook != NULL) {
                 adaptr->device.hook(&(adaptr->device), MDS_DEVICE_CMD_CLOSE);

@@ -10,61 +10,11 @@
  * See the Mulan PSL v2 for more details.
  **/
 /* Include ----------------------------------------------------------------- */
+#include "mds_def.h"
 #include "mds_log.h"
-#include "mds_sys.h"
-
-/* Define ------------------------------------------------------------------ */
-#ifndef MDS_LOG_COMPRESS_MAGIC
-#define MDS_LOG_COMPRESS_MAGIC 0xD6 /* log 109 => 0x6D */
-#endif
-
-#ifndef MDS_LOG_COMPRESS_ARG_FIX
-/* 0xFFFFFFFF => -1111111111 (2's complement: 0xBDC5CA39) */
-#define MDS_LOG_COMPRESS_ARG_FIX(x) ((x == 0xFFFFFFFF) ? (0xBDC5CA39) : (x))
-#endif
 
 /* Function ---------------------------------------------------------------- */
-size_t MDS_LOG_CompressStructVa(MDS_LOG_Compress_t *log, size_t level, const char *fmt, size_t cnt, va_list ap)
-{
-    MDS_ASSERT(log != NULL);
-
-    static size_t psn = 0;
-
-    register MDS_Item_t lock = MDS_CoreInterruptLock();
-    psn++;
-    MDS_CoreInterruptRestore(lock);
-
-    if (cnt > MDS_LOG_COMPRESS_ARGS_MAX) {
-        cnt = MDS_LOG_COMPRESS_ARGS_MAX;
-    }
-
-    log->magic = MDS_LOG_COMPRESS_MAGIC;
-    log->address = (uintptr_t)fmt & 0x00FFFFFF;
-    log->level = level;
-    log->count = cnt;
-    log->psn = psn;
-    log->timestamp = MDS_TIME_GetTimeStamp(NULL);
-
-    for (size_t idx = 0; idx < cnt; idx++) {
-        uint32_t val = va_arg(ap, uint32_t);
-        log->args[idx] = MDS_LOG_COMPRESS_ARG_FIX(val);
-    }
-
-    return (sizeof(MDS_LOG_Compress_t) - (sizeof(uint32_t) * (MDS_LOG_COMPRESS_ARGS_MAX + cnt)));
-}
-
-size_t MDS_LOG_CompressSturctPrint(MDS_LOG_Compress_t *log, size_t level, const char *fmt, size_t cnt, ...)
-{
-    va_list ap;
-
-    va_start(ap, cnt);
-    size_t len = MDS_LOG_CompressStructVa(log, level, fmt, cnt, ap);
-    va_end(ap);
-
-    return (len);
-}
-
-__attribute__((weak)) void MDS_LOG_VaPrintf(size_t level, const char *fmt, size_t cnt, va_list ap)
+__attribute__((weak)) void MDS_LOG_VaPrintf(size_t level, const void *fmt, size_t cnt, va_list ap)
 {
     UNUSED(level);
     UNUSED(fmt);
@@ -72,13 +22,17 @@ __attribute__((weak)) void MDS_LOG_VaPrintf(size_t level, const char *fmt, size_
     UNUSED(ap);
 }
 
-void MDS_LOG_Printf(size_t level, const char *fmt, size_t cnt, ...)
+void MDS_LOG_Printf(size_t level, const void *fmt, size_t cnt, ...)
 {
     va_list ap;
 
     va_start(ap, cnt);
     MDS_LOG_VaPrintf(level, fmt, cnt, ap);
     va_end(ap);
+}
+
+__attribute__((weak)) void MDS_PanicBacktrace(void)
+{
 }
 
 __attribute__((noreturn)) void MDS_PanicPrintf(const char *fmt, ...)
@@ -89,11 +43,9 @@ __attribute__((noreturn)) void MDS_PanicPrintf(const char *fmt, ...)
     MDS_LOG_VaPrintf(MDS_LOG_LEVEL_FATAL, fmt, 0, ap);
     va_end(ap);
 
-    MDS_CoreInterruptLock();
+    MDS_PanicBacktrace();
 
-    // TODO: add core backtrace
-
-    MDS_LOOP {
+    for (;;) {
     }
 }
 

@@ -20,37 +20,42 @@ extern "C" {
 #endif
 
 /* Define ------------------------------------------------------------------ */
-#if (defined(MDS_DEBUG_SCHEDULER) && (MDS_DEBUG_SCHEDULER > 0))
-#define MDS_SCHEDULER_PRINT(fmt, ...) MDS_LOG_D("[SCHEDULER]" fmt, ##__VA_ARGS__)
+#if (defined(MDS_SCHEDULER_DEBUG_ENABLE) && (MDS_SCHEDULER_DEBUG_ENABLE > 0))
+#define MDS_SCHEDULER_DEBUG(fmt, args...) MDS_LOG_D(fmt, ##args)
 #else
-#define MDS_SCHEDULER_PRINT(fmt, ...)
+#define MDS_SCHEDULER_DEBUG(fmt, args...)
 #endif
+
+/* Core -------------------------------------------------------------------- */
+extern void *MDS_CoreThreadStackInit(void *stackBase, size_t stackSize, void *entry, void *arg, void *exit);
+extern void MDS_CoreSchedulerStartup(void *toSP);
+extern void MDS_CoreSchedulerSwitch(void *from, void *to);
+extern bool MDS_CoreThreadStackCheck(void *sp);
 
 /* Kernel ------------------------------------------------------------------ */
 extern void MDS_KernelSchedulerCheck(void);
 extern void MDS_KernelPushDefunct(MDS_Thread_t *thread);
 extern MDS_Thread_t *MDS_KernelPopDefunct(void);
+extern void MDS_KernelRemainThread(void);
+extern MDS_Thread_t *MDS_KernelIdleThread(void);
+extern void MDS_IdleThreadInit(void);
 
 /* Scheduler --------------------------------------------------------------- */
 extern void MDS_SchedulerInit(void);
-extern MDS_Thread_t *MDS_SchedulerGetHighestPriorityThread(void);
 extern void MDS_SchedulerInsertThread(MDS_Thread_t *thread);
 extern void MDS_SchedulerRemoveThread(MDS_Thread_t *thread);
-extern void MDS_SchedulerRemainThread(void);
+extern MDS_Thread_t *MDS_SchedulerHighestPriorityThread(void);
 
 /* Timer ------------------------------------------------------------------- */
+#ifndef MDS_TIMER_THREAD_ENABLE
+#define MDS_TIMER_THREAD_ENABLE 1
+#endif
+
+#define MDS_TIMER_TICK_MAX ((MDS_Tick_t)(MDS_CLOCK_TICK_FOREVER / 2))
+
 extern void MDS_SysTimerInit(void);
 extern void MDS_SysTimerCheck(void);
 extern MDS_Tick_t MDS_SysTimerNextTick(void);
-
-/* Thread ------------------------------------------------------------------ */
-extern void MDS_IdleThreadInit(void);
-
-/* Core -------------------------------------------------------------------- */
-extern void *MDS_CoreThreadStackInit(void *stackBase, size_t stackSize, void *entry, void *arg, void *exit);
-extern bool MDS_CoreThreadStackCheck(MDS_Thread_t *thread);
-extern void MDS_CoreSchedulerSwitch(void *fromSP, void *toSP);
-extern void MDS_CoreSchedulerStartup(void *toSP);
 
 #ifdef __cplusplus
 }

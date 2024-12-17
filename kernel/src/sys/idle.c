@@ -11,23 +11,24 @@
  **/
 /* Include ----------------------------------------------------------------- */
 #include "kernel.h"
+#include "mds_log.h"
 
 /* Define ------------------------------------------------------------------ */
-#ifndef MDS_THREAD_IDLE_HOOK_SIZE
-#define MDS_THREAD_IDLE_HOOK_SIZE 0
+#ifndef MDS_IDLE_THREAD_STACKSIZE
+#define MDS_IDLE_THREAD_STACKSIZE 384
 #endif
 
-#ifndef MDS_THREAD_IDLE_STACKSIZE
-#define MDS_THREAD_IDLE_STACKSIZE 384
+#ifndef MDS_IDLE_THREAD_PRIORITY
+#define MDS_IDLE_THREAD_PRIORITY MDS_THREAD_PRIORITY_MAX
 #endif
 
-#ifndef MDS_THREAD_IDLE_TICKS
-#define MDS_THREAD_IDLE_TICKS 32
+#ifndef MDS_IDLE_THREAD_TICKS
+#define MDS_IDLE_THREAD_TICKS 16
 #endif
 
 /* Variable ---------------------------------------------------------------- */
 static MDS_Thread_t g_idleThread;
-static uint8_t g_idleStack[MDS_THREAD_IDLE_STACKSIZE];
+static uint8_t g_idleStack[MDS_IDLE_THREAD_STACKSIZE];
 
 /* Function ---------------------------------------------------------------- */
 __attribute__((weak)) void MDS_KernelIdleLowPowerControl(void)
@@ -35,7 +36,7 @@ __attribute__((weak)) void MDS_KernelIdleLowPowerControl(void)
     MDS_CoreIdleSleep();
 }
 
-MDS_Thread_t *MDS_KernelGetIdleThread(void)
+MDS_Thread_t *MDS_KernelIdleThread(void)
 {
     return (&g_idleThread);
 }
@@ -47,7 +48,7 @@ MDS_Err_t MDS_KernelAddIdleHook(void (*hook)(void))
 {
     size_t idx;
     MDS_Err_t err = MDS_ERROR;
-    register MDS_Item_t lock = MDS_CoreInterruptLock();
+    MDS_Item_t lock = MDS_CoreInterruptLock();
 
     for (idx = 0; idx < ARRAY_SIZE(g_idleHook); idx++) {
         if (g_idleHook[idx] == NULL) {
@@ -66,7 +67,7 @@ MDS_Err_t MDS_KernelDelIdleHook(void (*hook)(void))
 {
     size_t idx;
     MDS_Err_t err = MDS_ERROR;
-    register MDS_Item_t lock = MDS_CoreInterruptLock();
+    MDS_Item_t lock = MDS_CoreInterruptLock();
 
     for (idx = 0; idx < ARRAY_SIZE(g_idleHook); idx++) {
         if (g_idleHook[idx] == hook) {
@@ -121,8 +122,11 @@ static __attribute__((noreturn)) void IDLE_ThreadEntry(MDS_Arg_t *arg)
 
 void MDS_IdleThreadInit(void)
 {
-    MDS_ThreadInit(&g_idleThread, "idle", IDLE_ThreadEntry, NULL, &g_idleStack, sizeof(g_idleStack),
-                   MDS_THREAD_PRIORITY_NUMS - 1, MDS_THREAD_IDLE_TICKS);
-
-    MDS_ThreadStartup(&g_idleThread);
+    MDS_Err_t err = MDS_ThreadInit(&g_idleThread, "idle", IDLE_ThreadEntry, NULL, &g_idleStack, sizeof(g_idleStack),
+                                   MDS_IDLE_THREAD_PRIORITY, MDS_IDLE_THREAD_TICKS);
+    if (err == MDS_EOK) {
+        MDS_ThreadStartup(&g_idleThread);
+    } else {
+        MDS_PANIC("idle thread initialize err:%d", err);
+    }
 }

@@ -13,145 +13,76 @@
 #define __MDS_SYS_H__
 
 /* Include ----------------------------------------------------------------- */
-#ifdef MDS_CONFIG_HEADER
-#include MDS_CONFIG_HEADER
-#endif
 #include "mds_def.h"
-#include "mds_log.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* SysMem ------------------------------------------------------------------ */
-#ifndef MDS_SYSMEM_ALIGN_SIZE
-#define MDS_SYSMEM_ALIGN_SIZE sizeof(uintptr_t)
+/* Clock -------------------------------------------------------------------- */
+typedef size_t MDS_Tick_t;
+
+#ifndef MDS_CLOCK_TICK_FREQ_HZ
+#define MDS_CLOCK_TICK_FREQ_HZ 1000U
 #endif
 
-extern MDS_Err_t MDS_SysMemHeapSetup(void *heapBegin, void *heapLimit);
-extern void MDS_SysMemFree(void *ptr);
-extern void *MDS_SysMemAlloc(size_t size);
-extern void *MDS_SysMemCalloc(size_t nmemb, size_t size);
-extern void *MDS_SysMemRealloc(void *ptr, size_t size);
+#define MDS_CLOCK_TICK_FOREVER ((MDS_Tick_t)(-1))
 
-/* SysTick ----------------------------------------------------------------- */
-#ifndef MDS_SYSTICK_FREQ_HZ
-#define MDS_SYSTICK_FREQ_HZ 1000U
-#endif
+extern MDS_Tick_t MDS_ClockGetTickCount(void);
+extern void MDS_ClockSetTickCount(MDS_Tick_t tickcnt);
+extern void MDS_ClockIncTickCount(void);
+extern MDS_Time_t MDS_ClockGetTimestamp(int8_t *tz);
+extern void MDS_ClockSetTimestamp(MDS_Time_t ts, int8_t tz);
 
-extern MDS_Tick_t MDS_SysTickGetCount(void);
-extern void MDS_SysTickSetCount(MDS_Tick_t tickcnt);
-extern void MDS_SysTickIncCount(void);
-
-static inline MDS_Time_t MDS_SysTickToMs(MDS_Tick_t tick)
+static inline MDS_Time_t MDS_ClockTickToMs(MDS_Tick_t tick)
 {
-    return ((MDS_Time_t)tick * MDS_TIME_MSEC_OF_SEC / MDS_SYSTICK_FREQ_HZ);
+    return ((MDS_Time_t)tick * MDS_TIME_MSEC_OF_SEC / MDS_CLOCK_TICK_FREQ_HZ);
 }
 
-static inline MDS_Time_t MDS_SysTickFromMs(MDS_Time_t ms)
+static inline MDS_Time_t MDS_ClockTickFromMs(MDS_Time_t ms)
 {
-    return (ms * MDS_SYSTICK_FREQ_HZ / MDS_TIME_MSEC_OF_SEC);
+    return (ms * MDS_CLOCK_TICK_FREQ_HZ / MDS_TIME_MSEC_OF_SEC);
 }
 
-static inline void MDS_SysTickRawDelay(MDS_Tick_t delay)
+static inline void MDS_ClockDelayRawTick(MDS_Tick_t delay)
 {
-    register MDS_Tick_t ticklimit = MDS_SysTickGetCount() + delay;
+    MDS_Tick_t ticklimit = MDS_ClockGetTickCount() + delay;
 
-    while (MDS_SysTickGetCount() < ticklimit) {
+    while (MDS_ClockGetTickCount() < ticklimit) {
     }
 }
 
-static inline void MDS_SysCountDelay(MDS_Tick_t delay)
+static inline void MDS_ClockDelayCount(MDS_Tick_t delay)
 {
     for (volatile MDS_Tick_t count = delay; count > 0; count -= 1) {
     }
 }
 
-/* Core -------------------------------------------------------------------- */
+/* Core --------------------------------------------------------------------- */
 extern void MDS_CoreIdleSleep(void);
-
 extern MDS_Item_t MDS_CoreInterruptCurrent(void);
 extern MDS_Item_t MDS_CoreInterruptLock(void);
 extern void MDS_CoreInterruptRestore(MDS_Item_t lock);
 
-/* Object ------------------------------------------------------------------ */
-#ifndef MDS_TIMER_TYPE
-typedef struct MDS_Timer MDS_Timer_t;
-#else
-typedef MDS_TIMER_TYPE MDS_Timer_t;
+/* SysMem ------------------------------------------------------------------- */
+#ifndef MDS_SYSMEM_ALIGN_SIZE
+#define MDS_SYSMEM_ALIGN_SIZE sizeof(uintptr_t)
 #endif
 
-#ifndef MDS_THREAD_TYPE
-typedef struct MDS_Thread MDS_Thread_t;
-#else
-typedef MDS_THREAD_TYPE MDS_Thread_t;
+#ifndef MDS_SYSMEM_HEAP_SECTION
+#define MDS_SYSMEM_HEAP_SECTION ".heap"
 #endif
 
-#ifndef MDS_SEMAPHORE_TYPE
-typedef struct MDS_Semaphore MDS_Semaphore_t;
-#else
-typedef MDS_SEMAPHORE_TYPE MDS_Semaphore_t;
+#ifndef MDS_SYSMEM_HEAP_SIZE
+#define MDS_SYSMEM_HEAP_SIZE 0x4000
 #endif
 
-#ifndef MDS_MUTEX_TYPE
-typedef struct MDS_Mutex MDS_Mutex_t;
-#else
-typedef MDS_MUTEX_TYPE MDS_Mutex_t;
-#endif
+extern void *MDS_SysMemAlloc(size_t size);
+extern void *MDS_SysMemCalloc(size_t nmemb, size_t size);
+extern void *MDS_SysMemRealloc(void *ptr, size_t size);
+extern void MDS_SysMemFree(void *ptr);
 
-#ifndef MDS_EVENT_TYPE
-typedef struct MDS_Event MDS_Event_t;
-#else
-typedef MDS_EVENT_TYPE MDS_Event_t;
-#endif
-
-#ifndef MDS_MSGQUEUE_TYPE
-typedef struct MDS_MsgQueue MDS_MsgQueue_t;
-#else
-typedef MDS_MSGQUEUE_TYPE MDS_MsgQueue_t;
-#endif
-
-#ifndef MDS_MEMPOOL_TYPE
-typedef struct MDS_MemPool MDS_MemPool_t;
-#else
-typedef MDS_MEMPOOL_TYPE MDS_MemPool_t;
-#endif
-
-#ifndef MDS_MEMHEAP_TYPE
-typedef struct MDS_MemHeap MDS_MemHeap_t;
-#else
-typedef MDS_MEMHEAP_TYPE MDS_MemHeap_t;
-#endif
-
-typedef enum MDS_ObjectType {
-    MDS_OBJECT_TYPE_NONE = 0,
-    MDS_OBJECT_TYPE_DEVICE,
-#ifndef MDS_TIMER_TYPE
-    MDS_OBJECT_TYPE_TIMER,
-#endif
-#ifndef MDS_THREAD_TYPE
-    MDS_OBJECT_TYPE_THREAD,
-#endif
-#ifndef MDS_SEMAPHORE_TYPE
-    MDS_OBJECT_TYPE_SEMAPHORE,
-#endif
-#ifndef MDS_MUTEX_TYPE
-    MDS_OBJECT_TYPE_MUTEX,
-#endif
-#ifndef MDS_EVENT_TYPE
-    MDS_OBJECT_TYPE_EVENT,
-#endif
-#ifndef MDS_MSGQUEUE_TYPE
-    MDS_OBJECT_TYPE_MSGQUEUE,
-#endif
-#ifndef MDS_MEMPOOL_TYPE
-    MDS_OBJECT_TYPE_MEMPOOL,
-#endif
-#ifndef MDS_MEMHEAP_TYPE
-    MDS_OBJECT_TYPE_MEMHEAP,
-#endif
-} MDS_ObjectType_t;
-
+/* Object -------------------------------------------------------------------- */
 #ifndef MDS_OBJECT_NAME_SIZE
 #define MDS_OBJECT_NAME_SIZE 7
 #endif
@@ -161,6 +92,37 @@ typedef struct MDS_Object {
     uint8_t flags;
     char name[MDS_OBJECT_NAME_SIZE];
 } MDS_Object_t;
+
+typedef enum MDS_ObjectType {
+    MDS_OBJECT_TYPE_NONE = 0,
+
+    MDS_OBJECT_TYPE_DEVICE,
+
+    MDS_OBJECT_TYPE_TIMER,
+
+    MDS_OBJECT_TYPE_THREAD,
+
+    MDS_OBJECT_TYPE_SEMAPHORE,
+
+    MDS_OBJECT_TYPE_MUTEX,
+
+    MDS_OBJECT_TYPE_EVENT,
+
+    MDS_OBJECT_TYPE_MSGQUEUE,
+
+    MDS_OBJECT_TYPE_MEMPOOL,
+
+    MDS_OBJECT_TYPE_MEMHEAP,
+} MDS_ObjectType_t;
+
+typedef struct MDS_Timer MDS_Timer_t;
+typedef struct MDS_Thread MDS_Thread_t;
+typedef struct MDS_Semaphore MDS_Semaphore_t;
+typedef struct MDS_Mutex MDS_Mutex_t;
+typedef struct MDS_Event MDS_Event_t;
+typedef struct MDS_MsgQueue MDS_MsgQueue_t;
+typedef struct MDS_MemPool MDS_MemPool_t;
+typedef struct MDS_MemHeap MDS_MemHeap_t;
 
 extern MDS_Err_t MDS_ObjectInit(MDS_Object_t *object, MDS_ObjectType_t type, const char *name);
 extern MDS_Err_t MDS_ObjectDeInit(MDS_Object_t *object);
@@ -185,10 +147,6 @@ extern size_t MDS_KernelGetCritical(void);
 extern MDS_Tick_t MDS_KernelGetSleepTick(void);
 extern void MDS_KernelCompensateTick(MDS_Tick_t tickcount);
 
-extern MDS_Thread_t *MDS_KernelGetIdleThread(void);
-extern MDS_Err_t MDS_KernelAddIdleHook(void (*hook)(void));
-extern MDS_Err_t MDS_KernelDelIdleHook(void (*hook)(void));
-
 /* Timer ------------------------------------------------------------------- */
 #ifndef MDS_TIMER_SKIPLIST_LEVEL
 #define MDS_TIMER_SKIPLIST_LEVEL 1
@@ -198,7 +156,6 @@ extern MDS_Err_t MDS_KernelDelIdleHook(void (*hook)(void));
 #define MDS_TIMER_SKIPLIST_SHIFT 2
 #endif
 
-#define MDS_TIMER_TICK_MAX (((MDS_Tick_t)(-1)) / 2)
 typedef void (*MDS_TimerEntry_t)(MDS_Arg_t *arg);
 
 enum MDS_TimerType {
@@ -230,8 +187,8 @@ extern MDS_Err_t MDS_TimerStop(MDS_Timer_t *timer);
 extern bool MDS_TimerIsActived(const MDS_Timer_t *timer);
 
 /* Thread ------------------------------------------------------------------ */
-#ifndef MDS_THREAD_PRIORITY_NUMS
-#define MDS_THREAD_PRIORITY_NUMS 32
+#ifndef MDS_THREAD_PRIORITY_MAX
+#define MDS_THREAD_PRIORITY_MAX __WORDSIZE
 #endif
 
 typedef void (*MDS_ThreadEntry_t)(MDS_Arg_t *arg);
@@ -246,7 +203,7 @@ typedef enum MDS_ThreadState {
     MDS_THREAD_STATE_BLOCKED = 0x04U,
 
     MDS_THREAD_STATE_MASK = 0x0FU,
-    MDS_THREAD_STATE_YIELD = 0x80U,
+    MDS_THREAD_FLAG_YIELD = 0x80U,
 } MDS_ThreadState_t;
 
 struct MDS_Thread {
@@ -270,6 +227,10 @@ struct MDS_Thread {
     uint8_t state;
     uint8_t eventOpt;
     MDS_Mask_t eventMask;
+
+#if (defined(MDS_KERNEL_STATS_ENABLE) && (MDS_KERNEL_STATS_ENABLE > 0))
+    void *stackWater;
+#endif
 };
 
 extern MDS_Err_t MDS_ThreadInit(MDS_Thread_t *thread, const char *name, MDS_ThreadEntry_t entry, MDS_Arg_t *arg,
@@ -279,11 +240,16 @@ extern MDS_Thread_t *MDS_ThreadCreate(const char *name, MDS_ThreadEntry_t entry,
                                       MDS_ThreadPriority_t priority, MDS_Tick_t ticks);
 extern MDS_Err_t MDS_ThreadDestroy(MDS_Thread_t *thread);
 extern MDS_Err_t MDS_ThreadStartup(MDS_Thread_t *thread);
-extern MDS_Err_t MDS_ThreadSuspend(MDS_Thread_t *thread);
 extern MDS_Err_t MDS_ThreadResume(MDS_Thread_t *thread);
-extern MDS_Err_t MDS_ThreadDelay(MDS_Tick_t delay);
+extern MDS_Err_t MDS_ThreadSuspend(MDS_Thread_t *thread);
+extern MDS_Err_t MDS_ThreadDelayTick(MDS_Tick_t delay);
 extern MDS_Err_t MDS_ThreadChangePriority(MDS_Thread_t *thread, MDS_ThreadPriority_t priority);
 extern MDS_ThreadState_t MDS_ThreadGetState(const MDS_Thread_t *thread);
+
+static inline MDS_Err_t MDS_ThreadDelayMs(MDS_Tick_t timeout)
+{
+    return (MDS_ThreadDelayTick(MDS_ClockTickFromMs(timeout)));
+}
 
 /* Semaphore --------------------------------------------------------------- */
 struct MDS_Semaphore {
@@ -427,7 +393,7 @@ typedef struct MDS_MemHeapSize {
 } MDS_MemHeapSize_t;
 
 typedef struct MDS_MemHeapOps {
-    MDS_Err_t (*setup)(MDS_MemHeap_t *memheap, void *heapBegin, void *heapLimit);
+    MDS_Err_t (*setup)(MDS_MemHeap_t *memheap, void *heapBase, size_t heapSize);
     void (*free)(MDS_MemHeap_t *memheap, void *ptr);
     void *(*alloc)(MDS_MemHeap_t *memheap, size_t size);
     void *(*realloc)(MDS_MemHeap_t *memheap, void *ptr, size_t size);
@@ -439,12 +405,12 @@ typedef struct MDS_MemHeap {
     MDS_Semaphore_t lock;
     const MDS_MemHeapOps_t *ops;
     void *begin, *limit;
-#if (defined(MDS_MEMHEAP_STATS) && (MDS_MEMHEAP_STATS > 0))
+#if (defined(MDS_KERNEL_STATS_ENABLE) && (MDS_KERNEL_STATS_ENABLE > 0))
     MDS_MemHeapSize_t size;
 #endif
 } MDS_MemHeap_t;
 
-extern MDS_Err_t MDS_MemHeapInit(MDS_MemHeap_t *memheap, const char *name, void *begin, void *limit,
+extern MDS_Err_t MDS_MemHeapInit(MDS_MemHeap_t *memheap, const char *name, void *base, size_t size,
                                  const MDS_MemHeapOps_t *ops);
 extern MDS_Err_t MDS_MemHeapDeInit(MDS_MemHeap_t *memheap);
 extern void MDS_MemHeapFree(MDS_MemHeap_t *memheap, void *ptr);
@@ -454,9 +420,10 @@ extern void *MDS_MemHeapCalloc(MDS_MemHeap_t *memheap, size_t nmemb, size_t size
 extern void MDS_MemHeapSize(MDS_MemHeap_t *memheap, MDS_MemHeapSize_t *size);
 
 extern const MDS_MemHeapOps_t G_MDS_MEMHEAP_OPS_LLFF;
+extern const MDS_MemHeapOps_t G_MDS_MEMHEAP_OPS_TLSF;
 
 /* Hook -------------------------------------------------------------------- */
-#if (defined(MDS_HOOK_ENABLE) && (MDS_HOOK_ENABLE > 0))
+#if (defined(MDS_KERNEL_HOOK_ENABLE) && (MDS_KERNEL_HOOK_ENABLE > 0))
 extern void MDS_HOOK_SCHEDULER_SWITCH_Register(void (*hook)(MDS_Thread_t *toThread, MDS_Thread_t *fromThread));
 
 extern void MDS_HOOK_TIMER_ENTER_Register(void (*hook)(MDS_Timer_t *timer));
@@ -496,9 +463,6 @@ extern void MDS_HOOK_MEMHEAP_INIT_Register(void (*hook)(MDS_MemHeap_t *memheap, 
 extern void MDS_HOOK_MEMHEAP_ALLOC_Register(void (*hook)(MDS_MemHeap_t *memheap, void *ptr, size_t size));
 extern void MDS_HOOK_MEMHEAP_FREE_Register(void (*hook)(MDS_MemHeap_t *memheap, void *ptr));
 extern void MDS_HOOK_MEMHEAP_REALLOC_Register(void (*hook)(MDS_MemHeap_t *memheap, void *old, void *new, size_t size));
-
-extern void MDS_HOOK_INTERRUPT_ENTER_Register(void (*hook)(MDS_Item_t irq));
-extern void MDS_HOOK_INTERRUPT_EXIT_Register(void (*hook)(MDS_Item_t irq));
 
 #define MDS_HOOK_INIT(type, ...)                                                                                       \
     static void (*g_hook_##type)(__VA_ARGS__) = NULL;                                                                  \
