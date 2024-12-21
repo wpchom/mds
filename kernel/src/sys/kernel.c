@@ -127,9 +127,9 @@ void MDS_KernelInit(void)
 {
     MDS_SchedulerInit();
 
-    MDS_SysTimerInit();
-
     MDS_IdleThreadInit();
+
+    MDS_SysTimerInit();
 }
 
 void MDS_KernelStartup(void)

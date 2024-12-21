@@ -141,7 +141,7 @@ extern __attribute__((noreturn)) void MDS_AssertPrintf(const char *assertion, co
         }                                                                                                              \
     } while (0)
 #elif (!defined(MDS_ASSERT))
-#define MDS_ASSERT(condition) (void)(0)
+#define MDS_ASSERT(condition) (void)(condition)
 #endif
 
 #ifdef __cplusplus

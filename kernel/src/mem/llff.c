@@ -284,6 +284,9 @@ static void MDS_MemHeapLLFF_Size(MDS_MemHeap_t *memheap, MDS_MemHeapSize_t *size
     if (size != NULL) {
         *size = memheap->size;
     }
+#else
+    UNUSED(memheap);
+    UNUSED(size);
 #endif
 }
 

@@ -1,0 +1,6 @@
+[submodule "kernel"]
+	path = kernel
+	url = https://github.com/wpchom/mds_kernel
+[submodule "device"]
+	path = device
+	url = https://github.com/wpchom/mds_device

@@ -14,16 +14,16 @@
 #include "mds_log.h"
 
 /* MLFQ Scheduler ---------------------------------------------------------- */
-#if (MDS_THREAD_PRIORITY_MAX > __WORDSIZE)
-#error "kernel mlfq scheduler supported max priority same as wordsize 32-bit / 64-bit"
+#if (MDS_THREAD_PRIORITY_MAX > 32)
+#error "kernel mlfq scheduler supported max priority 32-bit / 64-bit"
 #endif
 
 /* Variable ---------------------------------------------------------------- */
-static volatile MDS_Mask_t g_sysThreadPrioMask = 0x00U;
+static volatile uint32_t g_sysThreadPrioMask = 0x00U;
 static MDS_ListNode_t g_sysSchedulerTable[MDS_THREAD_PRIORITY_MAX];
 
 /* Function ---------------------------------------------------------------- */
-__attribute__((weak)) size_t MDS_SchedulerFFS(size_t value)
+__attribute__((weak)) size_t MDS_SchedulerFFS(uint32_t value)
 {
 #if defined(__GNUC__)
     return (__builtin_ffs(value));
@@ -63,7 +63,7 @@ void MDS_SchedulerInit(void)
 {
     MDS_SCHEDULER_DEBUG("scheduler init with max priority:%u", ARRAY_SIZE(g_sysSchedulerTable));
 
-    g_sysThreadPrioMask = 0x00U;
+    g_sysThreadPrioMask = 0U;
     MDS_SkipListInitNode(g_sysSchedulerTable, ARRAY_SIZE(g_sysSchedulerTable));
 }
 
@@ -98,8 +98,7 @@ void MDS_SchedulerRemoveThread(MDS_Thread_t *thread)
 
     MDS_ListRemoveNode(&(thread->node));
 
-    if ((thread->currPrio < MDS_THREAD_PRIORITY_MAX) &&
-        (MDS_ListIsEmpty(&(g_sysSchedulerTable[thread->currPrio])))) {
+    if ((thread->currPrio < MDS_THREAD_PRIORITY_MAX) && (MDS_ListIsEmpty(&(g_sysSchedulerTable[thread->currPrio])))) {
         g_sysThreadPrioMask &= ~(1UL << thread->currPrio);
     }
 }

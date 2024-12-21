@@ -26,11 +26,19 @@ extern "C" {
 #define MDS_SCHEDULER_DEBUG(fmt, args...)
 #endif
 
+#define MDS_TIMER_TICK_MAX ((MDS_Tick_t)(MDS_CLOCK_TICK_FOREVER / 2))
+
 /* Core -------------------------------------------------------------------- */
 extern void *MDS_CoreThreadStackInit(void *stackBase, size_t stackSize, void *entry, void *arg, void *exit);
 extern void MDS_CoreSchedulerStartup(void *toSP);
 extern void MDS_CoreSchedulerSwitch(void *from, void *to);
 extern bool MDS_CoreThreadStackCheck(void *sp);
+
+/* Scheduler --------------------------------------------------------------- */
+extern void MDS_SchedulerInit(void);
+extern void MDS_SchedulerInsertThread(MDS_Thread_t *thread);
+extern void MDS_SchedulerRemoveThread(MDS_Thread_t *thread);
+extern MDS_Thread_t *MDS_SchedulerHighestPriorityThread(void);
 
 /* Kernel ------------------------------------------------------------------ */
 extern void MDS_KernelSchedulerCheck(void);
@@ -40,19 +48,7 @@ extern void MDS_KernelRemainThread(void);
 extern MDS_Thread_t *MDS_KernelIdleThread(void);
 extern void MDS_IdleThreadInit(void);
 
-/* Scheduler --------------------------------------------------------------- */
-extern void MDS_SchedulerInit(void);
-extern void MDS_SchedulerInsertThread(MDS_Thread_t *thread);
-extern void MDS_SchedulerRemoveThread(MDS_Thread_t *thread);
-extern MDS_Thread_t *MDS_SchedulerHighestPriorityThread(void);
-
 /* Timer ------------------------------------------------------------------- */
-#ifndef MDS_TIMER_THREAD_ENABLE
-#define MDS_TIMER_THREAD_ENABLE 1
-#endif
-
-#define MDS_TIMER_TICK_MAX ((MDS_Tick_t)(MDS_CLOCK_TICK_FOREVER / 2))
-
 extern void MDS_SysTimerInit(void);
 extern void MDS_SysTimerCheck(void);
 extern MDS_Tick_t MDS_SysTimerNextTick(void);

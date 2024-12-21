@@ -69,14 +69,6 @@ extern void MDS_CoreInterruptRestore(MDS_Item_t lock);
 #define MDS_SYSMEM_ALIGN_SIZE sizeof(uintptr_t)
 #endif
 
-#ifndef MDS_SYSMEM_HEAP_SECTION
-#define MDS_SYSMEM_HEAP_SECTION ".heap"
-#endif
-
-#ifndef MDS_SYSMEM_HEAP_SIZE
-#define MDS_SYSMEM_HEAP_SIZE 0x4000
-#endif
-
 extern void *MDS_SysMemAlloc(size_t size);
 extern void *MDS_SysMemCalloc(size_t nmemb, size_t size);
 extern void *MDS_SysMemRealloc(void *ptr, size_t size);
@@ -156,6 +148,10 @@ extern void MDS_KernelCompensateTick(MDS_Tick_t tickcount);
 #define MDS_TIMER_SKIPLIST_SHIFT 2
 #endif
 
+#ifndef MDS_TIMER_THREAD_ENABLE
+#define MDS_TIMER_THREAD_ENABLE 1
+#endif
+
 typedef void (*MDS_TimerEntry_t)(MDS_Arg_t *arg);
 
 enum MDS_TimerType {
@@ -188,7 +184,7 @@ extern bool MDS_TimerIsActived(const MDS_Timer_t *timer);
 
 /* Thread ------------------------------------------------------------------ */
 #ifndef MDS_THREAD_PRIORITY_MAX
-#define MDS_THREAD_PRIORITY_MAX __WORDSIZE
+#define MDS_THREAD_PRIORITY_MAX 32
 #endif
 
 typedef void (*MDS_ThreadEntry_t)(MDS_Arg_t *arg);

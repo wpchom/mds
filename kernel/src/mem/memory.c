@@ -157,6 +157,18 @@ extern void MDS_MemHeapSize(MDS_MemHeap_t *memheap, MDS_MemHeapSize_t *size)
 }
 
 /* SysMem ------------------------------------------------------------------ */
+#ifndef MDS_SYSMEM_HEAP_OPS
+#define MDS_SYSMEM_HEAP_OPS G_MDS_MEMHEAP_OPS_LLFF
+#endif
+
+#ifndef MDS_SYSMEM_HEAP_SECTION
+#define MDS_SYSMEM_HEAP_SECTION ".heap"
+#endif
+
+#ifndef MDS_SYSMEM_HEAP_SIZE
+#define MDS_SYSMEM_HEAP_SIZE 0x4000
+#endif
+
 static MDS_MemHeap_t g_sysMemHeap;
 static __attribute__((section(MDS_SYSMEM_HEAP_SECTION))) uint8_t g_sysMemBuff[MDS_SYSMEM_HEAP_SIZE];
 
@@ -166,7 +178,7 @@ void MDS_SysMemInit(void)
         return;
     }
 
-    MDS_MemHeapInit(&g_sysMemHeap, "sysmem", g_sysMemBuff, sizeof(g_sysMemBuff), &G_MDS_MEMHEAP_OPS_LLFF);
+    MDS_MemHeapInit(&g_sysMemHeap, "sysmem", g_sysMemBuff, sizeof(g_sysMemBuff), &MDS_SYSMEM_HEAP_OPS);
 }
 
 void MDS_SysMemFree(void *ptr)
