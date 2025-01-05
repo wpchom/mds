@@ -4,3 +4,9 @@
 [submodule "device"]
 	path = device
 	url = https://github.com/wpchom/mds_device
+[submodule "component"]
+	path = component
+	url = https://github.com/wpchom/mds_component
+[submodule "driver/chip/stm32f1xx"]
+	path = driver/chip/stm32f1xx
+	url = https://github.com/wpchom/drv_chip_stm32f1xx
