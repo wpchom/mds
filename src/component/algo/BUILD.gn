@@ -1,0 +1,8 @@
+source_set("mds_algo") {
+  sources = [
+    "algo_crc.c",
+    "algo_sha2.c",
+  ]
+
+  public_configs = [ "../:component_cfg" ]
+}

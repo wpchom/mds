@@ -1,0 +1,26 @@
+declare_args() {
+  mds_component_algo = true
+  mds_component_boot = false
+  mds_component_lpc = true
+  mds_component_fs = true
+}
+
+config("component_cfg") {
+  include_dirs = [ "../../include/component" ]
+}
+
+group("component") {
+  public_deps = []
+
+  if (mds_component_algo) {
+    public_deps += [ "algo/:mds_algo" ]
+  }
+
+  if (mds_component_boot) {
+    public_deps += [ "boot/:mds_boot" ]
+  }
+
+  if (mds_component_lpc) {
+    public_deps += [ "lpc/:mds_lpc" ]
+  }
+}

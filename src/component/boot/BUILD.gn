@@ -1,0 +1,66 @@
+declare_args() {
+  mds_boot_upgrade_retry = 3
+  mds_boot_upgrade_size = 1024
+  mds_boot_upgrade_alloc = false
+  mds_boot_upgrade_hash = true
+
+  mds_boot_upgrade_with_copy = true
+  mds_boot_upgrade_with_lzma = true
+}
+
+if (defined(mds_boot_upgrade_with_lzma) && mds_boot_upgrade_with_lzma) {
+  declare_args() {
+    mds_boot_lzma_read_size = 1024
+    mds_boot_lzma_write_size = 1024
+    mds_boot_lzma_dict_size = 4096
+    mds_boot_lzma_probs_size = 10112
+  }
+
+  pkggroup("lzma_sdk") {
+  }
+}
+
+source_set("mds_boot") {
+  deps = []
+
+  sources = [ "mds_boot.c" ]
+
+  defines = [
+    "CONFIG_MDS_BOOT_UPGRADE_RETRY=${mds_boot_upgrade_retry}",
+    "CONFIG_MDS_BOOT_UPGRADE_SIZE=${mds_boot_upgrade_size}",
+  ]
+
+  if (mds_boot_upgrade_alloc) {
+    defines += [ "CONFIG_MDS_BOOT_UPGRADE_ALLOC=1" ]
+  } else {
+    defines += [ "CONFIG_MDS_BOOT_UPGRADE_ALLOC=0" ]
+  }
+
+  if (mds_boot_upgrade_hash) {
+    defines += [ "CONFIG_MDS_BOOT_UPGRADE_HASH=1" ]
+  } else {
+    defines += [ "CONFIG_MDS_BOOT_UPGRADE_HASH=0" ]
+  }
+
+  if (mds_boot_upgrade_with_copy) {
+    defines += [ "CONFIG_MDS_BOOT_UPGRADE_WITH_COPY=1" ]
+  } else {
+    defines += [ "CONFIG_MDS_BOOT_UPGRADE_WITH_COPY=0" ]
+  }
+
+  if (mds_boot_upgrade_with_lzma) {
+    sources += [ "boot_lzma.c" ]
+    defines += [
+      "CONFIG_MDS_BOOT_UPGRADE_WITH_LZMA=1",
+      "CONFIG_MDS_BOOT_LZMA_READ_SIZE=${mds_boot_lzma_read_size}",
+      "CONFIG_MDS_BOOT_LZMA_WRITE_SIZE=${mds_boot_lzma_write_size}",
+      "CONFIG_MDS_BOOT_LZMA_DICT_SIZE=${mds_boot_lzma_dict_size}",
+      "CONFIG_MDS_BOOT_LZMA_PROBS_SIZE=${mds_boot_lzma_probs_size}",
+    ]
+    deps += [ ":lzma_sdk" ]
+  } else {
+    defines += [ "CONFIG_MDS_BOOT_UPGRADE_WITH_LZMA=0" ]
+  }
+
+  public_configs = [ "../:component_cfg" ]
+}

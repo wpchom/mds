@@ -125,21 +125,16 @@ static inline void MDS_ClockDelayCount(MDS_Timeout_t timeout)
     }
 }
 
-/* Core -------------------------------------------------------------------- */
-void MDS_CoreIdleSleep(void);
-MDS_Lock_t MDS_CoreInterruptLock(void);
-void MDS_CoreInterruptRestore(MDS_Lock_t lock);
-
-/* Spinlock ---------------------------------------------------------------- */
+/* Critical ---------------------------------------------------------------- */
 typedef struct MDS_SpinLock {
 #if defined(CONFIG_MDS_KERNEL_SMP_CPUS) && (CONFIG_MDS_KERNEL_SMP_CPUS > 1)
     intptr_t locked;
 #endif
 } MDS_SpinLock_t;
 
-MDS_Err_t MDS_SpinLockInit(MDS_SpinLock_t *spinlock);
-MDS_Err_t MDS_SpinLockAcquire(MDS_SpinLock_t *spinlock);
-MDS_Err_t MDS_SpinLockRelease(MDS_SpinLock_t *spinlock);
+MDS_Lock_t MDS_CriticalLock(MDS_SpinLock_t *spinlock);
+void MDS_CriticalRestore(MDS_SpinLock_t *spinlock, MDS_Lock_t lock);
+void MDS_SpinLockInit(MDS_SpinLock_t *spinlock);
 
 /* Object ------------------------------------------------------------------ */
 typedef enum MDS_ObjectType {

@@ -1,74 +1,7 @@
-declare_args() {
-  mds_config_file = ""
-  mds_config_core = ""
-}
-
-config("mds_kernel_config") {
-  include_dirs = [ "include/" ]
-  defines = []
-
-  if (defined(mds_config_file) && mds_config_file != "") {
-    defines += [ "CONFIG_MDS_CONFIG_FILE=\"${mds_config_file}\"" ]
-  }
-}
-
-static_library("mds_kernel") {
-  defines = []
-
-  sources = [
-    "src/device.c",
-    "src/log.c",
-    "src/object.c",
+static_library("mds") {
+  public_deps = [
+    "src/component/:component_src",
+    "src/device/:device_src",
+    "src/kernel/:kernel_src",
   ]
-
-  # lib
-  sources += [
-    "src/lib/format.c",
-    "src/lib/membuff.c",
-    "src/lib/msglist.c",
-    "src/lib/skiplist.c",
-    "src/lib/string.c",
-    "src/lib/time.c",
-    "src/lib/tree.c",
-  ]
-
-  # core
-  if (defined(mds_config_core) && mds_config_core != "") {
-    sources += [ "src/core/" + mds_config_core + ".c" ]
-  } else {
-    assert("mds_config_core is not defined")
-  }
-
-  # sys
-  sources += [
-    "src/sys/clock.c",
-    "src/sys/idle.c",
-    "src/sys/kernel.c",
-    "src/sys/scheduler.c",
-    "src/sys/spinlock.c",
-    "src/sys/thread.c",
-    "src/sys/timer.c",
-    "src/sys/workq.c",
-  ]
-
-  sources += [
-    "src/sys/ipc/condition.c",
-    "src/sys/ipc/event.c",
-    "src/sys/ipc/mempool.c",
-    "src/sys/ipc/msgqueue.c",
-    "src/sys/ipc/mutex.c",
-    "src/sys/ipc/rwlock.c",
-    "src/sys/ipc/semaphore.c",
-  ]
-
-  include_dirs = [ "src/sys" ]
-
-  # mem
-  sources += [
-    "src/mem/llff.c",
-    "src/mem/memory.c",
-  ]
-
-  # config
-  public_configs = [ ":mds_kernel_config" ]
 }

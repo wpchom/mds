@@ -1,0 +1,9 @@
+config("device_cfg") {
+}
+
+source_set("device_src") {
+  sources += [
+    "i2c.c",
+    "uart.c",
+  ]
+}
