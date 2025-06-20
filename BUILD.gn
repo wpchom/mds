@@ -1,7 +1,0 @@
-static_library("mds") {
-  public_deps = [
-    "src/component/:component_src",
-    "src/device/:device_src",
-    "src/kernel/:kernel_src",
-  ]
-}
