@@ -16,7 +16,14 @@
 extern "C" {
 #endif
 
-/* Utils ------------------------------------------------------------------- */
+/* Toolchain --------------------------------------------------------------- */
+#if defined(__IAR_SYSTEMS_ICC__)
+#define MDS_RETURN_ADDRESS() __get_return_address()
+#else
+#define MDS_RETURN_ADDRESS() __builtin_return_address(0)
+#endif
+
+/* Argument ---------------------------------------------------------------- */
 #define __ARGUMENT_PASSBY(x) x
 #define __ARGUMENT_STR(x)    #x
 #define MDS_ARGUMENT_STR(x)  __ARGUMENT_STR(x)
@@ -27,11 +34,11 @@ extern "C" {
 #define __DEBRACKET(...)                        __VA_ARGS__
 #define __ARGUMENT2_DEBRACKET(ignore, val, ...) __DEBRACKET val
 
-#define __ARGUMNET_NUMS(_0, _1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15,     \
-                        _16, ARG, ...)                                                            \
+#define __ARGUMNET_NUMS(_0, _1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, \
+                        ARG, ...)                                                                  \
     ARG
 
-#define MDS_ARGUMENT_NUMS(...)                                                                    \
+#define MDS_ARGUMENT_NUMS(...)                                                                     \
     __ARGUMNET_NUMS(0, ##__VA_ARGS__, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0)
 
 #define __ARGUMENT_GET_1(_0, ...)                                                               _0
@@ -49,124 +56,124 @@ extern "C" {
 #define __ARGUMENT_GET_13(_0, _1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, ...)           _12
 #define __ARGUMENT_GET_14(_0, _1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, ...)      _13
 #define __ARGUMENT_GET_15(_0, _1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, ...) _14
-#define __ARGUMENT_GET_16(_0, _1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15,   \
-                          ...)                                                                    \
+#define __ARGUMENT_GET_16(_0, _1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15,    \
+                          ...)                                                                     \
     _15
 
 #define MDS_ARGUMENT_GET_N(N, ...) __ARGUMENT_GET_##N(__VA_ARGS__)
 
 #define __ARGUMENT_FOREACH_0(_call, _sep, _arg, ...) _arg
 
-#define __ARGUMENT_FOREACH_1(_call, _sep, _arg, _elem)                                            \
+#define __ARGUMENT_FOREACH_1(_call, _sep, _arg, _elem)                                             \
     _call(0, _elem, _arg) __DEBRACKET _sep __ARGUMENT_FOREACH_0(_call, _sep, _arg)
 
-#define __ARGUMENT_FOREACH_2(_call, _sep, _arg, _elem, ...)                                       \
+#define __ARGUMENT_FOREACH_2(_call, _sep, _arg, _elem, ...)                                        \
     _call(1, _elem, _arg) __DEBRACKET _sep __ARGUMENT_FOREACH_1(_call, _sep, _arg, ##__VA_ARGS__)
 
-#define __ARGUMENT_FOREACH_3(_call, _sep, _arg, _elem, ...)                                       \
+#define __ARGUMENT_FOREACH_3(_call, _sep, _arg, _elem, ...)                                        \
     _call(2, _elem, _arg) __DEBRACKET _sep __ARGUMENT_FOREACH_2(_call, _sep, _arg, ##__VA_ARGS__)
 
-#define __ARGUMENT_FOREACH_4(_call, _sep, _arg, _elem, ...)                                       \
+#define __ARGUMENT_FOREACH_4(_call, _sep, _arg, _elem, ...)                                        \
     _call(3, _elem, _arg) __DEBRACKET _sep __ARGUMENT_FOREACH_3(_call, _sep, _arg, ##__VA_ARGS__)
 
-#define __ARGUMENT_FOREACH_5(_call, _sep, _arg, _elem, ...)                                       \
+#define __ARGUMENT_FOREACH_5(_call, _sep, _arg, _elem, ...)                                        \
     _call(4, _elem, _arg) __DEBRACKET _sep __ARGUMENT_FOREACH_4(_call, _sep, _arg, ##__VA_ARGS__)
 
-#define __ARGUMENT_FOREACH_6(_call, _sep, _arg, _elem, ...)                                       \
+#define __ARGUMENT_FOREACH_6(_call, _sep, _arg, _elem, ...)                                        \
     _call(5, _elem, _arg) __DEBRACKET _sep __ARGUMENT_FOREACH_5(_call, _sep, _arg, ##__VA_ARGS__)
 
-#define __ARGUMENT_FOREACH_7(_call, _sep, _arg, _elem, ...)                                       \
+#define __ARGUMENT_FOREACH_7(_call, _sep, _arg, _elem, ...)                                        \
     _call(6, _elem, _arg) __DEBRACKET _sep __ARGUMENT_FOREACH_6(_call, _sep, _arg, ##__VA_ARGS__)
 
-#define __ARGUMENT_FOREACH_8(_call, _sep, _arg, _elem, ...)                                       \
+#define __ARGUMENT_FOREACH_8(_call, _sep, _arg, _elem, ...)                                        \
     _call(7, _elem, _arg) __DEBRACKET _sep __ARGUMENT_FOREACH_7(_call, _sep, _arg, ##__VA_ARGS__)
 
-#define __ARGUMENT_FOREACH_9(_call, _sep, _arg, _elem, ...)                                       \
+#define __ARGUMENT_FOREACH_9(_call, _sep, _arg, _elem, ...)                                        \
     _call(8, _elem, _arg) __DEBRACKET _sep __ARGUMENT_FOREACH_8(_call, _sep, _arg, ##__VA_ARGS__)
 
-#define __ARGUMENT_FOREACH_10(_call, _sep, _arg, _elem, ...)                                      \
+#define __ARGUMENT_FOREACH_10(_call, _sep, _arg, _elem, ...)                                       \
     _call(9, _elem, _arg) __DEBRACKET _sep __ARGUMENT_FOREACH_9(_call, _sep, _arg, ##__VA_ARGS__)
 
-#define __ARGUMENT_FOREACH_11(_call, _sep, _arg, _elem, ...)                                      \
+#define __ARGUMENT_FOREACH_11(_call, _sep, _arg, _elem, ...)                                       \
     _call(10, _elem, _arg) __DEBRACKET _sep __ARGUMENT_FOREACH_10(_call, _sep, _arg, ##__VA_ARGS__)
 
-#define __ARGUMENT_FOREACH_12(_call, _sep, _arg, _elem, ...)                                      \
+#define __ARGUMENT_FOREACH_12(_call, _sep, _arg, _elem, ...)                                       \
     _call(11, _elem, _arg) __DEBRACKET _sep __ARGUMENT_FOREACH_11(_call, _sep, _arg, ##__VA_ARGS__)
 
-#define __ARGUMENT_FOREACH_13(_call, _sep, _arg, _elem, ...)                                      \
+#define __ARGUMENT_FOREACH_13(_call, _sep, _arg, _elem, ...)                                       \
     _call(12, _elem, _arg) __DEBRACKET _sep __ARGUMENT_FOREACH_12(_call, _sep, _arg, ##__VA_ARGS__)
 
-#define __ARGUMENT_FOREACH_14(_call, _sep, _arg, _elem, ...)                                      \
+#define __ARGUMENT_FOREACH_14(_call, _sep, _arg, _elem, ...)                                       \
     _call(13, _elem, _arg) __DEBRACKET _sep __ARGUMENT_FOREACH_13(_call, _sep, _arg, ##__VA_ARGS__)
 
-#define __ARGUMENT_FOREACH_15(_call, _sep, _arg, _elem, ...)                                      \
+#define __ARGUMENT_FOREACH_15(_call, _sep, _arg, _elem, ...)                                       \
     _call(14, _elem, _arg) __DEBRACKET _sep __ARGUMENT_FOREACH_14(_call, _sep, _arg, ##__VA_ARGS__)
 
-#define MDS_ARGUMENT_FOREACH_ARGS(_call, _sep, _arg, ...)                                         \
-    MDS_ARGUMENT_CAT(__ARGUMENT_FOREACH_, MDS_ARGUMENT_NUMS(__VA_ARGS__))(_call, _sep, _arg,      \
+#define MDS_ARGUMENT_FOREACH_ARGS(_call, _sep, _arg, ...)                                          \
+    MDS_ARGUMENT_CAT(__ARGUMENT_FOREACH_, MDS_ARGUMENT_NUMS(__VA_ARGS__))(_call, _sep, _arg,       \
                                                                           __VA_ARGS__)
 
 #define __ARGUMENT_FORLIST_1(_call, _sep, ...) _call(0, __VA_ARGS__)
 
-#define __ARGUMENT_FORLIST_2(_call, _sep, ...)                                                    \
+#define __ARGUMENT_FORLIST_2(_call, _sep, ...)                                                     \
     __ARGUMENT_FORLIST_1(_call, _sep, __VA_ARGS__) __DEBRACKET _sep _call(1, __VA_ARGS__)
 
-#define __ARGUMENT_FORLIST_3(_call, _sep, ...)                                                    \
+#define __ARGUMENT_FORLIST_3(_call, _sep, ...)                                                     \
     __ARGUMENT_FORLIST_2(_call, _sep, __VA_ARGS__) __DEBRACKET _sep _call(2, __VA_ARGS__)
 
-#define __ARGUMENT_FORLIST_4(_call, _sep, ...)                                                    \
+#define __ARGUMENT_FORLIST_4(_call, _sep, ...)                                                     \
     __ARGUMENT_FORLIST_3(_call, _sep, __VA_ARGS__) __DEBRACKET _sep _call(3, __VA_ARGS__)
 
-#define __ARGUMENT_FORLIST_5(_call, _sep, ...)                                                    \
+#define __ARGUMENT_FORLIST_5(_call, _sep, ...)                                                     \
     __ARGUMENT_FORLIST_4(_call, _sep, __VA_ARGS__) __DEBRACKET _sep _call(4, __VA_ARGS__)
 
-#define __ARGUMENT_FORLIST_6(_call, _sep, ...)                                                    \
+#define __ARGUMENT_FORLIST_6(_call, _sep, ...)                                                     \
     __ARGUMENT_FORLIST_5(_call, _sep, __VA_ARGS__) __DEBRACKET _sep _call(5, __VA_ARGS__)
 
-#define __ARGUMENT_FORLIST_7(_call, _sep, ...)                                                    \
+#define __ARGUMENT_FORLIST_7(_call, _sep, ...)                                                     \
     __ARGUMENT_FORLIST_6(_call, _sep, __VA_ARGS__) __DEBRACKET _sep _call(6, __VA_ARGS__)
 
-#define __ARGUMENT_FORLIST_8(_call, _sep, ...)                                                    \
+#define __ARGUMENT_FORLIST_8(_call, _sep, ...)                                                     \
     __ARGUMENT_FORLIST_7(_call, _sep, __VA_ARGS__) __DEBRACKET _sep _call(7, __VA_ARGS__)
 
-#define __ARGUMENT_FORLIST_9(_call, _sep, ...)                                                    \
+#define __ARGUMENT_FORLIST_9(_call, _sep, ...)                                                     \
     __ARGUMENT_FORLIST_8(_call, _sep, __VA_ARGS__) __DEBRACKET _sep _call(8, __VA_ARGS__)
 
-#define __ARGUMENT_FORLIST_10(_call, _sep, ...)                                                   \
+#define __ARGUMENT_FORLIST_10(_call, _sep, ...)                                                    \
     __ARGUMENT_FORLIST_9(_call, _sep, __VA_ARGS__) __DEBRACKET _sep _call(9, __VA_ARGS__)
 
-#define __ARGUMENT_FORLIST_11(_call, _sep, ...)                                                   \
+#define __ARGUMENT_FORLIST_11(_call, _sep, ...)                                                    \
     __ARGUMENT_FORLIST_10(_call, _sep, __VA_ARGS__) __DEBRACKET _sep _call(10, __VA_ARGS__)
 
-#define __ARGUMENT_FORLIST_12(_call, _sep, ...)                                                   \
+#define __ARGUMENT_FORLIST_12(_call, _sep, ...)                                                    \
     __ARGUMENT_FORLIST_11(_call, _sep, __VA_ARGS__) __DEBRACKET _sep _call(11, __VA_ARGS__)
 
-#define __ARGUMENT_FORLIST_13(_call, _sep, ...)                                                   \
+#define __ARGUMENT_FORLIST_13(_call, _sep, ...)                                                    \
     __ARGUMENT_FORLIST_12(_call, _sep, __VA_ARGS__) __DEBRACKET _sep _call(12, __VA_ARGS__)
 
-#define __ARGUMENT_FORLIST_14(_call, _sep, ...)                                                   \
+#define __ARGUMENT_FORLIST_14(_call, _sep, ...)                                                    \
     __ARGUMENT_FORLIST_13(_call, _sep, __VA_ARGS__) __DEBRACKET _sep _call(13, __VA_ARGS__)
 
-#define __ARGUMENT_FORLIST_15(_call, _sep, ...)                                                   \
+#define __ARGUMENT_FORLIST_15(_call, _sep, ...)                                                    \
     __ARGUMENT_FORLIST_14(_call, _sep, __VA_ARGS__) __DEBRACKET _sep _call(14, __VA_ARGS__)
 
-#define __ARGUMENT_FORLIST_16(_call, _sep, ...)                                                   \
+#define __ARGUMENT_FORLIST_16(_call, _sep, ...)                                                    \
     __ARGUMENT_FORLIST_15(_call, _sep, __VA_ARGS__) __DEBRACKET _sep _call(15, __VA_ARGS__)
 
-#define MDS_ARGUMENT_FORLIST_N(N, _call, _sep, ...)                                               \
+#define MDS_ARGUMENT_FORLIST_N(N, _call, _sep, ...)                                                \
     MDS_ARGUMENT_CAT(__ARGUMENT_FORLIST_, N)(_call, _sep, __VA_ARGS__)
 
-#define __CONDITION_CODE(_args, _if_code, _else_code)                                             \
+#define __CONDITION_CODE(_args, _if_code, _else_code)                                              \
     __ARGUMENT2_DEBRACKET(_args _if_code, _else_code)
 
 // if (defined(_flag) && (_flag != 0)) { _if_code_1 } else { _else_code }
-#define __COND_CODE_1(_flag, _if_1_code, _else_code)                                              \
+#define __COND_CODE_1(_flag, _if_1_code, _else_code)                                               \
     __CONDITION_CODE(__COND_CODE_RSV1_##_flag, _if_1_code, _else_code)
 #define __COND_CODE_RSV1_1                             __COND_CODE_RSV1_,
 #define MDS_COND_CODE_1(_flag, _if_1_code, _else_code) __COND_CODE_1(_flag, _if_1_code, _else_code)
 
 // if (defined(_flag) && (_flag == 0)) { _if_code_0 } else { _else_code }
-#define __COND_CODE_0(_flag, _if_0_code, _else_code)                                              \
+#define __COND_CODE_0(_flag, _if_0_code, _else_code)                                               \
     __CONDITION_CODE(__COND_CODE_RSV0_##_flag, _if_0_code, _else_code)
 #define __COND_CODE_RSV0_0                             __COND_CODE_RSV0_,
 #define MDS_COND_CODE_0(_flag, _if_0_code, _else_code) __COND_CODE_0(_flag, _if_0_code, _else_code)

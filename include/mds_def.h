@@ -17,7 +17,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <inttypes.h>
+#include <string.h>
 
 #ifdef CONFIG_MDS_CONFIG_FILE
 #include CONFIG_MDS_CONFIG_FILE
@@ -27,63 +27,7 @@
 extern "C" {
 #endif
 
-/* Typedef ----------------------------------------------------------------- */
-#if (defined(CONFIG_MDS_TICK_U64) && (CONFIG_MDS_TICK_U64))
-typedef uint64_t MDS_Tick_t;
-#define PRIdTICK PRId64
-#define PRIuTICK PRIu64
-#else
-typedef uint32_t MDS_Tick_t;
-#define PRIdTICK PRId32
-#define PRIuTICK PRIu32
-#endif
-
-typedef uintptr_t MDS_Mask_t;
-typedef intptr_t MDS_Item_t;
-
-typedef struct MDS_TimeStamp {
-    int64_t ts;
-} MDS_TimeStamp_t;
-
-typedef struct MDS_Timeout {
-    MDS_Tick_t ticks;
-} MDS_Timeout_t;
-
-typedef union MDS_Arg {
-    void *arg;
-} MDS_Arg_t;
-
-typedef enum MDS_Err {
-    MDS_EOK = 0,
-    MDS_EPERM = -1,      // Operation not permitted
-    MDS_ENOENT = -2,     // No such file or directory
-    MDS_EINTR = -4,      // Interrupted system call
-    MDS_EIO = -5,        // I/O error
-    MDS_EAGAIN = -11,    // Try again
-    MDS_ENOMEM = -12,    // Out of memory
-    MDS_EACCES = -13,    // Permission denied
-    MDS_EFAULT = -14,    // Bad address
-    MDS_EBUSY = -16,     // Device or resource busy
-    MDS_EEXIST = -17,    // File exists
-    MDS_ENODEV = -19,    // No such device
-    MDS_ENOTDIR = -20,   // Not a directory
-    MDS_EISDIR = -21,    // Is a directory
-    MDS_EINVAL = -22,    // Invalid argument
-    MDS_ERANGE = -34,    // Math result not representable
-    MDS_ETIMEOUT = -62,  // Timer expired
-
-    MDS_ENODEF = -__INT_MAX__,
-} MDS_Err_t;
-
 /* Define ------------------------------------------------------------------ */
-#define MDS_LOOP for (;;)
-
-#define MDS_BITS_OF_BYTE 8U
-#define MDS_NUM_BIN_BASE 2U
-#define MDS_NUM_OCT_BASE 8U
-#define MDS_NUM_DEC_BASE 10U
-#define MDS_NUM_HEX_BASE 16U
-
 #ifndef UNUSED
 #define UNUSED(x) (void)(x)
 #endif
@@ -107,6 +51,28 @@ typedef enum MDS_Err {
 #ifndef VALUE_ALIGN
 #define VALUE_ALIGN(val, align) ((val) & (~((align) - (1ULL))))
 #endif
+
+/* Typedef ----------------------------------------------------------------- */
+#if (defined(CONFIG_MDS_TICK_U64) && (CONFIG_MDS_TICK_U64))
+typedef uint64_t MDS_Tick_t;
+#define PRIdTICK PRId64
+#define PRIuTICK PRIu64
+#else
+typedef uint32_t MDS_Tick_t;
+#define PRIdTICK PRId32
+#define PRIuTICK PRIu32
+#endif
+
+typedef uintptr_t MDS_Mask_t;
+
+typedef struct MDS_String {
+    const char *str;
+    size_t len;
+} MDS_String_t;
+
+typedef union MDS_Arg {
+    void *arg;
+} MDS_Arg_t;
 
 /* Linked List ------------------------------------------------------------- */
 typedef struct MDS_SListNode {
@@ -193,23 +159,26 @@ static inline MDS_DListNode_t *MDS_DListForeachPrev(const MDS_DListNode_t *list,
     return (NULL);
 }
 
-#define MDS_DLIST_FOREACH_NEXT(iter, member, head)                                                 \
-    for ((iter) = CONTAINER_OF((head)->next, __typeof__(*(iter)), member);                         \
-         &((iter)->member) != (head);                                                              \
-         (iter) = CONTAINER_OF((iter)->member.next, __typeof__(*(iter)), member))
+#define MDS_DLIST_CONTAIN_FOREACH_NEXT(iter, member, list)                                         \
+    for (MDS_DListNode_t *node = ((list) != NULL) ? ((list)->next) : (NULL), *next = NULL;         \
+         (node != NULL) && (node != (list)) &&                                                     \
+         (next = node->next, ((iter) = CONTAINER_OF(node, __typeof__(*iter), member)) != NULL);    \
+         node = next)
 
-#define MDS_DLIST_FOREACH_PREV(iter, member, head)                                                 \
-    for ((iter) = CONTAINER_OF((head)->prev, __typeof__(*(iter)), member);                         \
-         &((iter)->member) != (head);                                                              \
-         (iter) = CONTAINER_OF((iter)->member.prev, __typeof__(*(iter)), member))
+#define MDS_DLIST_CONTAIN_FOREACH_PREV(iter, member, list)                                         \
+    for (MDS_DListNode_t *node = ((list) != NULL) ? ((list)->prev) : (NULL), *prev = NULL;         \
+         (node != NULL) && (node != (list)) &&                                                     \
+         (prev = node->prev, ((iter) = CONTAINER_OF(node, __typeof__(*iter), member)) != NULL);    \
+         node = prev)
 
 /* Skip List --------------------------------------------------------------- */
 void MDS_SkipListInitNode(MDS_DListNode_t node[], size_t size);
 void MDS_SkipListRemoveNode(MDS_DListNode_t node[], size_t size);
 bool MDS_SkipListIsEmpty(MDS_DListNode_t node[], size_t size);
-MDS_DListNode_t *MDS_SkipListSearchNode(
-    MDS_DListNode_t *last[], MDS_DListNode_t list[], size_t size, const void *value,
-    int (*compare)(const MDS_DListNode_t *node, const void *value));
+MDS_DListNode_t *MDS_SkipListSearchNode(MDS_DListNode_t *last[], MDS_DListNode_t list[],
+                                        size_t size, const void *value,
+                                        int (*compare)(const MDS_DListNode_t *node,
+                                                       const void *value));
 size_t MDS_SkipListInsertNode(MDS_DListNode_t *last[], MDS_DListNode_t node[], size_t size,
                               size_t rand, size_t shift);
 
@@ -236,65 +205,44 @@ typedef struct MDS_MsgList {
 size_t MDS_MsgListGetLength(const MDS_MsgList_t *msg);
 size_t MDS_MsgListCopyBuff(void *buff, size_t size, const MDS_MsgList_t *msg);
 
-/* Memory ------------------------------------------------------------------ */
-bool MDS_MemAddrIsAligned(const void *address, uintptr_t align);
-void *MDS_MemBuffSet(void *dst, int c, size_t len);
-size_t MDS_MemBuffCopy(void *dst, size_t size, const void *src, size_t len);
-void *MDS_MemBuffCpy(void *dst, const void *src, size_t size);
-void *MDS_MemBuffCcpy(void *dst, const void *src, int c, size_t size);
-int MDS_MemBuffCmp(const void *buf1, const void *buf2, size_t size);
-
-/* String ------------------------------------------------------------------ */
-size_t MDS_StrAscLetterLength(const char *str);
-size_t MDS_StrAscNumberLength(const char *str, int base);
-size_t MDS_StrAsc2Hex(uint8_t *hex, size_t size, const char *asc, bool rightAlign);
-size_t MDS_StrHex2Asc(char *asc, size_t size, const uint8_t *hex, size_t len, bool lowCase);
-size_t MDS_Strnlen(const char *str, size_t maxlen);
-size_t MDS_Strlen(const char *str);
-int MDS_Strncmp(const char *str1, const char *str2, size_t n);
-int MDS_Strcmp(const char *str1, const char *str2);
-size_t MDS_Strlcpy(char *dst, const char *src, size_t dsize);
-size_t MDS_Strlcat(char *dst, const char *src, size_t dsize);
-unsigned long long MDS_Strtoull(const char *str, char **context, int base);
-long long MDS_Strtoll(const char *str, char **context, int base);
-unsigned long MDS_Strtoul(const char *str, char **context, int base);
-long MDS_Strtol(const char *str, char **context, int base);
-
-/* Format ------------------------------------------------------------------ */
-int MDS_Vsnprintf(char *buff, size_t size, const char *fmt, va_list ap);
-int MDS_Snprintf(char *buff, size_t size, const char *fmt, ...);
-int MDS_Vsprintf(char *buff, const char *fmt, va_list ap);
-int MDS_Sprintf(char *buff, const char *fmt, ...);
-int MDS_Vsscanf(const char *buff, const char *fmt, va_list ap);
-int MDS_Sscanf(const char *buff, const char *fmt, ...);
+/* Number ------------------------------------------------------------------ */
+#define MDS_BITS_OF_BYTE 8U
+#define MDS_NUM_BIN_BASE 2U
+#define MDS_NUM_OCT_BASE 8U
+#define MDS_NUM_DEC_BASE 10U
+#define MDS_NUM_HEX_BASE 16U
 
 /* Time -------------------------------------------------------------------- */
-#define MDS_TIME_NSEC_OF_SEC  1000000000
-#define MDS_TIME_USEC_OF_SEC  1000000
-#define MDS_TIME_MSEC_OF_SEC  1000
-#define MDS_TIME_USEC_OF_MSEC 1000
-#define MDS_TIME_SEC_OF_MIN   60
+#define MDS_TIME_NSEC_OF_SEC  1000000000UL
+#define MDS_TIME_USEC_OF_SEC  1000000UL
+#define MDS_TIME_MSEC_OF_SEC  1000UL
+#define MDS_TIME_USEC_OF_MSEC 1000UL
+#define MDS_TIME_SEC_OF_MIN   60U
 #define MDS_TIME_MSEC_OF_MIN  (MDS_TIME_MSEC_OF_SEC * MDS_TIME_SEC_OF_MIN)
-#define MDS_TIME_MIN_OF_HOUR  60
+#define MDS_TIME_MIN_OF_HOUR  60U
 #define MDS_TIME_SEC_OF_HOUR  (MDS_TIME_SEC_OF_MIN * MDS_TIME_MIN_OF_HOUR)
 #define MDS_TIME_MSEC_OF_HOUR (MDS_TIME_MSEC_OF_SEC * MDS_TIME_SEC_OF_HOUR)
-#define MDS_TIME_HOUR_OF_DAY  24
+#define MDS_TIME_HOUR_OF_DAY  24U
 #define MDS_TIME_MIN_OF_DAY   (MDS_TIME_MIN_OF_HOUR * MDS_TIME_HOUR_OF_DAY)
 #define MDS_TIME_SEC_OF_DAY   (MDS_TIME_SEC_OF_MIN * MDS_TIME_MIN_OF_DAY)
 #define MDS_TIME_MSEC_OF_DAY  (MDS_TIME_MSEC_OF_SEC * MDS_TIME_SEC_OF_DAY)
-#define MDS_TIME_DAY_OF_WEEK  7
-#define MDS_TIME_DAY_OF_YEAR  365
+#define MDS_TIME_DAY_OF_WEEK  7U
+#define MDS_TIME_DAY_OF_YEAR  365U
+
+typedef struct MDS_TimeStamp {
+    int64_t ts;
+} MDS_TimeStamp_t;
 
 typedef struct MDS_TimeDate {
-    int16_t msec;   // microseconds [0~999]
-    int8_t second;  // seconds [0~60]
-    int8_t minute;  // minute [0~ 59]
-    int8_t hour;    // hour [0~23]
-    int8_t wday;    // day of week [0~6]
-    int8_t mday;    // day of month [1~31]
-    int8_t month;   // month [1~12]
-    int16_t year;   // year [20xx]
-    int16_t yday;   // days in year [0~365]
+    int16_t msec;  // microseconds [0~999]
+    int8_t second; // seconds [0~60]
+    int8_t minute; // minute [0~ 59]
+    int8_t hour;   // hour [0~23]
+    int8_t wday;   // day of week [0~6]
+    int8_t mday;   // day of month [1~31]
+    int8_t month;  // month [1~12]
+    int16_t year;  // year [20xx]
+    int16_t yday;  // days in year [0~365]
 } MDS_TimeDate_t;
 
 typedef enum MDS_TIME_Weekday {
@@ -325,43 +273,6 @@ typedef enum MDS_TIME_Month {
 MDS_TimeStamp_t MDS_TIME_ChangeTimeStamp(MDS_TimeDate_t *tm, int8_t tz);
 void MDS_TIME_ChangeTimeDate(MDS_TimeDate_t *tm, MDS_TimeStamp_t timestamp, int8_t tz);
 MDS_TimeStamp_t MDS_TIME_DiffTimeMs(MDS_TimeDate_t *tm1, MDS_TimeDate_t *tm2);
-
-/* Compiler ---------------------------------------------------------------- */
-#if defined(__IAR_SYSTEMS_ICC__)
-
-#define MDS_RETURN_ADDRESS() __get_return_address()
-
-static inline uintptr_t MDS_SysHeapBegin(void)
-{
-#pragma section(".heap")
-    const uintptr_t __HeapBase[] = __section_start(".heap");
-    return ((uintptr_t)__HeapBase);
-}
-
-static inline uintptr_t MDS_SysHeapLimit(void)
-{
-#pragma section(".heap")
-    const uintptr_t __HeapLimit[] = __section_end(".heap");
-    return ((uintptr_t)__HeapLimit);
-}
-
-#else
-
-#define MDS_RETURN_ADDRESS() __builtin_return_address(0)
-
-static inline uintptr_t MDS_SysHeapBegin(void)
-{
-    extern void __HeapBase(void);
-    return ((uintptr_t)__HeapBase);
-}
-
-static inline uintptr_t MDS_SysHeapLimit(void)
-{
-    extern void __HeapLimit(void);
-    return ((uintptr_t)__HeapLimit);
-}
-
-#endif
 
 #ifdef __cplusplus
 }

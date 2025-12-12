@@ -13,21 +13,24 @@
 #include "mds_sys.h"
 
 /* Define ------------------------------------------------------------------ */
-#define OBJECT_LIST_INIT(obj) [obj] = {.list = MDS_DLIST_INIT(g_objectList[obj].list)}
+#undef MDS_ERR_MODULE
+#define MDS_ERR_MODULE MDS_ERR_MODULE_OBJECT
+MDS_LOG_MODULE_DECLARE(kernel, CONFIG_MDS_KERNEL_LOG_LEVEL);
 
 /* Variable ---------------------------------------------------------------- */
+#define OBJECT_LIST_INIT(obj) [obj] = {.list = MDS_DLIST_INIT(g_objectList[obj].list)}
 static MDS_ObjectInfo_t g_objectList[] = {
-    OBJECT_LIST_INIT(MDS_OBJECT_TYPE_DEVICE),     //
-    OBJECT_LIST_INIT(MDS_OBJECT_TYPE_THREAD),     //
-    OBJECT_LIST_INIT(MDS_OBJECT_TYPE_WORKQUEUE),  //
-    OBJECT_LIST_INIT(MDS_OBJECT_TYPE_WORKNODE),   //
-    OBJECT_LIST_INIT(MDS_OBJECT_TYPE_SEMAPHORE),  //
-    OBJECT_LIST_INIT(MDS_OBJECT_TYPE_MUTEX),      //
-    OBJECT_LIST_INIT(MDS_OBJECT_TYPE_EVENT),      //
-    OBJECT_LIST_INIT(MDS_OBJECT_TYPE_POLL),       //
-    OBJECT_LIST_INIT(MDS_OBJECT_TYPE_MSGQUEUE),   //
-    OBJECT_LIST_INIT(MDS_OBJECT_TYPE_MEMPOOL),    //
-    OBJECT_LIST_INIT(MDS_OBJECT_TYPE_MEMHEAP),    //
+    OBJECT_LIST_INIT(MDS_OBJECT_TYPE_DEVICE),    //
+    OBJECT_LIST_INIT(MDS_OBJECT_TYPE_THREAD),    //
+    OBJECT_LIST_INIT(MDS_OBJECT_TYPE_WORKQUEUE), //
+    OBJECT_LIST_INIT(MDS_OBJECT_TYPE_WORKNODE),  //
+    OBJECT_LIST_INIT(MDS_OBJECT_TYPE_SEMAPHORE), //
+    OBJECT_LIST_INIT(MDS_OBJECT_TYPE_MUTEX),     //
+    OBJECT_LIST_INIT(MDS_OBJECT_TYPE_EVENT),     //
+    OBJECT_LIST_INIT(MDS_OBJECT_TYPE_POLL),      //
+    OBJECT_LIST_INIT(MDS_OBJECT_TYPE_MSGQUEUE),  //
+    OBJECT_LIST_INIT(MDS_OBJECT_TYPE_MEMPOOL),   //
+    OBJECT_LIST_INIT(MDS_OBJECT_TYPE_MEMHEAP),   //
 };
 
 /* Function ---------------------------------------------------------------- */
@@ -37,16 +40,20 @@ MDS_Err_t MDS_ObjectInit(MDS_Object_t *object, MDS_ObjectType_t type, const char
     MDS_ASSERT(type < ARRAY_SIZE(g_objectList));
 
     if (object->type != MDS_OBJECT_TYPE_NONE) {
+        MDS_LOG_W("[object] init a already object:%p type:%u", object, object->type);
         return (MDS_EAGAIN);
     }
 
     MDS_DListInitNode(&(object->node));
     object->type = type;
-    (void)MDS_Strlcpy(object->name, name, sizeof(object->name));
+    strlcpy(object->name, name, sizeof(object->name));
 
     MDS_Lock_t lock = MDS_CriticalLock(&(g_objectList[type].spinlock));
     MDS_DListInsertNodePrev(&(g_objectList[type].list), &(object->node));
     MDS_CriticalRestore(&(g_objectList[type].spinlock), lock);
+
+    MDS_LOG_D("[object] init a object:%p type:%u created:%u", object, object->type,
+              object->created);
 
     return (MDS_EOK);
 }
@@ -54,6 +61,14 @@ MDS_Err_t MDS_ObjectInit(MDS_Object_t *object, MDS_ObjectType_t type, const char
 MDS_Err_t MDS_ObjectDeInit(MDS_Object_t *object)
 {
     MDS_ASSERT(object != NULL);
+
+    if (MDS_ObjectIsCreated(object)) {
+        MDS_LOG_W("[object] deinit a not static object:%p type:%u", object, object->type);
+        return (MDS_EPERM);
+    }
+
+    MDS_LOG_D("[object] deinit a object:%p type:%u created:%u", object, object->type,
+              object->created);
 
     MDS_Lock_t lock = MDS_CriticalLock(&(g_objectList[object->type].spinlock));
     MDS_DListRemoveNode(&(object->node));
@@ -68,8 +83,8 @@ MDS_Object_t *MDS_ObjectCreate(size_t typesz, MDS_ObjectType_t type, const char 
     MDS_Object_t *object = MDS_SysMemCalloc(1, typesz);
 
     if (object != NULL) {
-        MDS_ObjectInit(object, type, name);
         object->created = true;
+        MDS_ObjectInit(object, type, name);
     }
 
     return (object);
@@ -81,7 +96,8 @@ MDS_Err_t MDS_ObjectDestroy(MDS_Object_t *object)
     MDS_ASSERT(MDS_ObjectIsCreated(object));
 
     if (!MDS_ObjectIsCreated(object)) {
-        return (MDS_EFAULT);
+        MDS_LOG_W("[object] destroy a not dynamic object:%p type:%u", object, object->type);
+        return (MDS_EPERM);
     }
 
     MDS_ObjectDeInit(object);
@@ -94,17 +110,16 @@ MDS_Object_t *MDS_ObjectFind(const MDS_ObjectType_t type, const char *name)
 {
     MDS_ASSERT((type != MDS_OBJECT_TYPE_NONE) && (type < ARRAY_SIZE(g_objectList)));
 
-    MDS_Object_t *find = NULL;
-
     if ((name == NULL) || (name[0] == '\0')) {
         return (NULL);
     }
 
     MDS_Lock_t lock = MDS_CriticalLock(&(g_objectList[type].spinlock));
 
+    MDS_Object_t *find = NULL;
     MDS_Object_t *iter = NULL;
-    MDS_DLIST_FOREACH_NEXT (iter, node, &(g_objectList[type].list)) {
-        if (MDS_Strncmp(name, iter->name, sizeof(iter->name)) == 0) {
+    MDS_DLIST_CONTAIN_FOREACH_PREV (iter, node, &(g_objectList[type].list)) {
+        if (strncmp(iter->name, name, sizeof(find->name)) == 0) {
             find = iter;
             break;
         }
@@ -129,11 +144,16 @@ size_t MDS_ObjectGetCount(MDS_ObjectType_t type)
     return (MDS_DListGetCount(&(g_objectList[type].list)));
 }
 
-const char *MDS_ObjectGetName(const MDS_Object_t *object)
+MDS_String_t MDS_ObjectGetName(const MDS_Object_t *object)
 {
     MDS_ASSERT(object != NULL);
 
-    return (object->name);
+    MDS_String_t str = {
+        .str = object->name,
+        .len = strnlen(object->name, CONFIG_MDS_OBJECT_NAME_SIZE),
+    };
+
+    return (str);
 }
 
 MDS_ObjectType_t MDS_ObjectGetType(const MDS_Object_t *object)

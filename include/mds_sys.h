@@ -14,6 +14,7 @@
 
 /* Include ----------------------------------------------------------------- */
 #include "mds_def.h"
+#include "mds_err.h"
 #include "mds_log.h"
 
 #ifdef __cplusplus
@@ -90,6 +91,10 @@ static inline void MDS_InitExport(void)
 }
 
 /* Clock ------------------------------------------------------------------- */
+typedef struct MDS_Timeout {
+    MDS_Tick_t ticks;
+} MDS_Timeout_t;
+
 #define MDS_CLOCK_TICK_NO_WAIT   ((MDS_Tick_t)(0))
 #define MDS_CLOCK_TICK_FOREVER   ((MDS_Tick_t)(-1))
 #define MDS_CLOCK_TICK_TIMER_MAX ((MDS_Tick_t)(MDS_CLOCK_TICK_FOREVER / 2))
@@ -189,7 +194,7 @@ MDS_Err_t MDS_ObjectDestroy(MDS_Object_t *object);
 MDS_Object_t *MDS_ObjectFind(MDS_ObjectType_t type, const char *name);
 MDS_ObjectInfo_t *MDS_ObjectGetInfo(MDS_ObjectType_t type);
 size_t MDS_ObjectGetCount(MDS_ObjectType_t type);
-const char *MDS_ObjectGetName(const MDS_Object_t *object);
+MDS_String_t MDS_ObjectGetName(const MDS_Object_t *object);
 MDS_ObjectType_t MDS_ObjectGetType(const MDS_Object_t *object);
 bool MDS_ObjectIsCreated(const MDS_Object_t *object);
 

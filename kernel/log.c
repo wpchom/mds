@@ -47,8 +47,8 @@ static struct MDS_LOG_Handle {
     MDS_SpinLock_t spinlock;
     MDS_Thread_t *thread;
     MDS_MsgQueue_t *mq;
-    uint16_t loss;  // atomic
-    uint16_t psn;   // atomic
+    uint16_t loss; // atomic
+    uint16_t psn;  // atomic
 } g_logHandle;
 
 typedef struct MDS_LOG_Message {
@@ -56,7 +56,7 @@ typedef struct MDS_LOG_Message {
     uint8_t level : 4;
     uint8_t count : 4;
     uint32_t psn : 12;
-    uint64_t timestamp : 44;  // ms
+    uint64_t timestamp : 44; // ms
     const char *fmt;
     int32_t args[CONFIG_MDS_LOG_MSGARGS_NUMS];
 } MDS_LOG_Message_t;
@@ -79,7 +79,7 @@ static void MDS_LOG_ModuleWrite(const MDS_LOG_Module_t *module, uint8_t level, s
 
     do {
 #if (defined(CONFIG_MDS_LOG_FILTER_ENABLE) && (CONFIG_MDS_LOG_FILTER_ENABLE != 0))
-        if ((module != NULL) && (module->filter->print != NULL)) {
+        if ((module != NULL) && (module->filter != NULL) && (module->filter->print != NULL)) {
             module->filter->print(module, level, va_cnt, fmt, va_args);
             break;
         }
@@ -105,9 +105,9 @@ static void MDS_LOG_ThreadEntry(MDS_Arg_t *arg)
         MDS_Err_t err = MDS_MsgQueueRecvAcquire(g_logHandle.mq, &recv, MDS_TIMEOUT_FOREVER);
 
         while (err == MDS_EOK) {
-            MDS_LOG_ModuleWrite(recv->module, recv->level, recv->count, recv->fmt,
-                                MDS_ARGUMENT_FORLIST_N(CONFIG_MDS_LOG_MSGARGS_NUMS,
-                                                       __LOG_MESSAGE_ARG, (, ), recv));
+            MDS_LOG_ModuleWrite(
+                recv->module, recv->level, recv->count, recv->fmt,
+                MDS_ARGUMENT_FORLIST_N(CONFIG_MDS_LOG_MSGARGS_NUMS, __LOG_MESSAGE_ARG, (, ), recv));
 
             MDS_MsgQueueRecvRelease(g_logHandle.mq, recv);
             recv = NULL;
@@ -129,18 +129,18 @@ static void MDS_LOG_ThreadEntry(MDS_Arg_t *arg)
 static MDS_Err_t MDS_LOG_ThreadInit(void)
 {
     if (g_logHandle.mq == NULL) {
-        g_logHandle.mq = MDS_MsgQueueCreate("mqlog", sizeof(MDS_LOG_Message_t),
-                                            CONFIG_MDS_LOG_MSGQUEUE_NUMS);
+        g_logHandle.mq =
+            MDS_MsgQueueCreate("mqlog", sizeof(MDS_LOG_Message_t), CONFIG_MDS_LOG_MSGQUEUE_NUMS);
     }
     if (g_logHandle.mq == NULL) {
         return (MDS_ENOMEM);
     }
 
     if (g_logHandle.thread == NULL) {
-        g_logHandle.thread = MDS_ThreadCreate("thlog", MDS_LOG_ThreadEntry, NULL,
-                                              CONFIG_MDS_LOG_THREAD_STACKSIZE,
-                                              MDS_THREAD_PRIORITY(CONFIG_MDS_LOG_THREAD_PRIORITY),
-                                              MDS_TIMEOUT_TICKS(CONFIG_MDS_LOG_THREAD_TICKS));
+        g_logHandle.thread =
+            MDS_ThreadCreate("thlog", MDS_LOG_ThreadEntry, NULL, CONFIG_MDS_LOG_THREAD_STACKSIZE,
+                             MDS_THREAD_PRIORITY(CONFIG_MDS_LOG_THREAD_PRIORITY),
+                             MDS_TIMEOUT_TICKS(CONFIG_MDS_LOG_THREAD_TICKS));
     }
     if (g_logHandle.thread == NULL) {
         return (MDS_ENOMEM);
@@ -198,7 +198,7 @@ void MDS_LOG_ModulePrintf(const MDS_LOG_Module_t *module, uint8_t level, size_t 
 
     do {
 #if (defined(CONFIG_MDS_LOG_FILTER_ENABLE) && (CONFIG_MDS_LOG_FILTER_ENABLE != 0))
-        if ((module != NULL) && (module->filter->print != NULL)) {
+        if ((module != NULL) && (module->filter != NULL) && (module->filter->print != NULL)) {
             module->filter->print(module, level, va_cnt, fmt, va_args);
             break;
         }
@@ -228,7 +228,7 @@ void MDS_PanicPrintf(size_t va_cnt, const char *fmt, ...)
     va_start(va_args, fmt);
     do {
 #if (defined(CONFIG_MDS_LOG_FILTER_ENABLE) && (CONFIG_MDS_LOG_FILTER_ENABLE != 0))
-        if ((module != NULL) && (module->filter->print != NULL)) {
+        if ((module != NULL) && (module->filter != NULL) && (module->filter->print != NULL)) {
             module->filter->print(module, MDS_LOG_LEVEL_FAT, va_cnt, fmt, va_args);
             break;
         }
@@ -254,8 +254,8 @@ void MDS_PanicPrintf(size_t va_cnt, const char *fmt, ...)
 #define MDS_LOG_COMPRESS_ARG_FIX(x) ((x == 0xFFFFFFFF) ? (0xBDC5CA39) : (x))
 #endif
 
-int MDS_LOG_CompressStructVa(MDS_LOG_Compress_t *log, size_t level, size_t va_cnt, const char *fmt,
-                             va_list va_args)
+size_t MDS_LOG_CompressStructVa(MDS_LOG_Compress_t *log, size_t level, size_t va_cnt,
+                                const char *fmt, va_list va_args)
 {
     static size_t logCompressPsn = 0;
 
@@ -283,13 +283,13 @@ int MDS_LOG_CompressStructVa(MDS_LOG_Compress_t *log, size_t level, size_t va_cn
             (sizeof(uint32_t) * (CONFIG_MDS_LOG_MSGARGS_NUMS + va_cnt)));
 }
 
-int MDS_LOG_CompressSturctPrint(MDS_LOG_Compress_t *log, size_t level, size_t va_cnt,
-                                const char *fmt, ...)
+size_t MDS_LOG_CompressSturctPrint(MDS_LOG_Compress_t *log, size_t level, size_t va_cnt,
+                                   const char *fmt, ...)
 {
     va_list va_args;
 
     va_start(va_args, fmt);
-    int len = MDS_LOG_CompressStructVa(log, level, va_cnt, fmt, va_args);
+    size_t len = MDS_LOG_CompressStructVa(log, level, va_cnt, fmt, va_args);
     va_end(va_args);
 
     return (len);
