@@ -10,7 +10,7 @@
  * See the Mulan PSL v2 for more details.
  **/
 /* Include ----------------------------------------------------------------- */
-#include "kernel.h"
+#include "mds_sys.h"
 
 /* Variable ---------------------------------------------------------------- */
 static MDS_SpinLock_t g_sysSpinLock;
@@ -58,3 +58,5 @@ void MDS_CriticalRestore(MDS_SpinLock_t *spinlock, MDS_Lock_t lock)
 
     MDS_CoreInterruptRestore(lock);
 }
+
+// TODO: atomic

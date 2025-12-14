@@ -1,5 +1,5 @@
 declare_args() {
-  mds_pkgver = "latest"
+  # mds config
 }
 
 declare_toolchain(profile_toolchain) {

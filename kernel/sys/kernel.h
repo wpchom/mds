@@ -24,10 +24,7 @@ typedef struct MDS_KernelCpuInfo {
     MDS_Thread_t *currThread;
 } MDS_KernelCpuInfo_t;
 
-/* Core -------------------------------------------------------------------- */
-void MDS_CoreIdleSleep(void);
-MDS_Lock_t MDS_CoreInterruptLock(void);
-void MDS_CoreInterruptRestore(MDS_Lock_t lock);
+/* Core --------------------------------------------------------------------- */
 void *MDS_CoreThreadStackInit(void *stackBase, size_t stackSize, void *entry, void *arg,
                               void *exit);
 void MDS_CoreSchedulerStartup(void *toSP);

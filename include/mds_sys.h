@@ -34,6 +34,10 @@ extern "C" {
 #define CONFIG_MDS_OBJECT_NAME_SIZE 7
 #endif
 
+#ifndef CONFIG_MDS_SYSMEM_HEAP_OPS
+#define CONFIG_MDS_SYSMEM_HEAP_OPS MDS_MEMHEAP_OPS_LLFF
+#endif
+
 #ifndef CONFIG_MDS_KERNEL_LOG_LEVEL
 #define CONFIG_MDS_KERNEL_LOG_LEVEL MDS_LOG_LEVEL_WRN
 #endif
@@ -90,6 +94,15 @@ static inline void MDS_InitExport(void)
     }
 }
 
+/* Core -------------------------------------------------------------------- */
+typedef struct MDS_Lock {
+    intptr_t key;
+} MDS_Lock_t;
+
+MDS_Lock_t MDS_CoreInterruptLock(void);
+void MDS_CoreInterruptRestore(MDS_Lock_t lock);
+void MDS_CoreIdleSleep(void);
+
 /* Clock ------------------------------------------------------------------- */
 typedef struct MDS_Timeout {
     MDS_Tick_t ticks;
@@ -133,10 +146,6 @@ static inline void MDS_ClockDelayCnt(MDS_Tick_t cnt)
 }
 
 /* Critical ---------------------------------------------------------------- */
-typedef struct MDS_Lock {
-    intptr_t key;
-} MDS_Lock_t;
-
 typedef struct MDS_SpinLock {
 #if defined(CONFIG_MDS_KERNEL_SMP_CPUS) && (CONFIG_MDS_KERNEL_SMP_CPUS > 1)
     intptr_t locked;
@@ -531,6 +540,16 @@ extern const MDS_MemHeapOps_t G_MDS_MEMHEAP_OPS_TLSF;
 
 /* SysMem ------------------------------------------------------------------ */
 #define MDS_SYSMEM_ALIGN_SIZE sizeof(uintptr_t)
+
+#define MDS_MEMHEAP_OPS_NONE 0
+#define MDS_MEMHEAP_OPS_LLFF 1
+#define MDS_MEMHEAP_OPS_TLSF 2
+
+#if (CONFIG_MDS_SYSMEM_HEAP_OPS == MDS_MEMHEAP_OPS_LLFF)
+#define MDS_SYSMEM_HEAP_OPS G_MDS_MEMHEAP_OPS_LLFF
+#elif (CONFIG_MDS_SYSMEM_HEAP_OPS == MDS_MEMHEAP_OPS_TLSF)
+#define MDS_SYSMEM_HEAP_OPS G_MDS_MEMHEAP_OPS_TLSF
+#endif
 
 void *MDS_SysMemAlloc(size_t size);
 void *MDS_SysMemCalloc(size_t nmemb, size_t size);

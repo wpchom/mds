@@ -100,11 +100,11 @@ static void MDS_LOG_ThreadEntry(MDS_Arg_t *arg)
         return;
     }
 
-    MDS_LOOP {
+    for (;;) {
         MDS_LOG_Message_t *recv = NULL;
         MDS_Err_t err = MDS_MsgQueueRecvAcquire(g_logHandle.mq, &recv, MDS_TIMEOUT_FOREVER);
 
-        while (err == MDS_EOK) {
+        while (MDS_ErrIsSame(err, MDS_EOK)) {
             MDS_LOG_ModuleWrite(
                 recv->module, recv->level, recv->count, recv->fmt,
                 MDS_ARGUMENT_FORLIST_N(CONFIG_MDS_LOG_MSGARGS_NUMS, __LOG_MESSAGE_ARG, (, ), recv));
@@ -115,6 +115,7 @@ static void MDS_LOG_ThreadEntry(MDS_Arg_t *arg)
             err = MDS_MsgQueueRecvAcquire(g_logHandle.mq, &recv, MDS_TIMEOUT_NOWAIT);
         }
 
+        // TODO: atomic
         MDS_Lock_t lock = MDS_CriticalLock(&(g_logHandle.spinlock));
         uint16_t loss = g_logHandle.loss;
         g_logHandle.loss = 0;
@@ -158,7 +159,7 @@ void MDS_LOG_ModulePrintf(const MDS_LOG_Module_t *module, uint8_t level, size_t 
         return;
     }
 
-    if ((g_logHandle.mq == NULL) && (MDS_LOG_ThreadInit() != MDS_EOK)) {
+    if ((g_logHandle.mq == NULL) && (!MDS_ErrIsSame(MDS_LOG_ThreadInit(), MDS_EOK))) {
         return;
     }
 
@@ -177,12 +178,15 @@ void MDS_LOG_ModulePrintf(const MDS_LOG_Module_t *module, uint8_t level, size_t 
     }
     va_end(va_args);
 
+    // TODO: atomic
     MDS_Lock_t lock = MDS_CriticalLock(&(g_logHandle.spinlock));
     log.psn = g_logHandle.psn;
     g_logHandle.psn += 1;
     MDS_CriticalRestore(&(g_logHandle.spinlock), lock);
 
-    if (MDS_MsgQueueSend(g_logHandle.mq, &log, sizeof(log), MDS_TIMEOUT_NOWAIT) != MDS_EOK) {
+    MDS_Err_t err = MDS_MsgQueueSend(g_logHandle.mq, &log, sizeof(log), MDS_TIMEOUT_NOWAIT);
+    if (!MDS_ErrIsSame(err, MDS_EOK)) {
+        // TODO: atomic
         lock = MDS_CriticalLock(&(g_logHandle.spinlock));
         g_logHandle.loss += 1;
         MDS_CriticalRestore(&(g_logHandle.spinlock), lock);
@@ -257,6 +261,7 @@ void MDS_PanicPrintf(size_t va_cnt, const char *fmt, ...)
 size_t MDS_LOG_CompressStructVa(MDS_LOG_Compress_t *log, size_t level, size_t va_cnt,
                                 const char *fmt, va_list va_args)
 {
+    // TODO: atomic
     static size_t logCompressPsn = 0;
 
     if (log == NULL) {
@@ -271,7 +276,8 @@ size_t MDS_LOG_CompressStructVa(MDS_LOG_Compress_t *log, size_t level, size_t va
     log->address = (uintptr_t)fmt & 0x00FFFFFF;
     log->level = level;
     log->count = va_cnt;
-    log->psn = logCompressPsn;
+    // TODO: atomic
+    log->psn = logCompressPsn++;
     log->timestamp = MDS_ClockGetTimestamp(NULL).ts;
 
     for (size_t idx = 0; idx < va_cnt; idx++) {

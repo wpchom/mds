@@ -78,6 +78,7 @@ MDS_Err_t MDS_ObjectDeInit(MDS_Object_t *object)
     return (MDS_EOK);
 }
 
+#if (!defined(CONFIG_MDS_SYSMEM_HEAP_OPS) || (CONFIG_MDS_SYSMEM_HEAP_OPS > 0))
 MDS_Object_t *MDS_ObjectCreate(size_t typesz, MDS_ObjectType_t type, const char *name)
 {
     MDS_Object_t *object = MDS_SysMemCalloc(1, typesz);
@@ -105,6 +106,7 @@ MDS_Err_t MDS_ObjectDestroy(MDS_Object_t *object)
 
     return (MDS_EOK);
 }
+#endif
 
 MDS_Object_t *MDS_ObjectFind(const MDS_ObjectType_t type, const char *name)
 {
@@ -118,7 +120,7 @@ MDS_Object_t *MDS_ObjectFind(const MDS_ObjectType_t type, const char *name)
 
     MDS_Object_t *find = NULL;
     MDS_Object_t *iter = NULL;
-    MDS_DLIST_CONTAIN_FOREACH_PREV (iter, node, &(g_objectList[type].list)) {
+    MDS_DLIST_CONTAINER_FOREACH_PREV (iter, node, &(g_objectList[type].list)) {
         if (strncmp(iter->name, name, sizeof(find->name)) == 0) {
             find = iter;
             break;

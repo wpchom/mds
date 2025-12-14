@@ -143,8 +143,8 @@ ExperimentalAutoDetectBinPacking: false
 FixNamespaceComments: false
 ForEachMacros:
   - MDS_LOOP
-  - MDS_DLIST_CONTAIN_FOREACH_NEXT
-  - MDS_DLIST_CONTAIN_FOREACH_PREV
+  - MDS_DLIST_CONTAINER_FOREACH_NEXT
+  - MDS_DLIST_CONTAINER_FOREACH_PREV
 IfMacros:
   - IF
 IncludeBlocks:   Preserve

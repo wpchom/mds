@@ -90,6 +90,10 @@ static inline bool MDS_ErrIsSame(MDS_Err_t e1, MDS_Err_t e2)
 #define MDS_ERANGE  MDS_ERR(34) /* Result too large */
 #define MDS_ENOMSG  MDS_ERR(35) /* No message of desired type */
 #define MDS_EIDRM   MDS_ERR(36) /* Identifier removed */
+#define MDS_ENOSTR  MDS_ERR(60) /* Not a stream */
+#define MDS_ENODATA MDS_ERR(61) /* No data (for no delay io) */
+#define MDS_ETIME   MDS_ERR(62) /* Stream ioctl timeout */
+#define MDS_ENOSR   MDS_ERR(63) /* No stream resources */
 
 #ifdef __cplusplus
 }

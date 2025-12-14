@@ -38,7 +38,7 @@ extern "C" {
 #endif
 
 #ifndef CONFIG_MDS_LOG_FORMAT_SECTION
-#define CONFIG_MDS_LOG_FORMAT_SECTION ".logfmt."
+#define CONFIG_MDS_LOG_FORMAT_SECTION ".logstr."
 #endif
 
 #ifndef CONFIG_MDS_LOG_MSGARGS_NUMS
