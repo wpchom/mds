@@ -62,39 +62,39 @@ typedef uint32_t rv_fpreg_t;
 
 /* StackFrame -------------------------------------------------------------- */
 struct StackFrame {
-    uintptr_t mepc;     // mepc         | mchaine exception register
-    uintptr_t ra;       // x1  - ra     | return address
-    uintptr_t mstatus;  // mstatus      | machine status register
-    uintptr_t fcsr;     // fcsr         | float point constrl and status register
-    uintptr_t tp;       // x4  - tp     | thread pointer
-    uintptr_t t0;       // x5  - t0     | temporary register 0
-    uintptr_t t1;       // x6  - t1     | temporary register 1
-    uintptr_t t2;       // x7  - t2     | temporary register 2
-    uintptr_t s0_fp;    // x8  - s0/fp  | saved register 0 or frame pointer
-    uintptr_t s1;       // x9  - s1     | saved register 1
-    uintptr_t a0;       // x10 - a0     | return value or function argument 0
-    uintptr_t a1;       // x11 - a1     | return value or function argument 1
-    uintptr_t a2;       // x12 - a2     | function argument 2
-    uintptr_t a3;       // x13 - a3     | function argument 3
-    uintptr_t a4;       // x14 - a4     | function argument 4
-    uintptr_t a5;       // x15 - a5     | function argument 5
+    uintptr_t mepc;    // mepc         | mchaine exception register
+    uintptr_t ra;      // x1  - ra     | return address
+    uintptr_t mstatus; // mstatus      | machine status register
+    uintptr_t fcsr;    // fcsr         | float point constrl and status register
+    uintptr_t tp;      // x4  - tp     | thread pointer
+    uintptr_t t0;      // x5  - t0     | temporary register 0
+    uintptr_t t1;      // x6  - t1     | temporary register 1
+    uintptr_t t2;      // x7  - t2     | temporary register 2
+    uintptr_t s0_fp;   // x8  - s0/fp  | saved register 0 or frame pointer
+    uintptr_t s1;      // x9  - s1     | saved register 1
+    uintptr_t a0;      // x10 - a0     | return value or function argument 0
+    uintptr_t a1;      // x11 - a1     | return value or function argument 1
+    uintptr_t a2;      // x12 - a2     | function argument 2
+    uintptr_t a3;      // x13 - a3     | function argument 3
+    uintptr_t a4;      // x14 - a4     | function argument 4
+    uintptr_t a5;      // x15 - a5     | function argument 5
 #ifndef __riscv_32e
-    uintptr_t a6;   // x16 - a6         | function argument 6
-    uintptr_t a7;   // x17 - a7         | function argument 7
-    uintptr_t s2;   // x18 - s2         | saved register 2
-    uintptr_t s3;   // x19 - s3         | saved register 3
-    uintptr_t s4;   // x20 - s4         | saved register 4
-    uintptr_t s5;   // x21 - s5         | saved register 5
-    uintptr_t s6;   // x22 - s6         | saved register 6
-    uintptr_t s7;   // x23 - s7         | saved register 7
-    uintptr_t s8;   // x24 - s8         | saved register 8
-    uintptr_t s9;   // x25 - s9         | saved register 9
-    uintptr_t s10;  // x26 - s10        | saved register 10
-    uintptr_t s11;  // x27 - s11        | saved register 11
-    uintptr_t t3;   // x28 - t3         | temporary register 3
-    uintptr_t t4;   // x29 - t4         | temporary register 4
-    uintptr_t t5;   // x30 - t5         | temporary register 5
-    uintptr_t t6;   // x31 - t6         | temporary register 6
+    uintptr_t a6;  // x16 - a6         | function argument 6
+    uintptr_t a7;  // x17 - a7         | function argument 7
+    uintptr_t s2;  // x18 - s2         | saved register 2
+    uintptr_t s3;  // x19 - s3         | saved register 3
+    uintptr_t s4;  // x20 - s4         | saved register 4
+    uintptr_t s5;  // x21 - s5         | saved register 5
+    uintptr_t s6;  // x22 - s6         | saved register 6
+    uintptr_t s7;  // x23 - s7         | saved register 7
+    uintptr_t s8;  // x24 - s8         | saved register 8
+    uintptr_t s9;  // x25 - s9         | saved register 9
+    uintptr_t s10; // x26 - s10        | saved register 10
+    uintptr_t s11; // x27 - s11        | saved register 11
+    uintptr_t t3;  // x28 - t3         | temporary register 3
+    uintptr_t t4;  // x29 - t4         | temporary register 4
+    uintptr_t t5;  // x30 - t5         | temporary register 5
+    uintptr_t t6;  // x31 - t6         | temporary register 6
 #endif
 
 #ifdef __riscv_flen
@@ -351,12 +351,11 @@ void MDS_CoreIdleSleep(void)
 }
 
 /* CoreThread -------------------------------------------------------------- */
-void *MDS_CoreThreadStackInit(void *stackBase, size_t stackSize, void *entry, void *arg,
-                              void *exit)
+void *MDS_CoreThreadStackInit(void *stackBase, size_t stackSize, void *entry, void *arg, void *exit)
 {
 #ifndef __riscv_32e
-    uintptr_t sp = VALUE_ALIGN((uintptr_t)(stackBase) + stackSize,
-                               sizeof(uint64_t) + sizeof(uint64_t));
+    uintptr_t sp =
+        VALUE_ALIGN((uintptr_t)(stackBase) + stackSize, sizeof(uint64_t) + sizeof(uint64_t));
 #else
     uintptr_t sp = VALUE_ALIGN((uintptr_t)(stackBase) + stackSize, sizeof(uint32_t));
 #endif
@@ -401,8 +400,7 @@ bool MDS_CoreThreadStackCheck(MDS_Thread_t *thread)
 }
 
 /* CoreScheduler ----------------------------------------------------------- */
-#if (defined(CONFIG_MDS_KERNEL_THREAD_PRIORITY_MAX) &&                                            \
-     (CONFIG_MDS_KERNEL_THREAD_PRIORITY_MAX != 0))
+#if (defined(CONFIG_MDS_KERNEL_THREAD_PRIORITY_MAX) && (CONFIG_MDS_KERNEL_THREAD_PRIORITY_MAX != 0))
 static struct CoreScheduler {
     uintptr_t swflag;
     uintptr_t *fromSP;
@@ -590,8 +588,7 @@ void MDS_CorePanicTrace(void)
     }
 }
 
-__attribute__((noreturn)) void Exception_Handler(uintptr_t mcause, uintptr_t mscratch,
-                                                 uintptr_t sp)
+__attribute__((noreturn)) void Exception_Handler(uintptr_t mcause, uintptr_t mscratch, uintptr_t sp)
 {
     uintptr_t mepc, mtval;
 
@@ -662,8 +659,7 @@ __attribute__((naked, __aligned__(0x04))) void Trap_Handler(void)
         __asm volatile("csrrw       sp, mscratch, sp");
     }
 
-#if (defined(CONFIG_MDS_KERNEL_THREAD_PRIORITY_MAX) &&                                            \
-     (CONFIG_MDS_KERNEL_THREAD_PRIORITY_MAX != 0))
+#if (defined(CONFIG_MDS_KERNEL_THREAD_PRIORITY_MAX) && (CONFIG_MDS_KERNEL_THREAD_PRIORITY_MAX != 0))
     if (g_coreScheduler.swflag) {
         g_coreScheduler.swflag = false;
 

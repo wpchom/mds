@@ -1,11 +1,12 @@
 declare_args() {
   # config
   mds_core_arch = ""
+  mds_with_nosys = false
   mds_config_file = ""
 }
 
 config("mds_kernel_cfg") {
-  include_dirs = [ "../include" ]
+  include_dirs = [ "../include/kernel" ]
   defines = []
 
   if (defined(mds_config_file) && mds_config_file != "") {
@@ -23,8 +24,6 @@ config("mds_kernel_cfg") {
         "CONFIG_MDS_LOG_FORMAT_SECTION=\"rodata,logfmt.\"",
       ]
     }
-
-    # add other os
   }
 }
 
@@ -38,31 +37,35 @@ static_library("mds_kernel") {
     "utils.c",
   ]
 
-  sources += [
-    "sys/clock.c",
-    "sys/idle.c",
-    "sys/ipc/condition.c",
-    "sys/ipc/event.c",
-    "sys/ipc/mempool.c",
-    "sys/ipc/msgqueue.c",
-    "sys/ipc/mutex.c",
-    "sys/ipc/rwlock.c",
-    "sys/ipc/semaphore.c",
-    "sys/kernel.c",
-    "sys/scheduler.c",
-    "sys/thread.c",
-    "sys/timer.c",
-    "sys/workq.c",
-  ]
+  if (mds_core_arch != "") {
+    sources += [ "arch/" + mds_core_arch + ".c" ]
+  }
+
+  if (mds_with_nosys) {
+    sources += [ "nosys.c" ]
+  } else {
+    sources += [
+      "sys/clock.c",
+      "sys/idle.c",
+      "sys/ipc/condition.c",
+      "sys/ipc/event.c",
+      "sys/ipc/mempool.c",
+      "sys/ipc/msgqueue.c",
+      "sys/ipc/mutex.c",
+      "sys/ipc/rwlock.c",
+      "sys/ipc/semaphore.c",
+      "sys/kernel.c",
+      "sys/scheduler.c",
+      "sys/thread.c",
+      "sys/timer.c",
+      "sys/workq.c",
+    ]
+  }
 
   sources += [
     "mm/heap.c",
     "mm/llff.c",
   ]
-
-  if (mds_core_arch != "") {
-    sources += [ "arch/" + mds_core_arch + ".c" ]
-  }
 
   public_configs = [ ":mds_kernel_cfg" ]
 }

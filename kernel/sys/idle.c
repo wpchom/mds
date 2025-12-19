@@ -52,7 +52,7 @@ MDS_Err_t MDS_KernelAddIdleHook(void (*hook)(void))
 {
     size_t idx;
     MDS_Err_t err = MDS_ERROR;
-    MDS_Item_t lock = MDS_CoreInterruptLock();
+    MDS_Lock_t lock = MDS_CoreInterruptLock();
 
     for (idx = 0; idx < ARRAY_SIZE(g_idleHook); idx++) {
         if (g_idleHook[idx] == NULL) {
@@ -71,7 +71,7 @@ MDS_Err_t MDS_KernelDelIdleHook(void (*hook)(void))
 {
     size_t idx;
     MDS_Err_t err = MDS_ERROR;
-    MDS_Item_t lock = MDS_CoreInterruptLock();
+    MDS_Lock_t lock = MDS_CoreInterruptLock();
 
     for (idx = 0; idx < ARRAY_SIZE(g_idleHook); idx++) {
         if (g_idleHook[idx] == hook) {

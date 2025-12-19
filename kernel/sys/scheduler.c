@@ -103,8 +103,8 @@ MDS_Thread_t *MDS_SchedulerPeekThread(void)
 
     size_t highestPrio = MDS_SchedulerFFS(g_sysThreadPrioMask);
     if (highestPrio != 0U) {
-        thread = CONTAINER_OF(g_sysSchedulerTable[highestPrio - 1].next, MDS_Thread_t,
-                              nodeWait.node);
+        thread =
+            CONTAINER_OF(g_sysSchedulerTable[highestPrio - 1].next, MDS_Thread_t, nodeWait.node);
     } else {
         thread = MDS_KernelIdleThread();
     }

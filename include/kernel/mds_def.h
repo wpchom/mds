@@ -160,13 +160,13 @@ static inline MDS_DListNode_t *MDS_DListForeachPrev(const MDS_DListNode_t *list,
     return (NULL);
 }
 
-#define MDS_DLIST_CONTAINER_FOREACH_NEXT(iter, member, list)                                         \
+#define MDS_DLIST_CONTAINER_FOREACH_NEXT(iter, member, list)                                       \
     for (MDS_DListNode_t *node = ((list) != NULL) ? ((list)->next) : (NULL), *next = NULL;         \
          (node != NULL) && (node != (list)) &&                                                     \
          (next = node->next, ((iter) = CONTAINER_OF(node, __typeof__(*iter), member)) != NULL);    \
          node = next)
 
-#define MDS_DLIST_CONTAINER_FOREACH_PREV(iter, member, list)                                         \
+#define MDS_DLIST_CONTAINER_FOREACH_PREV(iter, member, list)                                       \
     for (MDS_DListNode_t *node = ((list) != NULL) ? ((list)->prev) : (NULL), *prev = NULL;         \
          (node != NULL) && (node != (list)) &&                                                     \
          (prev = node->prev, ((iter) = CONTAINER_OF(node, __typeof__(*iter), member)) != NULL);    \
@@ -205,11 +205,6 @@ typedef struct MDS_MsgList {
 
 size_t MDS_MsgListGetLength(const MDS_MsgList_t *msg);
 size_t MDS_MsgListCopyBuff(void *buff, size_t size, const MDS_MsgList_t *msg);
-
-/* String ------------------------------------------------------------------ */
-size_t MDS_Strlcpy(char *dst, const char *src, size_t dsize);
-size_t MDS_Strnlen(const char *str, size_t maxlen);
-void *MDS_Memset(void *dst, int c, size_t size);
 
 /* Number ------------------------------------------------------------------ */
 #define MDS_BITS_OF_BYTE 8U
