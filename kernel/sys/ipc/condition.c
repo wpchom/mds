@@ -41,12 +41,15 @@ MDS_Err_t MDS_ConditionDeInit(MDS_Condition_t *condition)
         err = MDS_ObjectDeInit(&(condition->object));
     }
 
-    MDS_CriticalRestore((!MDS_ErrIsSame(err, MDS_EOK)) ? (&(condition->spinlock)) : (NULL), lock);
+    if (MDS_ErrIsSame(err, MDS_EOK)) {
+        MDS_CriticalRestore(NULL, lock);
+    } else {
+        MDS_CriticalRestore(&(condition->spinlock), lock);
+    }
 
     return (err);
 }
 
-#if (!defined(CONFIG_MDS_SYSMEM_HEAP_OPS) || (CONFIG_MDS_SYSMEM_HEAP_OPS > 0))
 MDS_Condition_t *MDS_ConditionCreate(const char *name)
 {
     return (MDS_SemaphoreCreate(name, 0, -1));
@@ -70,11 +73,14 @@ MDS_Err_t MDS_ConditionDestroy(MDS_Condition_t *condition)
         err = MDS_ObjectDestroy(&(condition->object));
     }
 
-    MDS_CriticalRestore((!MDS_ErrIsSame(err, MDS_EOK)) ? (&(condition->spinlock)) : (NULL), lock);
+    if (MDS_ErrIsSame(err, MDS_EOK)) {
+        MDS_CriticalRestore(NULL, lock);
+    } else {
+        MDS_CriticalRestore(&(condition->spinlock), lock);
+    }
 
     return (err);
 }
-#endif
 
 MDS_Err_t MDS_ConditionBroadCast(MDS_Condition_t *condition)
 {

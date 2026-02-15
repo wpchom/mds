@@ -25,9 +25,9 @@ static volatile uint32_t g_sysThreadPrioMask = 0x00U;
 static MDS_DListNode_t g_sysSchedulerTable[CONFIG_MDS_KERNEL_THREAD_PRIORITY_MAX];
 
 /* Function ---------------------------------------------------------------- */
-__attribute__((weak)) size_t MDS_SchedulerFFS(size_t value)
+__attribute__((weak)) size_t MDS_SchedulerFFS(register size_t value)
 {
-    size_t num = 0;
+    register size_t num = 0;
 #if __SIZE_MAX__ == __UINT64_MAX__
     if ((value & 0xFFFFFFFF) == 0) {
         num += 0x20;
@@ -60,18 +60,16 @@ void MDS_SchedulerInit(void)
 {
     if ((g_sysSchedulerTable[0].next == NULL) || (g_sysSchedulerTable[0].prev == NULL)) {
         g_sysThreadPrioMask = 0U;
-        MDS_SkipListInitNode(g_sysSchedulerTable, ARRAY_SIZE(g_sysSchedulerTable));
+        for (size_t idx = 0; idx < ARRAY_SIZE(g_sysSchedulerTable); ++idx) {
+            MDS_DListInitNode(&(g_sysSchedulerTable[idx]));
+        }
+        MDS_LOG_D("[scheduler] init with max priority:%" PRIuPTR, ARRAY_SIZE(g_sysSchedulerTable));
     }
-
-    MDS_LOG_D("[scheduler] init with max priority:%" PRIuPTR, ARRAY_SIZE(g_sysSchedulerTable));
 }
 
 void MDS_SchedulerInsertThread(MDS_Thread_t *thread)
 {
-    if ((g_sysSchedulerTable[0].next == NULL) || (g_sysSchedulerTable[0].prev == NULL)) {
-        g_sysThreadPrioMask = 0U;
-        MDS_SkipListInitNode(g_sysSchedulerTable, ARRAY_SIZE(g_sysSchedulerTable));
-    }
+    MDS_SchedulerInit();
 
     MDS_DListRemoveNode(&(thread->nodeWait.node));
 

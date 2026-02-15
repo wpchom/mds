@@ -22,7 +22,7 @@ MDS_Err_t MDS_EventInit(MDS_Event_t *event, const char *name)
 
     MDS_Err_t err = MDS_ObjectInit(&(event->object), MDS_OBJECT_TYPE_EVENT, name);
     if (MDS_ErrIsSame(err, MDS_EOK)) {
-        event->value = 0U;
+        event->value.mask = 0U;
         MDS_KernelWaitQueueInit(&(event->queueWait));
         MDS_SpinLockInit(&(event->spinlock));
     }
@@ -38,20 +38,23 @@ MDS_Err_t MDS_EventDeInit(MDS_Event_t *event)
     MDS_Lock_t lock = MDS_CriticalLock(&(event->spinlock));
 
     MDS_KernelWaitQueueDrain(&(event->queueWait));
-    MDS_Err_t err = MDS_ObjectDeInit(&(event->object));
 
-    MDS_CriticalRestore((!MDS_ErrIsSame(err, MDS_EOK)) ? (&(event->spinlock)) : (NULL), lock);
+    MDS_Err_t err = MDS_ObjectDeInit(&(event->object));
+    if (MDS_ErrIsSame(err, MDS_EOK)) {
+        MDS_CriticalRestore(NULL, lock);
+    } else {
+        MDS_CriticalRestore(&(event->spinlock), lock);
+    }
 
     return (err);
 }
 
-#if (!defined(CONFIG_MDS_SYSMEM_HEAP_OPS) || (CONFIG_MDS_SYSMEM_HEAP_OPS > 0))
 MDS_Event_t *MDS_EventCreate(const char *name)
 {
     MDS_Event_t *event =
         (MDS_Event_t *)MDS_ObjectCreate(sizeof(MDS_Event_t), MDS_OBJECT_TYPE_EVENT, name);
     if (event != NULL) {
-        event->value = 0U;
+        event->value.mask = 0U;
         MDS_KernelWaitQueueInit(&(event->queueWait));
         MDS_SpinLockInit(&(event->spinlock));
     }
@@ -67,13 +70,16 @@ MDS_Err_t MDS_EventDestroy(MDS_Event_t *event)
     MDS_Lock_t lock = MDS_CriticalLock(&(event->spinlock));
 
     MDS_KernelWaitQueueDrain(&(event->queueWait));
-    MDS_Err_t err = MDS_ObjectDestroy(&(event->object));
 
-    MDS_CriticalRestore((!MDS_ErrIsSame(err, MDS_EOK)) ? (&(event->spinlock)) : (NULL), lock);
+    MDS_Err_t err = MDS_ObjectDestroy(&(event->object));
+    if (MDS_ErrIsSame(err, MDS_EOK)) {
+        MDS_CriticalRestore(NULL, lock);
+    } else {
+        MDS_CriticalRestore(&(event->spinlock), lock);
+    }
 
     return (err);
 }
-#endif
 
 MDS_Err_t MDS_EventWait(MDS_Event_t *event, MDS_Mask_t wait, MDS_EventOpt_t opt, MDS_Mask_t *recv,
                         MDS_Timeout_t timeout)
@@ -83,7 +89,7 @@ MDS_Err_t MDS_EventWait(MDS_Event_t *event, MDS_Mask_t wait, MDS_EventOpt_t opt,
     MDS_ASSERT((opt & (MDS_EVENT_OPT_AND | MDS_EVENT_OPT_OR)) !=
                (MDS_EVENT_OPT_AND | MDS_EVENT_OPT_OR));
 
-    if ((wait == 0U) || ((opt & (MDS_EVENT_OPT_AND | MDS_EVENT_OPT_OR)) == 0U)) {
+    if ((wait.mask == 0U) || ((opt & (MDS_EVENT_OPT_AND | MDS_EVENT_OPT_OR)) == 0U)) {
         return (MDS_EINVAL);
     }
 
@@ -93,21 +99,21 @@ MDS_Err_t MDS_EventWait(MDS_Event_t *event, MDS_Mask_t wait, MDS_EventOpt_t opt,
 
     MDS_LOG_D("[event] thread(%p) wait event(%p)" "which value:%" PRIxPTR " mask:%" PRIxPTR
               " opt:%" PRIx32,
-              thread, event, event->value, wait, (uint32_t)opt);
+              thread, event, event->value.mask, wait.mask, (uint32_t)opt);
 
     MDS_HOOK_CALL(KERNEL, event, (event, MDS_KERNEL_TRACE_EVENT_TRY_ACQUIRE, err, timeout));
 
     MDS_Lock_t lock = MDS_CriticalLock(&(event->spinlock));
 
-    if ((((opt & MDS_EVENT_OPT_AND) != 0U) && ((event->value & wait) == wait)) ||
-        (((opt & MDS_EVENT_OPT_OR) != 0U) && ((event->value & wait) != 0U))) {
+    if ((((opt & MDS_EVENT_OPT_AND) != 0U) && ((event->value.mask & wait.mask) == wait.mask)) ||
+        (((opt & MDS_EVENT_OPT_OR) != 0U) && ((event->value.mask & wait.mask) != 0U))) {
         if (recv != NULL) {
             *recv = thread->eventMask;
         }
-        thread->eventMask = event->value & wait;
+        thread->eventMask.mask = event->value.mask & wait.mask;
         thread->eventOpt = opt;
         if ((opt & MDS_EVENT_OPT_NOCLR) == 0U) {
-            event->value &= ~(wait);
+            event->value.mask &= ~(wait.mask);
         }
     } else if (timeout.ticks == MDS_CLOCK_TICK_NO_WAIT) {
         err = thread->err = MDS_ETIME;
@@ -145,25 +151,25 @@ MDS_Err_t MDS_EventSet(MDS_Event_t *event, MDS_Mask_t set)
     MDS_Err_t err = MDS_EOK;
     bool reSchedule = false;
 
-    MDS_LOG_D("[event] event(%p) which value:%" PRIxPTR " set mask:%" PRIxPTR, event, event->value,
-              set);
+    MDS_LOG_D("[event] event(%p) which value:%" PRIxPTR " set mask:%" PRIxPTR, event,
+              event->value.mask, set.mask);
 
     MDS_HOOK_CALL(KERNEL, event,
                   (event, MDS_KERNEL_TRACE_EVENT_HAS_SET, err, MDS_TIMEOUT_TICKS(mask)));
 
     MDS_Lock_t lock = MDS_CriticalLock(&(event->spinlock));
 
-    event->value |= set;
+    event->value.mask |= set.mask;
     MDS_Thread_t *iter = NULL;
     MDS_DLIST_CONTAINER_FOREACH_NEXT (iter, nodeWait.node, &(event->queueWait.list)) {
         err = MDS_EINVAL;
         if ((iter->eventOpt & MDS_EVENT_OPT_AND) != 0U) {
-            if ((iter->eventMask & event->value) == iter->eventMask) {
+            if ((iter->eventMask.mask & event->value.mask) == iter->eventMask.mask) {
                 err = MDS_EOK;
             }
         } else if ((iter->eventOpt & MDS_EVENT_OPT_OR) != 0U) {
-            if ((iter->eventMask & event->value) != 0U) {
-                iter->eventMask &= event->value;
+            if ((iter->eventMask.mask & event->value.mask) != 0U) {
+                iter->eventMask.mask &= event->value.mask;
                 err = MDS_EOK;
             }
         } else {
@@ -171,7 +177,7 @@ MDS_Err_t MDS_EventSet(MDS_Event_t *event, MDS_Mask_t set)
         }
         if (MDS_ErrIsSame(err, MDS_EOK)) {
             if ((iter->eventOpt & MDS_EVENT_OPT_NOCLR) == 0U) {
-                event->value &= ~iter->eventMask;
+                event->value.mask &= ~iter->eventMask.mask;
             }
             MDS_KernelWaitQueueResume(&(event->queueWait));
             reSchedule = true;
@@ -195,14 +201,14 @@ MDS_Err_t MDS_EventClr(MDS_Event_t *event, MDS_Mask_t clr)
 
     MDS_Err_t err = MDS_EOK;
 
-    MDS_LOG_D("[event] event(%p) which value:%" PRIxPTR " clr mask:%" PRIxPTR, event, event->value,
-              clr);
+    MDS_LOG_D("[event] event(%p) which value:%" PRIxPTR " clr mask:%" PRIxPTR, event,
+              event->value.mask, clr.mask);
 
     MDS_HOOK_CALL(KERNEL, event,
                   (event, MDS_KERNEL_TRACE_EVENT_HAS_CLR, err, (MDS_Timeout_t) {.ticks = mask}));
 
     MDS_Lock_t lock = MDS_CriticalLock(&(event->spinlock));
-    event->value &= ~(clr);
+    event->value.mask &= ~(clr.mask);
     MDS_CriticalRestore(&(event->spinlock), lock);
 
     return (err);

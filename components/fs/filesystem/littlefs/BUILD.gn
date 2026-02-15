@@ -1,0 +1,8 @@
+pkggroup("littlefs") {
+}
+
+source_set("fs_littlefs") {
+  sources = [ "littlefs_ops.c" ]
+
+  public_deps = [ ":littlefs" ]
+}

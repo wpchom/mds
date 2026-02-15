@@ -1,0 +1,6 @@
+source_set("fsm") {
+  sources = [ "mds_fsm.c" ]
+
+  defines = []
+  deps = [ "../../:kernel" ]
+}

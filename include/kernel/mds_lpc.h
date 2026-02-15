@@ -65,13 +65,13 @@ typedef enum MDS_LPC_Run {
 } MDS_LPC_Run_t;
 
 typedef struct MDS_LPC_DeviceOps {
-    void (*suspend)(MDS_Arg_t *dev, MDS_LPC_Sleep_t sleep);
-    void (*resume)(MDS_Arg_t *dev, MDS_LPC_Run_t run);
+    void (*suspend)(MDS_Arg_t dev, MDS_LPC_Sleep_t sleep);
+    void (*resume)(MDS_Arg_t dev, MDS_LPC_Run_t run);
 } MDS_LPC_DeviceOps_t;
 
 typedef struct MDS_LPC_Device {
     MDS_DListNode_t node;
-    MDS_Arg_t *dev;
+    MDS_Arg_t dev;
     const MDS_LPC_DeviceOps_t *ops;
 } MDS_LPC_Device_t;
 
@@ -108,7 +108,7 @@ MDS_Err_t MDS_LPC_RunModeRequest(MDS_LPC_Run_t run);
 MDS_Err_t MDS_LPC_RunModeRelease(MDS_LPC_Run_t run);
 MDS_Err_t MDS_LPC_RunModeWait(MDS_LPC_Run_t run, MDS_Timeout_t timeout);
 
-MDS_Err_t MDS_LPC_DeviceRegister(MDS_LPC_Device_t *device, MDS_Arg_t *dev,
+MDS_Err_t MDS_LPC_DeviceRegister(MDS_LPC_Device_t *device, MDS_Arg_t dev,
                                  const MDS_LPC_DeviceOps_t *ops);
 MDS_Err_t MDS_LPC_DeviceUnregister(MDS_LPC_Device_t *device);
 

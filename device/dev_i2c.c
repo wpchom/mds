@@ -15,7 +15,7 @@
 /* I2C adaptr -------------------------------------------------------------- */
 MDS_Err_t DEV_I2C_AdaptrInit(DEV_I2C_Adaptr_t *i2c, const char *name,
                              const DEV_I2C_Driver_t *driver, MDS_DevHandle_t *handle,
-                             const MDS_Arg_t *init)
+                             MDS_Arg_t init)
 {
     return (MDS_DevAdaptrInit((MDS_DevAdaptr_t *)i2c, name, (const MDS_DevDriver_t *)driver, handle,
                               init));
@@ -27,7 +27,7 @@ MDS_Err_t DEV_I2C_AdaptrDeInit(DEV_I2C_Adaptr_t *i2c)
 }
 
 DEV_I2C_Adaptr_t *DEV_I2C_AdaptrCreate(const char *name, const DEV_I2C_Driver_t *driver,
-                                       const MDS_Arg_t *init)
+                                       MDS_Arg_t init)
 {
     return ((DEV_I2C_Adaptr_t *)MDS_DevAdaptrCreate(sizeof(DEV_I2C_Adaptr_t), name,
                                                     (const MDS_DevDriver_t *)driver, init));
@@ -75,8 +75,8 @@ MDS_Err_t DEV_I2C_PeriphClose(DEV_I2C_Periph_t *periph)
 }
 
 void DEV_I2C_PeriphSlaveCallback(DEV_I2C_Periph_t *periph,
-                                 void (*callback)(DEV_I2C_Periph_t *, MDS_Arg_t *, MDS_Mask_t),
-                                 MDS_Arg_t *arg)
+                                 void (*callback)(DEV_I2C_Periph_t *, MDS_Arg_t , MDS_Mask_t),
+                                 MDS_Arg_t arg)
 {
     MDS_ASSERT(periph != NULL);
 
@@ -150,7 +150,7 @@ MDS_Err_t DEV_I2C_PeriphMasterTransfer(DEV_I2C_Periph_t *periph, const DEV_I2C_M
 MDS_Err_t DEV_I2C_PeriphMasterTransmit(DEV_I2C_Periph_t *periph, const uint8_t *buff, size_t len)
 {
     DEV_I2C_Msg_t msg[] = {
-        {.flags = DEV_I2C_MSGFLAG_WR, .buff = (uint8_t *)buff, .len = len},
+        {.flag.mask = DEV_I2C_MSGFLAG_WR, .buff = (uint8_t *)buff, .len = len},
     };
 
     return (DEV_I2C_PeriphMasterTransfer(periph, msg, ARRAY_SIZE(msg)));
@@ -159,7 +159,7 @@ MDS_Err_t DEV_I2C_PeriphMasterTransmit(DEV_I2C_Periph_t *periph, const uint8_t *
 MDS_Err_t DEV_I2C_PeriphMasterReceive(DEV_I2C_Periph_t *periph, uint8_t *buff, size_t size)
 {
     DEV_I2C_Msg_t msg[] = {
-        {.flags = DEV_I2C_MSGFLAG_RD, .buff = buff, .len = size},
+        {.flag.mask = DEV_I2C_MSGFLAG_RD, .buff = buff, .len = size},
     };
 
     return (DEV_I2C_PeriphMasterTransfer(periph, msg, ARRAY_SIZE(msg)));
@@ -177,8 +177,8 @@ MDS_Err_t DEV_I2C_PeriphMasterWriteMem(DEV_I2C_Periph_t *periph, uint32_t memAdd
         reg[idx] = (uint8_t)(memAddr >> (MDS_BITS_OF_BYTE * (memAddrSz - idx - 1)));
     }
     DEV_I2C_Msg_t msg[] = {
-        {.flags = DEV_I2C_MSGFLAG_WR | DEV_I2C_MSGFLAG_NO_STOP, .buff = reg, .len = memAddrSz},
-        {.flags = DEV_I2C_MSGFLAG_WR | DEV_I2C_MSGFLAG_NO_START,
+        {.flag.mask = DEV_I2C_MSGFLAG_WR | DEV_I2C_MSGFLAG_NO_STOP, .buff = reg, .len = memAddrSz},
+        {.flag.mask = DEV_I2C_MSGFLAG_WR | DEV_I2C_MSGFLAG_NO_START,
          .buff = (uint8_t *)buff,
          .len = len},
     };
@@ -198,8 +198,8 @@ MDS_Err_t DEV_I2C_PeriphMasterReadMem(DEV_I2C_Periph_t *periph, uint32_t memAddr
         reg[idx] = (uint8_t)(memAddr >> (MDS_BITS_OF_BYTE * (memAddrSz - idx - 1)));
     }
     DEV_I2C_Msg_t msg[] = {
-        {.flags = DEV_I2C_MSGFLAG_WR | DEV_I2C_MSGFLAG_NO_STOP, .buff = reg, .len = memAddrSz},
-        {.flags = DEV_I2C_MSGFLAG_RD, .buff = buff, .len = len},
+        {.flag.mask = DEV_I2C_MSGFLAG_WR | DEV_I2C_MSGFLAG_NO_STOP, .buff = reg, .len = memAddrSz},
+        {.flag.mask = DEV_I2C_MSGFLAG_RD, .buff = buff, .len = len},
     };
 
     return (DEV_I2C_PeriphMasterTransfer(periph, msg, ARRAY_SIZE(msg)));

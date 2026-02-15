@@ -15,7 +15,7 @@
 /* I2S adaptr -------------------------------------------------------------- */
 MDS_Err_t DEV_I2S_AdaptrInit(DEV_I2S_Adaptr_t *i2s, const char *name,
                              const DEV_I2S_Driver_t *driver, MDS_DevHandle_t *handle,
-                             const MDS_Arg_t *init)
+                             MDS_Arg_t init)
 {
     return (MDS_DevAdaptrInit((MDS_DevAdaptr_t *)i2s, name, (const MDS_DevDriver_t *)driver, handle,
                               init));
@@ -27,7 +27,7 @@ MDS_Err_t DEV_I2S_AdaptrDeInit(DEV_I2S_Adaptr_t *i2s)
 }
 
 DEV_I2S_Adaptr_t *DEV_I2S_AdaptrCreate(const char *name, const DEV_I2S_Driver_t *driver,
-                                       const MDS_Arg_t *init)
+                                       MDS_Arg_t init)
 {
     return ((DEV_I2S_Adaptr_t *)MDS_DevAdaptrCreate(sizeof(DEV_I2S_Adaptr_t), name,
                                                     (const MDS_DevDriver_t *)driver, init));
@@ -75,9 +75,9 @@ MDS_Err_t DEV_I2S_PeriphClose(DEV_I2S_Periph_t *periph)
 }
 
 void DEV_I2S_PeriphTxCallback(DEV_I2S_Periph_t *periph,
-                              void (*callback)(DEV_I2S_Periph_t *, MDS_Arg_t *, const uint8_t *,
+                              void (*callback)(DEV_I2S_Periph_t *, MDS_Arg_t , const uint8_t *,
                                                size_t, size_t),
-                              MDS_Arg_t *arg)
+                              MDS_Arg_t arg)
 {
     MDS_ASSERT(periph != NULL);
 
@@ -86,9 +86,9 @@ void DEV_I2S_PeriphTxCallback(DEV_I2S_Periph_t *periph,
 }
 
 void DEV_I2S_PeriphRxCallback(DEV_I2S_Periph_t *periph,
-                              void (*callback)(DEV_I2S_Periph_t *, MDS_Arg_t *, uint8_t *, size_t,
+                              void (*callback)(DEV_I2S_Periph_t *, MDS_Arg_t , uint8_t *, size_t,
                                                size_t),
-                              MDS_Arg_t *arg)
+                              MDS_Arg_t arg)
 {
     MDS_ASSERT(periph != NULL);
 

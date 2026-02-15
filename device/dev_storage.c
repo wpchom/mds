@@ -15,7 +15,7 @@
 /* Storage adaptr ---------------------------------------------------------- */
 MDS_Err_t DEV_STORAGE_AdaptrInit(DEV_STORAGE_Adaptr_t *storage, const char *name,
                                  const DEV_STORAGE_Driver_t *driver, MDS_DevHandle_t *handle,
-                                 const MDS_Arg_t *init)
+                                 MDS_Arg_t init)
 {
     return (MDS_DevAdaptrInit((MDS_DevAdaptr_t *)storage, name, (const MDS_DevDriver_t *)driver,
                               handle, init));
@@ -27,7 +27,7 @@ MDS_Err_t DEV_STORAGE_AdaptrDeInit(DEV_STORAGE_Adaptr_t *storage)
 }
 
 DEV_STORAGE_Adaptr_t *DEV_STORAGE_AdaptrCreate(const char *name, const DEV_STORAGE_Driver_t *driver,
-                                               const MDS_Arg_t *init)
+                                               MDS_Arg_t init)
 {
     return ((DEV_STORAGE_Adaptr_t *)MDS_DevAdaptrCreate(sizeof(DEV_STORAGE_Adaptr_t), name,
                                                         (const MDS_DevDriver_t *)driver, init));

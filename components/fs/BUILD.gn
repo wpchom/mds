@@ -1,0 +1,15 @@
+declare_args() {
+  mds_fs_with_littlefs = false
+}
+
+source_set("fs") {
+  sources = [ "mds_fs.c" ]
+
+  defines = []
+
+  deps = [ "../../:kernel" ]
+
+  if (defined(mds_fs_with_littlefs) && mds_fs_with_littlefs) {
+    deps += [ "filesystem/littlefs/:fs_littlefs" ]
+  }
+}

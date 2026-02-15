@@ -15,7 +15,7 @@
 /* LED device -------------------------------------------------------------- */
 MDS_Err_t DEV_LED_DeviceInit(DEV_LED_Device_t *led, const char *name,
                              const DEV_LED_Driver_t *driver, MDS_DevHandle_t *handle,
-                             const MDS_Arg_t *init)
+                             MDS_Arg_t init)
 {
     return (MDS_DevModuleInit((MDS_DevModule_t *)led, name, (const MDS_DevDriver_t *)driver, handle,
                               init));
@@ -27,7 +27,7 @@ MDS_Err_t DEV_LED_DeviceDeInit(DEV_LED_Device_t *led)
 }
 
 DEV_LED_Device_t *DEV_LED_DeviceCreate(const char *name, const DEV_LED_Driver_t *driver,
-                                       const MDS_Arg_t *init)
+                                       MDS_Arg_t init)
 {
     return ((DEV_LED_Device_t *)MDS_DevModuleCreate(sizeof(DEV_LED_Device_t), name,
                                                     (const MDS_DevDriver_t *)driver, init));

@@ -16,6 +16,16 @@
 static MDS_SpinLock_t g_sysSpinLock;
 
 /* Function ---------------------------------------------------------------- */
+__attribute__((weak)) MDS_Lock_t MDS_CoreInterruptLock(void)
+{
+    return ((MDS_Lock_t) {0});
+}
+
+__attribute__((weak)) void MDS_CoreInterruptRestore(MDS_Lock_t lock)
+{
+    UNUSED(lock);
+}
+
 void MDS_SpinLockInit(MDS_SpinLock_t *spinlock)
 {
 #if defined(CONFIG_MDS_KERNEL_SMP_CPUS) && (CONFIG_MDS_KERNEL_SMP_CPUS > 1)

@@ -15,36 +15,24 @@
 /* Include ----------------------------------------------------------------- */
 #include <stdint.h>
 #include <stdbool.h>
-#include "mds_utils.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /* Define ------------------------------------------------------------------ */
-#define MDS_ERR_MODULE_UNKOWN 0x0000
-#define MDS_ERR_MODULE_OBJECT 0x0001
-#define MDS_ERR_MODULE_DEVICE 0x0002
-#define MDS_ERR_MODULE_SCHEDU 0x0003
-#define MDS_ERR_MODULE_MEMHEAP
-#define MDS_ERR_MODULE_THREAD
-#define MDS_ERR_MODULE_WORKQ
-#define MDS_ERR_MODULE_TIMER
-#define MDS_ERR_MODULE_SEMAPHORE
-#define MDS_ERR_MODULE_MUTEX
-#define MDS_ERR_MODULE_EVENT
-#define MDS_ERR_MODULE_MSGQUEUE
-#define MDS_ERR_MODULE_MEMPOOL
+#define MDS_RESULT_TYPE(TypeErr, TypeVal)                                                          \
+    struct {                                                                                       \
+        TypeErr err;                                                                               \
+        TypeVal val;                                                                               \
+    }
 
-/* Config ------------------------------------------------------------------ */
-#ifndef MDS_ERR_MODULE
-#define MDS_ERR_MODULE MDS_ERR_MODULE_UNKOWN
-#endif
+#define MDS_RESULT_ERR(erval) {.err = (erval)}
+#define MDS_RESULT_OK(okval)  {.val = (okval)}
 
 /* Typedef ----------------------------------------------------------------- */
 typedef struct MDS_Err {
-    int32_t errno : 16;
-    uint32_t module : 16;
+    int errno;
 } MDS_Err_t;
 
 static inline bool MDS_ErrIsSame(MDS_Err_t e1, MDS_Err_t e2)
@@ -53,11 +41,11 @@ static inline bool MDS_ErrIsSame(MDS_Err_t e1, MDS_Err_t e2)
 }
 
 #define MDS_EOK    ((MDS_Err_t) {0})
-#define MDS_ERR(e) ((MDS_Err_t) {.module = MDS_ERR_MODULE, .errno = e})
+#define MDS_ERR(e) ((MDS_Err_t) {.errno = (-e)})
 
 #define MDS_EPERM   MDS_ERR(1)  /* Not owner */
 #define MDS_ENOENT  MDS_ERR(2)  /* No such file or directory */
-#define MDS_ESRCH   MDS_ERR(3)  /* No such process */
+#define MDS_ESRCH   MDS_ERR(3)  /* No such context */
 #define MDS_EINTR   MDS_ERR(4)  /* Interrupted system call */
 #define MDS_EIO     MDS_ERR(5)  /* I/O error */
 #define MDS_ENXIO   MDS_ERR(6)  /* No such device or address */
@@ -65,10 +53,11 @@ static inline bool MDS_ErrIsSame(MDS_Err_t e1, MDS_Err_t e2)
 #define MDS_ENOEXEC MDS_ERR(8)  /* Exec format error */
 #define MDS_EBADF   MDS_ERR(9)  /* Bad file number */
 #define MDS_ECHILD  MDS_ERR(10) /* No children */
-#define MDS_EAGAIN  MDS_ERR(11) /* No more processes */
+#define MDS_EAGAIN  MDS_ERR(11) /* No more contexts */
 #define MDS_ENOMEM  MDS_ERR(12) /* Not enough space */
 #define MDS_EACCES  MDS_ERR(13) /* Permission denied */
 #define MDS_EFAULT  MDS_ERR(14) /* Bad address */
+#define MDS_ENOTBLK MDS_ERR(15) /* Block device required */
 #define MDS_EBUSY   MDS_ERR(16) /* Device or resource busy */
 #define MDS_EEXIST  MDS_ERR(17) /* File exists */
 #define MDS_EXDEV   MDS_ERR(18) /* Cross-device link */
@@ -90,10 +79,14 @@ static inline bool MDS_ErrIsSame(MDS_Err_t e1, MDS_Err_t e2)
 #define MDS_ERANGE  MDS_ERR(34) /* Result too large */
 #define MDS_ENOMSG  MDS_ERR(35) /* No message of desired type */
 #define MDS_EIDRM   MDS_ERR(36) /* Identifier removed */
+#define MDS_EDEADLK MDS_ERR(45) /* Resource deadlock avoided */
+#define MDS_ENOLCK  MDS_ERR(46) /* No locks available */
 #define MDS_ENOSTR  MDS_ERR(60) /* Not a stream */
 #define MDS_ENODATA MDS_ERR(61) /* No data (for no delay io) */
 #define MDS_ETIME   MDS_ERR(62) /* Stream ioctl timeout */
 #define MDS_ENOSR   MDS_ERR(63) /* No stream resources */
+
+#define MDS_ENOTSUP MDS_ERR(134) /* Unsupported value */
 
 #ifdef __cplusplus
 }

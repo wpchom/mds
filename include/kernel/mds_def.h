@@ -64,7 +64,9 @@ typedef uint32_t MDS_Tick_t;
 #define PRIuTICK PRIu32
 #endif
 
-typedef uintptr_t MDS_Mask_t;
+typedef struct {
+    uintptr_t mask;
+} MDS_Mask_t;
 
 typedef struct MDS_String {
     const char *str;
@@ -72,8 +74,9 @@ typedef struct MDS_String {
 } MDS_String_t;
 
 typedef union MDS_Arg {
-    void *arg;
+    const void *ptr;
 } MDS_Arg_t;
+#define MDS_ARG_WITH(x) ((MDS_Arg_t) {x})
 
 /* Linked List ------------------------------------------------------------- */
 typedef struct MDS_SListNode {
@@ -172,30 +175,6 @@ static inline MDS_DListNode_t *MDS_DListForeachPrev(const MDS_DListNode_t *list,
          (prev = node->prev, ((iter) = CONTAINER_OF(node, __typeof__(*iter), member)) != NULL);    \
          node = prev)
 
-/* Skip List --------------------------------------------------------------- */
-void MDS_SkipListInitNode(MDS_DListNode_t node[], size_t size);
-void MDS_SkipListRemoveNode(MDS_DListNode_t node[], size_t size);
-bool MDS_SkipListIsEmpty(MDS_DListNode_t node[], size_t size);
-MDS_DListNode_t *MDS_SkipListSearchNode(MDS_DListNode_t *last[], MDS_DListNode_t list[],
-                                        size_t size, const void *value,
-                                        int (*compare)(const MDS_DListNode_t *node,
-                                                       const void *value));
-size_t MDS_SkipListInsertNode(MDS_DListNode_t *last[], MDS_DListNode_t node[], size_t size,
-                              size_t rand, size_t shift);
-
-/* Tree -------------------------------------------------------------------- */
-typedef struct MDS_TreeNode {
-    struct MDS_TreeNode *parent;
-    MDS_DListNode_t child;
-    MDS_DListNode_t sibling;
-} MDS_TreeNode_t;
-
-void MDS_TreeInitNode(MDS_TreeNode_t *node);
-MDS_TreeNode_t *MDS_TreeInsertNode(MDS_TreeNode_t *parent, MDS_TreeNode_t *node);
-MDS_TreeNode_t *MDS_TreeRemoveNode(MDS_TreeNode_t *node);
-size_t MDS_TreeForeachNode(const MDS_TreeNode_t *tree,
-                           void (*func)(const MDS_TreeNode_t *, MDS_Arg_t *), MDS_Arg_t *arg);
-
 /* Message ----------------------------------------------------------------- */
 typedef struct MDS_MsgList {
     const void *buff;
@@ -203,8 +182,35 @@ typedef struct MDS_MsgList {
     struct MDS_MsgList *next;
 } MDS_MsgList_t;
 
-size_t MDS_MsgListGetLength(const MDS_MsgList_t *msg);
-size_t MDS_MsgListCopyBuff(void *buff, size_t size, const MDS_MsgList_t *msg);
+static inline size_t MDS_MsgListGetLength(const MDS_MsgList_t *msg)
+{
+    size_t len = 0;
+    const MDS_MsgList_t *cur = msg;
+
+    while (cur != NULL) {
+        len += cur->len;
+        cur = cur->next;
+    }
+
+    return (len);
+}
+
+static inline size_t MDS_MsgListCopyBuff(void *buff, size_t size, const MDS_MsgList_t *msg)
+{
+    size_t len = 0;
+
+    for (const MDS_MsgList_t *cur = msg; cur != NULL; cur = cur->next) {
+        size_t cnt = (cur->len <= size) ? (cur->len) : (size);
+        if (cnt == 0) {
+            break;
+        }
+        memcpy((uint8_t *)buff + len, cur->buff, cnt);
+        len += cnt;
+        size -= cnt;
+    }
+
+    return (len);
+}
 
 /* Number ------------------------------------------------------------------ */
 #define MDS_BITS_OF_BYTE 8U

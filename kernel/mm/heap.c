@@ -171,7 +171,8 @@ static MDS_Err_t MDS_SysMemInit(void)
 
     MDS_Lock_t lock = MDS_CriticalLock(&(g_sysHeap.spinlock));
     do {
-        if (MDS_ObjectGetType(&(g_sysHeap.memheap.object)) == MDS_OBJECT_TYPE_MEMHEAP) {
+        MDS_ObjectType_t type = MDS_ObjectGetType(&(g_sysHeap.memheap.object));
+        if (type == MDS_OBJECT_TYPE_MEMHEAP) {
             break;
         }
 
@@ -187,7 +188,6 @@ static MDS_Err_t MDS_SysMemInit(void)
             MDS_LOG_E("[memory] SysMemInit failed");
         }
     } while (0);
-
     MDS_CriticalRestore(&(g_sysHeap.spinlock), lock);
 
     return (err);
@@ -227,5 +227,42 @@ void *MDS_SysMemRealloc(void *ptr, size_t size)
     }
 
     return (MDS_MemHeapRealloc(&(g_sysHeap.memheap), ptr, size));
+}
+#else
+
+void MDS_SysMemFree(void *ptr)
+{
+    UNUSED(ptr);
+
+    MDS_ASSERT("CONFIG_MDS_SYSMEM_HEAP_OPS is MDS_MEMHEAP_OPS_NONE");
+}
+
+void *MDS_SysMemAlloc(size_t size)
+{
+    UNUSED(size);
+
+    MDS_ASSERT("CONFIG_MDS_SYSMEM_HEAP_OPS is MDS_MEMHEAP_OPS_NONE");
+
+    return (NULL);
+}
+
+void *MDS_SysMemCalloc(size_t nmemb, size_t size)
+{
+    UNUSED(nmemb);
+    UNUSED(size);
+
+    MDS_ASSERT("CONFIG_MDS_SYSMEM_HEAP_OPS is MDS_MEMHEAP_OPS_NONE");
+
+    return (NULL);
+}
+
+void *MDS_SysMemRealloc(void *ptr, size_t size)
+{
+    UNUSED(ptr);
+    UNUSED(size);
+
+    MDS_ASSERT("CONFIG_MDS_SYSMEM_HEAP_OPS is MDS_MEMHEAP_OPS_NONE");
+
+    return (NULL);
 }
 #endif

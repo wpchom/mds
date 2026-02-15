@@ -50,12 +50,22 @@ extern "C" {
 #define CONFIG_MDS_KERNEL_THREAD_PRIORITY_MAX 32
 #endif
 
+#ifndef CONFIG_MDS_TIMER_INDEPENDENT
+#define CONFIG_MDS_TIMER_INDEPENDENT 1
+#endif
+
 #ifndef CONFIG_MDS_TIMER_SKIPLIST_LEVEL
-#define CONFIG_MDS_TIMER_SKIPLIST_LEVEL 1
+#define CONFIG_MDS_TIMER_SKIPLIST_LEVEL 0
 #endif
 
 #ifndef CONFIG_MDS_TIMER_SKIPLIST_SHIFT
 #define CONFIG_MDS_TIMER_SKIPLIST_SHIFT 2
+#endif
+
+#if (CONFIG_MDS_TIMER_SKIPLIST_LEVEL == 0)
+#ifndef CONFIG_MDS_TIMER_WHEEL_TABLE
+#define CONFIG_MDS_TIMER_WHEEL_TABLE 6, 5, 4
+#endif
 #endif
 
 #ifndef CONFIG_MDS_INIT_SECTION
@@ -166,7 +176,6 @@ typedef enum MDS_ObjectType {
     MDS_OBJECT_TYPE_SEMAPHORE,
     MDS_OBJECT_TYPE_MUTEX,
     MDS_OBJECT_TYPE_EVENT,
-    MDS_OBJECT_TYPE_POLL,
     MDS_OBJECT_TYPE_MSGQUEUE,
     MDS_OBJECT_TYPE_MEMPOOL,
     MDS_OBJECT_TYPE_MEMHEAP,
@@ -226,47 +235,57 @@ void MDS_KernelSchdulerLockAcquire(void);
 void MDS_KernelSchdulerLockRelease(void);
 
 /* WorkQueue --------------------------------------------------------------- */
-typedef void (*MDS_WorkEntry_t)(const MDS_WorkNode_t *workn, MDS_Arg_t *arg);
+typedef void (*MDS_WorkEntry_t)(const MDS_WorkNode_t *workn, MDS_Arg_t arg);
 
 struct MDS_WorkQueue {
     MDS_Object_t object;
 
     MDS_Thread_t *thread;
+#if (defined(CONFIG_MDS_TIMER_SKIPLIST_LEVEL) && (CONFIG_MDS_TIMER_SKIPLIST_LEVEL > 0))
     MDS_DListNode_t list[CONFIG_MDS_TIMER_SKIPLIST_LEVEL];
-
+#else
+    MDS_Tick_t ticklast;
+    MDS_DListNode_t overList;
+    MDS_DListNode_t wheelList[MDS_ARGUMENT_FOREACH_ARGS(__ARGUMENT_ELEM_SHIFT, (+), 0,
+                                                        CONFIG_MDS_TIMER_WHEEL_TABLE)];
+#endif
     MDS_SpinLock_t spinlock;
 };
 
 struct MDS_WorkNode {
     MDS_Object_t object;
 
-    MDS_DListNode_t node[CONFIG_MDS_TIMER_SKIPLIST_LEVEL];
     MDS_WorkQueue_t *queue;
+#if (defined(CONFIG_MDS_TIMER_SKIPLIST_LEVEL) && (CONFIG_MDS_TIMER_SKIPLIST_LEVEL > 0))
+    MDS_DListNode_t node[CONFIG_MDS_TIMER_SKIPLIST_LEVEL];
+#else
+    MDS_DListNode_t node;
+#endif
     MDS_Tick_t tickout;
     MDS_Tick_t tperiod;
 
     // callback
     MDS_WorkEntry_t entry;
     MDS_WorkEntry_t stop;
-    MDS_Arg_t *arg;
+    MDS_Arg_t arg;
 };
 
 MDS_Err_t MDS_WorkQueueInit(MDS_WorkQueue_t *workq, const char *name, MDS_Thread_t *thread,
                             void *stackPool, size_t stackSize, MDS_ThreadPriority_t priority,
-                            MDS_Timeout_t timeout);
+                            MDS_Timeout_t timeslice);
 MDS_Err_t MDS_WorkQueueDeInit(MDS_WorkQueue_t *workq);
 MDS_WorkQueue_t *MDS_WorkQueueCreate(const char *name, size_t stackSize,
-                                     MDS_ThreadPriority_t priority, MDS_Timeout_t timeout);
+                                     MDS_ThreadPriority_t priority, MDS_Timeout_t timeslice);
 MDS_Err_t MDS_WorkQueueDestroy(MDS_WorkQueue_t *workq);
 MDS_Err_t MDS_WorkQueueStart(MDS_WorkQueue_t *workq);
 MDS_Err_t MDS_WorkQueueStop(MDS_WorkQueue_t *workq);
 MDS_Tick_t MDS_WorkQueueNextTick(MDS_WorkQueue_t *workq);
 
 MDS_Err_t MDS_WorkNodeInit(MDS_WorkNode_t *workn, const char *name, MDS_WorkEntry_t entry,
-                           MDS_WorkEntry_t stop, MDS_Arg_t *arg);
+                           MDS_WorkEntry_t stop, MDS_Arg_t arg);
 MDS_Err_t MDS_WorkNodeDeInit(MDS_WorkNode_t *workn);
 MDS_WorkNode_t *MDS_WorkNodeCreate(const char *name, MDS_WorkEntry_t entry, MDS_WorkEntry_t stop,
-                                   MDS_Arg_t *arg);
+                                   MDS_Arg_t arg);
 MDS_Err_t MDS_WorkNodeDestroy(MDS_WorkNode_t *workn);
 MDS_Err_t MDS_WorkNodeSubmit(MDS_WorkQueue_t *workq, MDS_WorkNode_t *workn, MDS_Timeout_t delay,
                              MDS_Timeout_t period);
@@ -277,17 +296,17 @@ bool MDS_WorkNodeIsSubmit(const MDS_WorkNode_t *workn);
 typedef MDS_WorkEntry_t MDS_TimerEntry_t;
 
 MDS_Err_t MDS_TimerInit(MDS_Timer_t *timer, const char *name, MDS_TimerEntry_t entry,
-                        MDS_TimerEntry_t stop, MDS_Arg_t *arg);
+                        MDS_TimerEntry_t stop, MDS_Arg_t arg);
 MDS_Err_t MDS_TimerDeInit(MDS_Timer_t *timer);
 MDS_Timer_t *MDS_TimerCreate(const char *name, MDS_TimerEntry_t entry, MDS_TimerEntry_t stop,
-                             MDS_Arg_t *arg);
+                             MDS_Arg_t arg);
 MDS_Err_t MDS_TimerDestroy(MDS_Timer_t *timer);
 MDS_Err_t MDS_TimerStart(MDS_Timer_t *timer, MDS_Timeout_t duration, MDS_Timeout_t period);
 MDS_Err_t MDS_TimerStop(MDS_Timer_t *timer);
 bool MDS_TimerIsActive(const MDS_Timer_t *timer);
 
 /* Thread ------------------------------------------------------------------ */
-typedef void (*MDS_ThreadEntry_t)(MDS_Arg_t *arg);
+typedef void (*MDS_ThreadEntry_t)(MDS_Arg_t arg);
 
 #define MDS_THREAD_PRIORITY(n) ((MDS_ThreadPriority_t) {n})
 
@@ -316,7 +335,7 @@ struct MDS_Thread {
     MDS_WaitQueue_t nodeWait;
 
     MDS_ThreadEntry_t entry;
-    MDS_Arg_t *arg;
+    MDS_Arg_t arg;
 
     size_t stackSize;
     void *stackBase;
@@ -341,12 +360,12 @@ struct MDS_Thread {
 };
 
 MDS_Err_t MDS_ThreadInit(MDS_Thread_t *thread, const char *name, MDS_ThreadEntry_t entry,
-                         MDS_Arg_t *arg, void *stackPool, size_t stackSize,
-                         MDS_ThreadPriority_t priority, MDS_Timeout_t timeout);
+                         MDS_Arg_t arg, void *stackPool, size_t stackSize,
+                         MDS_ThreadPriority_t priority, MDS_Timeout_t timeslice);
 MDS_Err_t MDS_ThreadDeInit(MDS_Thread_t *thread);
-MDS_Thread_t *MDS_ThreadCreate(const char *name, MDS_ThreadEntry_t entry, MDS_Arg_t *arg,
+MDS_Thread_t *MDS_ThreadCreate(const char *name, MDS_ThreadEntry_t entry, MDS_Arg_t arg,
                                size_t stackSize, MDS_ThreadPriority_t priority,
-                               MDS_Timeout_t timeout);
+                               MDS_Timeout_t timeslice);
 MDS_Err_t MDS_ThreadDestroy(MDS_Thread_t *thread);
 MDS_Err_t MDS_ThreadStartup(MDS_Thread_t *thread);
 MDS_Err_t MDS_ThreadResume(MDS_Thread_t *thread);
@@ -436,10 +455,10 @@ MDS_Err_t MDS_EventInit(MDS_Event_t *event, const char *name);
 MDS_Err_t MDS_EventDeInit(MDS_Event_t *event);
 MDS_Event_t *MDS_EventCreate(const char *name);
 MDS_Err_t MDS_EventDestroy(MDS_Event_t *event);
-MDS_Err_t MDS_EventWait(MDS_Event_t *event, MDS_Mask_t mask, MDS_EventOpt_t opt, MDS_Mask_t *recv,
+MDS_Err_t MDS_EventWait(MDS_Event_t *event, MDS_Mask_t wait, MDS_EventOpt_t opt, MDS_Mask_t *recv,
                         MDS_Timeout_t timeout);
-MDS_Err_t MDS_EventSet(MDS_Event_t *event, MDS_Mask_t mask);
-MDS_Err_t MDS_EventClr(MDS_Event_t *event, MDS_Mask_t mask);
+MDS_Err_t MDS_EventSet(MDS_Event_t *event, MDS_Mask_t set);
+MDS_Err_t MDS_EventClr(MDS_Event_t *event, MDS_Mask_t clr);
 MDS_Mask_t MDS_EventGetValue(const MDS_Event_t *event);
 
 /* MsgQueue ---------------------------------------------------------------- */

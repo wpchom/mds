@@ -26,7 +26,7 @@ typedef enum DEV_TIMER_CounterType {
     DEV_TIMER_COUNTERTYPE_NS,
     DEV_TIMER_COUNTERTYPE_COUNT,
     DEV_TIMER_COUNTERTYPE_HZ,
-} DEV_TIMER_CounterType_t;
+} __attribute__((packed)) DEV_TIMER_CounterType_t;
 
 typedef enum DEV_TIMER_CounterMode {
     DEV_TIMER_COUNTERMODE_UP,
@@ -34,12 +34,12 @@ typedef enum DEV_TIMER_CounterMode {
     DEV_TIMER_COUNTERMODE_CENTER_UP,
     DEV_TIMER_COUNTERMODE_CENTER_DOWN,
     DEV_TIMER_COUNTERMODE_CENTER_UP_DOWN,
-} DEV_TIMER_CounterMode_t;
+} __attribute__((packed)) DEV_TIMER_CounterMode_t;
 
 typedef enum DEV_TIMER_Period {
     DEV_TIMER_PERIOD_DISABLE,
     DEV_TIMER_PERIOD_ENABLE,
-} DEV_TIMER_Period_t;
+} __attribute__((packed)) DEV_TIMER_Period_t;
 
 typedef struct DEV_TIMER_Config {
     DEV_TIMER_CounterType_t type : 8;
@@ -52,7 +52,7 @@ typedef enum DEV_TIMER_OC_Polarity {
     DEV_TIMER_OC_POLARITY_NONE,
     DEV_TIMER_OC_POLARITY_HIGH,
     DEV_TIMER_OC_POLARITY_LOW,
-} DEV_TIMER_OC_Polarity_t;
+} __attribute__((packed)) DEV_TIMER_OC_Polarity_t;
 
 typedef struct DEV_TIMER_OC_Config {
     DEV_TIMER_OC_Polarity_t pola : 8;
@@ -67,7 +67,7 @@ typedef enum DEV_TIMER_IC_Type {
     DEV_TIMER_IC_TYPE_BOTH,
 
     DEV_TIMER_IC_TYPE_DECODE,
-} DEV_TIMER_IC_Type_t;
+} __attribute__((packed)) DEV_TIMER_IC_Type_t;
 
 typedef struct DEV_TIMER_IC_Config {
     DEV_TIMER_IC_Type_t type : 8;
@@ -93,9 +93,9 @@ typedef struct DEV_TIMER_OC_Channel DEV_TIMER_OC_Channel_t;
 typedef struct DEV_TIMER_IC_Channel DEV_TIMER_IC_Channel_t;
 
 typedef struct DEV_TIMER_Driver {
-    MDS_Err_t (*control)(const DEV_TIMER_Device_t *timer, MDS_DevCmd_t cmd, MDS_Arg_t *arg);
+    MDS_Err_t (*control)(const DEV_TIMER_Device_t *timer, MDS_DevCmd_t cmd, MDS_Arg_t arg);
     MDS_Err_t (*config)(const DEV_TIMER_Device_t *timer, const DEV_TIMER_Config_t *config,
-                        MDS_Timeout_t timeout);
+                        uint32_t timeout);
     MDS_Err_t (*oc)(const DEV_TIMER_OC_Channel_t *oc, MDS_DevCmd_t cmd,
                     const DEV_TIMER_OC_Config_t *config, size_t value);
     MDS_Err_t (*ic)(const DEV_TIMER_IC_Channel_t *ic, MDS_DevCmd_t cmd,
@@ -107,8 +107,8 @@ struct DEV_TIMER_Device {
     const DEV_TIMER_Driver_t *driver;
     const MDS_DevHandle_t *handle;
 
-    void (*callback)(DEV_TIMER_Device_t *timer, MDS_Arg_t *arg);
-    MDS_Arg_t *arg;
+    void (*callback)(DEV_TIMER_Device_t *timer, MDS_Arg_t arg);
+    MDS_Arg_t arg;
 };
 
 typedef struct DEV_TIMER_OC_Object {
@@ -122,8 +122,8 @@ struct DEV_TIMER_OC_Channel {
 
     DEV_TIMER_OC_Object_t object;
 
-    void (*callback)(DEV_TIMER_OC_Channel_t *oc, MDS_Arg_t *arg);
-    MDS_Arg_t *arg;
+    void (*callback)(DEV_TIMER_OC_Channel_t *oc, MDS_Arg_t arg);
+    MDS_Arg_t arg;
 };
 
 typedef struct DEV_TIMER_IC_Object {
@@ -136,23 +136,23 @@ struct DEV_TIMER_IC_Channel {
 
     DEV_TIMER_IC_Object_t object;
 
-    void (*callback)(DEV_TIMER_IC_Channel_t *ic, MDS_Arg_t *arg);
-    MDS_Arg_t *arg;
+    void (*callback)(DEV_TIMER_IC_Channel_t *ic, MDS_Arg_t arg);
+    MDS_Arg_t arg;
 };
 
 /* Function ---------------------------------------------------------------- */
 MDS_Err_t DEV_TIMER_DeviceInit(DEV_TIMER_Device_t *timer, const char *name,
                                const DEV_TIMER_Driver_t *driver, MDS_DevHandle_t *handle,
-                               const MDS_Arg_t *init);
+                               MDS_Arg_t init);
 MDS_Err_t DEV_TIMER_DeviceDeInit(DEV_TIMER_Device_t *timer);
 DEV_TIMER_Device_t *DEV_TIMER_DeviceCreate(const char *name, const DEV_TIMER_Driver_t *driver,
-                                           const MDS_Arg_t *init);
+                                           MDS_Arg_t init);
 MDS_Err_t DEV_TIMER_DeviceDestroy(DEV_TIMER_Device_t *timer);
 
 void DEV_TIMER_DeviceCallback(DEV_TIMER_Device_t *timer,
-                              void (*callback)(DEV_TIMER_Device_t *, MDS_Arg_t *), MDS_Arg_t *arg);
+                              void (*callback)(DEV_TIMER_Device_t *, MDS_Arg_t ), MDS_Arg_t arg);
 MDS_Err_t DEV_TIMER_DeviceConfig(DEV_TIMER_Device_t *timer, const DEV_TIMER_Config_t *config,
-                                 MDS_Timeout_t timeout);
+                                 uint32_t timeout);
 MDS_Err_t DEV_TIMER_DeviceStart(DEV_TIMER_Device_t *timer);
 MDS_Err_t DEV_TIMER_DeviceStop(DEV_TIMER_Device_t *timer);
 MDS_Err_t DEV_TIMER_DeviceWait(DEV_TIMER_Device_t *timer, MDS_Timeout_t timeout);
@@ -164,8 +164,8 @@ DEV_TIMER_OC_Channel_t *DEV_TIMER_OC_ChannelCreate(const char *name, DEV_TIMER_D
 MDS_Err_t DEV_TIMER_OC_ChannelDestroy(DEV_TIMER_OC_Channel_t *oc);
 
 void DEV_TIMER_OC_ChannelCallback(DEV_TIMER_OC_Channel_t *oc,
-                                  void (*callback)(DEV_TIMER_OC_Channel_t *, MDS_Arg_t *),
-                                  MDS_Arg_t *arg);
+                                  void (*callback)(DEV_TIMER_OC_Channel_t *, MDS_Arg_t ),
+                                  MDS_Arg_t arg);
 MDS_Err_t DEV_TIMER_OC_ChannelConfig(DEV_TIMER_OC_Channel_t *oc,
                                      const DEV_TIMER_OC_Config_t *config);
 MDS_Err_t DEV_TIMER_OC_ChannelEnable(DEV_TIMER_OC_Channel_t *oc, bool enabled);
@@ -178,8 +178,8 @@ DEV_TIMER_IC_Channel_t *DEV_TIMER_IC_ChannelCreate(const char *name, DEV_TIMER_D
 MDS_Err_t DEV_TIMER_IC_ChannelDestroy(DEV_TIMER_IC_Channel_t *ic);
 
 void DEV_TIMER_IC_ChannelCallback(DEV_TIMER_IC_Channel_t *ic,
-                                  void (*callback)(DEV_TIMER_IC_Channel_t *, MDS_Arg_t *),
-                                  MDS_Arg_t *arg);
+                                  void (*callback)(DEV_TIMER_IC_Channel_t *, MDS_Arg_t ),
+                                  MDS_Arg_t arg);
 MDS_Err_t DEV_TIMER_IC_ChannelConfig(DEV_TIMER_IC_Channel_t *ic,
                                      const DEV_TIMER_IC_Config_t *config);
 MDS_Err_t DEV_TIMER_IC_ChannelEnable(DEV_TIMER_IC_Channel_t *ic, bool enabled);

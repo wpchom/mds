@@ -25,26 +25,26 @@ typedef enum DEV_DMA_Direction {
     DEV_DMA_DIRECTION_M2P,
     DEV_DMA_DIRECTION_M2M,
     DEV_DMA_DIRECTION_P2P,
-} DEV_DMA_Direction_t;
+} __attribute__((packed)) DEV_DMA_Direction_t;
 
 typedef enum DEV_DMA_IncMode {
     DEV_DMA_INCMODE_NOINC,
     DEV_DMA_INCMODE_INC,
-} DEV_DMA_IncMode_t;
+} __attribute__((packed)) DEV_DMA_IncMode_t;
 
 typedef enum DEV_DMA_DataSize {
     DEV_DMA_DATASIZE_1B = 1,
     DEV_DMA_DATASIZE_2B = 2,
     DEV_DMA_DATASIZE_4B = 4,
     DEV_DMA_DATASIZE_8B = 8,
-} DEV_DMA_DataSize_t;
+} __attribute__((packed)) DEV_DMA_DataSize_t;
 
 typedef enum DEV_DMA_Priority {
     DEV_DMA_PRIORITY_LOW,
     DEV_DMA_PRIORITY_MED,
     DEV_DMA_PRIORITY_HIGH,
     DEV_DMA_PRIORITY_MAX,
-} DEV_DMA_Prority_t;
+} __attribute__((packed)) DEV_DMA_Prority_t;
 
 typedef struct DEV_DMA_Config {
     DEV_DMA_Prority_t priority : 4;
@@ -59,7 +59,7 @@ typedef struct DEV_DMA_Channel {
     void *DMAx;
     MDS_Mask_t channel;
 
-    MDS_Arg_t *parent;
+    MDS_Arg_t parent;
     void (*errCallback)(struct DEV_DMA_Channel *channel);
     void (*halfCallback)(struct DEV_DMA_Channel *channel);
     void (*cpltCallback)(struct DEV_DMA_Channel *channel);

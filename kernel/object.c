@@ -13,8 +13,6 @@
 #include "mds_sys.h"
 
 /* Define ------------------------------------------------------------------ */
-#undef MDS_ERR_MODULE
-#define MDS_ERR_MODULE MDS_ERR_MODULE_OBJECT
 MDS_LOG_MODULE_DECLARE(kernel, CONFIG_MDS_KERNEL_LOG_LEVEL);
 
 /* Variable ---------------------------------------------------------------- */
@@ -27,7 +25,6 @@ static MDS_ObjectInfo_t g_objectList[] = {
     OBJECT_LIST_INIT(MDS_OBJECT_TYPE_SEMAPHORE), //
     OBJECT_LIST_INIT(MDS_OBJECT_TYPE_MUTEX),     //
     OBJECT_LIST_INIT(MDS_OBJECT_TYPE_EVENT),     //
-    OBJECT_LIST_INIT(MDS_OBJECT_TYPE_POLL),      //
     OBJECT_LIST_INIT(MDS_OBJECT_TYPE_MSGQUEUE),  //
     OBJECT_LIST_INIT(MDS_OBJECT_TYPE_MEMPOOL),   //
     OBJECT_LIST_INIT(MDS_OBJECT_TYPE_MEMHEAP),   //
@@ -78,7 +75,6 @@ MDS_Err_t MDS_ObjectDeInit(MDS_Object_t *object)
     return (MDS_EOK);
 }
 
-#if (!defined(CONFIG_MDS_SYSMEM_HEAP_OPS) || (CONFIG_MDS_SYSMEM_HEAP_OPS > 0))
 MDS_Object_t *MDS_ObjectCreate(size_t typesz, MDS_ObjectType_t type, const char *name)
 {
     MDS_Object_t *object = MDS_SysMemCalloc(1, typesz);
@@ -106,7 +102,6 @@ MDS_Err_t MDS_ObjectDestroy(MDS_Object_t *object)
 
     return (MDS_EOK);
 }
-#endif
 
 MDS_Object_t *MDS_ObjectFind(const MDS_ObjectType_t type, const char *name)
 {

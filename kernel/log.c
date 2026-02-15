@@ -92,7 +92,7 @@ static void MDS_LOG_ModuleWrite(const MDS_LOG_Module_t *module, uint8_t level, s
     va_end(va_args);
 }
 
-static void MDS_LOG_ThreadEntry(MDS_Arg_t *arg)
+static void MDS_LOG_ThreadEntry(MDS_Arg_t arg)
 {
     UNUSED(arg);
 

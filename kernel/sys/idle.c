@@ -38,9 +38,7 @@ __attribute__((weak)) void MDS_IdleLowPowerControl(void)
 
 MDS_Thread_t *MDS_KernelIdleThread(void)
 {
-    if (MDS_ObjectGetType(&(g_idleThread.object)) != MDS_OBJECT_TYPE_THREAD) {
-        MDS_IdleThreadInit();
-    }
+    MDS_IdleThreadInit();
 
     return (&g_idleThread);
 }
@@ -98,15 +96,13 @@ static void IDLE_ThreadDefunct(void)
         if (!MDS_ObjectIsCreated(&(thread->object))) {
             MDS_ObjectDeInit(&(thread->object));
         } else {
-#if (!defined(CONFIG_MDS_SYSMEM_HEAP_OPS) || (CONFIG_MDS_SYSMEM_HEAP_OPS > 0))
             MDS_SysMemFree(thread->stackBase);
             MDS_ObjectDestroy(&(thread->object));
-#endif
         }
     }
 }
 
-static __attribute__((noreturn)) void IDLE_ThreadEntry(MDS_Arg_t *arg)
+static __attribute__((noreturn)) void IDLE_ThreadEntry(MDS_Arg_t arg)
 {
     UNUSED(arg);
 
@@ -128,18 +124,21 @@ static __attribute__((noreturn)) void IDLE_ThreadEntry(MDS_Arg_t *arg)
 
 void MDS_IdleThreadInit(void)
 {
-    if (MDS_ObjectGetType(&(g_idleThread.object)) == MDS_OBJECT_TYPE_THREAD) {
-        return;
+    MDS_Lock_t lock = MDS_CriticalLock(NULL);
+
+    MDS_ObjectType_t type = MDS_ObjectGetType(&(g_idleThread.object));
+    if (type != MDS_OBJECT_TYPE_THREAD) {
+        MDS_Err_t err = MDS_ThreadInit(&g_idleThread, "idle", IDLE_ThreadEntry, MDS_ARG_WITH(NULL),
+                                       &g_idleStack, sizeof(g_idleStack),
+                                       MDS_THREAD_PRIORITY(CONFIG_MDS_KERNEL_THREAD_PRIORITY_MAX),
+                                       MDS_TIMEOUT_TICKS(CONFIG_MDS_IDLE_THREAD_TICKS));
+
+        if (MDS_ErrIsSame(err, MDS_EOK)) {
+            err = MDS_ThreadStartup(&g_idleThread);
+        } else {
+            MDS_PANIC("idle thread initialize err:%d", err.errno);
+        }
     }
 
-    MDS_Err_t err = MDS_ThreadInit(&g_idleThread, "idle", IDLE_ThreadEntry, NULL, &g_idleStack,
-                                   sizeof(g_idleStack),
-                                   MDS_THREAD_PRIORITY(CONFIG_MDS_KERNEL_THREAD_PRIORITY_MAX),
-                                   MDS_TIMEOUT_TICKS(CONFIG_MDS_IDLE_THREAD_TICKS));
-
-    if (MDS_ErrIsSame(err, MDS_EOK)) {
-        err = MDS_ThreadStartup(&g_idleThread);
-    } else {
-        MDS_PANIC("idle thread initialize err:%d", err.errno);
-    }
+    MDS_CriticalRestore(NULL, lock);
 }

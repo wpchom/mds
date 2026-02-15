@@ -1,0 +1,23 @@
+declare_args() {
+  mds_boot_with_lzma = true
+}
+
+if (defined(mds_boot_with_lzma) && mds_boot_with_lzma) {
+  pkggroup("lzma_sdk") {
+  }
+}
+
+source_set("boot") {
+  sources = [ "mds_boot.c" ]
+
+  include_dirs = [ "../" ]
+
+  defines = []
+  deps = []
+
+  if (defined(mds_boot_with_lzma) && mds_boot_with_lzma) {
+    sources += [ "boot_lzma.c" ]
+    defines += [ "CONFIG_MDS_BOOT_UPGRADE_WITH_LZMA=1" ]
+    deps += [ ":lzma_sdk" ]
+  }
+}

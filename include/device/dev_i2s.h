@@ -38,38 +38,38 @@ typedef enum DEV_I2S_Standard {
     DEV_I2S_STANDARD_LSB,
     DEV_I2S_STANDARD_PCM_SHORT,
     DEV_I2S_STANDARD_PCM_LONG,
-} DEV_I2S_Standard_t;
+} __attribute__((packed)) DEV_I2S_Standard_t;
 
 typedef enum DEV_I2S_BusMode {
     DEV_I2S_BUSMODE_MASTER = 0x00U,
     DEV_I2S_BUSMODE_SLAVE = 0x01U,
-} DEV_I2S_BusMode_t;
+} __attribute__((packed)) DEV_I2S_BusMode_t;
 
 typedef enum DEV_I2S_DataWidth {
     DEV_I2S_DATAWIDTH_16 = 16U,
     DEV_I2S_DATAWIDTH_24 = 24U,
     DEV_I2S_DATAWIDTH_32 = 32U,
-} DEV_I2S_DataWidth_t;
+} __attribute__((packed)) DEV_I2S_DataWidth_t;
 
 typedef enum DEV_I2S_Channel {
     DEV_I2S_CHANNEL_MONO = 0x01U,
     DEV_I2S_CHANNEL_STEREO = 0x02U,
-} DEV_I2S_Channel_t;
+} __attribute__((packed)) DEV_I2S_Channel_t;
 
 typedef enum DEV_I2S_ClkEdge {
     DEV_I2S_CLKEDGE_RISING = 0,
     DEV_I2S_CLKEDGE_FALLING = 1,
-} DEV_I2S_ClkEdge_t;
+} __attribute__((packed)) DEV_I2S_ClkEdge_t;
 
 typedef enum DEV_I2S_FirstBit {
     DEV_I2S_FIRSTBIT_MSB = 0,
     DEV_I2S_FIRSTBIT_LSB = 1,
-} DEV_I2S_FirstBit_t;
+} __attribute__((packed)) DEV_I2S_FirstBit_t;
 
 typedef enum DEV_I2S_WsInversion {
     DEV_I2S_WSINVERSION_DISABLE = 0,
     DEV_I2S_WSINVERSION_ENABLE = 1,
-} DEV_I2S_WsInversion_t;
+} __attribute__((packed)) DEV_I2S_WsInversion_t;
 
 typedef struct DEV_I2S_Config {
     uint32_t audioFreq;
@@ -90,7 +90,7 @@ typedef struct DEV_I2S_Adaptr DEV_I2S_Adaptr_t;
 typedef struct DEV_I2S_Periph DEV_I2S_Periph_t;
 
 typedef struct DEV_I2S_Driver {
-    MDS_Err_t (*control)(const DEV_I2S_Adaptr_t *i2s, MDS_DevCmd_t cmd, MDS_Arg_t *arg);
+    MDS_Err_t (*control)(const DEV_I2S_Adaptr_t *i2s, MDS_DevCmd_t cmd, MDS_Arg_t arg);
     MDS_Err_t (*transmit)(const DEV_I2S_Periph_t *periph, const uint8_t *buff, size_t len,
                           MDS_Timeout_t timeout);
     MDS_Err_t (*receive)(const DEV_I2S_Periph_t *periph, uint8_t *buff, size_t size, size_t *recv,
@@ -112,22 +112,22 @@ struct DEV_I2S_Periph {
     DEV_I2S_Object_t object;
     DEV_I2S_Config_t config;
 
-    void (*txCallback)(DEV_I2S_Periph_t *periph, MDS_Arg_t *arg, const uint8_t *buff, size_t size,
+    void (*txCallback)(DEV_I2S_Periph_t *periph, MDS_Arg_t arg, const uint8_t *buff, size_t size,
                        size_t send);
-    MDS_Arg_t *txArg;
+    MDS_Arg_t txArg;
 
-    void (*rxCallback)(DEV_I2S_Periph_t *periph, MDS_Arg_t *arg, uint8_t *buff, size_t size,
+    void (*rxCallback)(DEV_I2S_Periph_t *periph, MDS_Arg_t arg, uint8_t *buff, size_t size,
                        size_t recv);
-    MDS_Arg_t *rxArg;
+    MDS_Arg_t rxArg;
 };
 
 /* Function ---------------------------------------------------------------- */
 MDS_Err_t DEV_I2S_AdaptrInit(DEV_I2S_Adaptr_t *i2s, const char *name,
                              const DEV_I2S_Driver_t *driver, MDS_DevHandle_t *handle,
-                             const MDS_Arg_t *init);
+                             MDS_Arg_t init);
 MDS_Err_t DEV_I2S_AdaptrDeInit(DEV_I2S_Adaptr_t *i2s);
 DEV_I2S_Adaptr_t *DEV_I2S_AdaptrCreate(const char *name, const DEV_I2S_Driver_t *driver,
-                                       const MDS_Arg_t *init);
+                                       MDS_Arg_t init);
 MDS_Err_t DEV_I2S_AdaptrDestroy(DEV_I2S_Adaptr_t *i2s);
 
 MDS_Err_t DEV_I2S_PeriphInit(DEV_I2S_Periph_t *periph, const char *name, DEV_I2S_Adaptr_t *i2s);
@@ -138,13 +138,13 @@ MDS_Err_t DEV_I2S_PeriphDestroy(DEV_I2S_Periph_t *periph);
 MDS_Err_t DEV_I2S_PeriphOpen(DEV_I2S_Periph_t *periph, MDS_Timeout_t timeout);
 MDS_Err_t DEV_I2S_PeriphClose(DEV_I2S_Periph_t *periph);
 void DEV_I2S_PeriphTxCallback(DEV_I2S_Periph_t *periph,
-                              void (*callback)(DEV_I2S_Periph_t *, MDS_Arg_t *, const uint8_t *,
+                              void (*callback)(DEV_I2S_Periph_t *, MDS_Arg_t , const uint8_t *,
                                                size_t, size_t),
-                              MDS_Arg_t *arg);
+                              MDS_Arg_t arg);
 void DEV_I2S_PeriphRxCallback(DEV_I2S_Periph_t *periph,
-                              void (*callback)(DEV_I2S_Periph_t *, MDS_Arg_t *, uint8_t *, size_t,
+                              void (*callback)(DEV_I2S_Periph_t *, MDS_Arg_t , uint8_t *, size_t,
                                                size_t),
-                              MDS_Arg_t *arg);
+                              MDS_Arg_t arg);
 MDS_Err_t DEV_I2S_PeriphTransmit(DEV_I2S_Periph_t *periph, const uint8_t *buff, size_t len);
 MDS_Err_t DEV_I2S_PeriphReceive(DEV_I2S_Periph_t *periph, uint8_t *buff, size_t size, size_t *recv,
                                 MDS_Timeout_t timeout);

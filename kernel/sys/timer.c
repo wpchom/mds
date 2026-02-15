@@ -40,9 +40,9 @@ static uint8_t g_sysWorkqStack[CONFIG_MDS_TIMER_THREAD_STACKSIZE];
 /* Function ---------------------------------------------------------------- */
 void MDS_SysTimerInit(void)
 {
-    if ((g_sysTimerQueue.list->next == NULL) || (g_sysTimerQueue.list->prev == NULL)) {
-        MDS_SpinLockInit(&(g_sysTimerQueue.spinlock));
-        MDS_SkipListInitNode(g_sysTimerQueue.list, ARRAY_SIZE(g_sysTimerQueue.list));
+    if (MDS_ObjectGetType(&(g_sysTimerQueue.object)) != MDS_OBJECT_TYPE_WORKQUEUE) {
+        MDS_WorkQueueInit(&g_sysTimerQueue, "", NULL, NULL, 0, MDS_THREAD_PRIORITY(0),
+                          MDS_TIMEOUT_FOREVER);
     }
 
 #if (defined(CONFIG_MDS_TIMER_INDEPENDENT) && (CONFIG_MDS_TIMER_INDEPENDENT != 0))
@@ -54,7 +54,7 @@ void MDS_SysTimerInit(void)
         if (MDS_ErrIsSame(err, MDS_EOK)) {
             err = MDS_WorkQueueStart(&g_sysWorkQueue);
         } else {
-            MDS_LOG_E("[timer] soft timer queue init failed: %d", err);
+            MDS_LOG_E("[timer] soft timer queue init err(%d)", err.errno);
         }
     }
 #endif
@@ -78,7 +78,7 @@ MDS_Err_t MDS_SysTimerStart(MDS_Timer_t *timer, MDS_Timeout_t duration, MDS_Time
 }
 
 MDS_Err_t MDS_TimerInit(MDS_Timer_t *timer, const char *name, MDS_TimerEntry_t entry,
-                        MDS_TimerEntry_t stop, MDS_Arg_t *arg)
+                        MDS_TimerEntry_t stop, MDS_Arg_t arg)
 {
     return (MDS_WorkNodeInit(timer, name, entry, stop, arg));
 }
@@ -88,9 +88,8 @@ MDS_Err_t MDS_TimerDeInit(MDS_Timer_t *timer)
     return (MDS_WorkNodeDeInit(timer));
 }
 
-#if (!defined(CONFIG_MDS_SYSMEM_HEAP_OPS) || (CONFIG_MDS_SYSMEM_HEAP_OPS > 0))
 MDS_Timer_t *MDS_TimerCreate(const char *name, MDS_TimerEntry_t entry, MDS_TimerEntry_t stop,
-                             MDS_Arg_t *arg)
+                             MDS_Arg_t arg)
 {
     return (MDS_WorkNodeCreate(name, entry, stop, arg));
 }
@@ -99,7 +98,6 @@ MDS_Err_t MDS_TimerDestroy(MDS_Timer_t *timer)
 {
     return (MDS_WorkNodeDestroy(timer));
 }
-#endif
 
 MDS_Err_t MDS_TimerStart(MDS_Timer_t *timer, MDS_Timeout_t duration, MDS_Timeout_t period)
 {

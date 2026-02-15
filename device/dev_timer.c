@@ -15,7 +15,7 @@
 /* Timer device ------------------------------------------------------------ */
 MDS_Err_t DEV_TIMER_DeviceInit(DEV_TIMER_Device_t *timer, const char *name,
                                const DEV_TIMER_Driver_t *driver, MDS_DevHandle_t *handle,
-                               const MDS_Arg_t *init)
+                               MDS_Arg_t init)
 {
     return (MDS_DevModuleInit((MDS_DevModule_t *)timer, name, (const MDS_DevDriver_t *)driver,
                               handle, init));
@@ -27,7 +27,7 @@ MDS_Err_t DEV_TIMER_DeviceDeInit(DEV_TIMER_Device_t *timer)
 }
 
 DEV_TIMER_Device_t *DEV_TIMER_DeviceCreate(const char *name, const DEV_TIMER_Driver_t *driver,
-                                           const MDS_Arg_t *init)
+                                           MDS_Arg_t init)
 {
     return ((DEV_TIMER_Device_t *)MDS_DevModuleCreate(sizeof(DEV_TIMER_Device_t), name,
                                                       (const MDS_DevDriver_t *)driver, init));
@@ -39,7 +39,7 @@ MDS_Err_t DEV_TIMER_DeviceDestroy(DEV_TIMER_Device_t *timer)
 }
 
 MDS_Err_t DEV_TIMER_DeviceConfig(DEV_TIMER_Device_t *timer, const DEV_TIMER_Config_t *config,
-                                 MDS_Timeout_t timeout)
+                                 uint32_t timeout)
 {
     MDS_ASSERT(timer != NULL);
     MDS_ASSERT(timer->driver != NULL);
@@ -49,7 +49,7 @@ MDS_Err_t DEV_TIMER_DeviceConfig(DEV_TIMER_Device_t *timer, const DEV_TIMER_Conf
 }
 
 void DEV_TIMER_DeviceCallback(DEV_TIMER_Device_t *timer,
-                              void (*callback)(DEV_TIMER_Device_t *, MDS_Arg_t *), MDS_Arg_t *arg)
+                              void (*callback)(DEV_TIMER_Device_t *, MDS_Arg_t), MDS_Arg_t arg)
 {
     MDS_ASSERT(timer != NULL);
 
@@ -63,7 +63,7 @@ MDS_Err_t DEV_TIMER_DeviceStart(DEV_TIMER_Device_t *timer)
     MDS_ASSERT(timer->driver != NULL);
     MDS_ASSERT(timer->driver->control != NULL);
 
-    return (timer->driver->control(timer, DEV_TIMER_CMD_START, NULL));
+    return (timer->driver->control(timer, DEV_TIMER_CMD_START, MDS_ARG_WITH(NULL)));
 }
 
 MDS_Err_t DEV_TIMER_DeviceStop(DEV_TIMER_Device_t *timer)
@@ -72,7 +72,7 @@ MDS_Err_t DEV_TIMER_DeviceStop(DEV_TIMER_Device_t *timer)
     MDS_ASSERT(timer->driver != NULL);
     MDS_ASSERT(timer->driver->control != NULL);
 
-    return (timer->driver->control(timer, DEV_TIMER_CMD_STOP, NULL));
+    return (timer->driver->control(timer, DEV_TIMER_CMD_STOP, MDS_ARG_WITH(NULL)));
 }
 
 MDS_Err_t DEV_TIMER_DeviceWait(DEV_TIMER_Device_t *timer, MDS_Timeout_t timeout)
@@ -81,7 +81,7 @@ MDS_Err_t DEV_TIMER_DeviceWait(DEV_TIMER_Device_t *timer, MDS_Timeout_t timeout)
     MDS_ASSERT(timer->driver != NULL);
     MDS_ASSERT(timer->driver->control != NULL);
 
-    return (timer->driver->control(timer, DEV_TIMER_CMD_WAIT, (MDS_Arg_t *)&timeout));
+    return (timer->driver->control(timer, DEV_TIMER_CMD_WAIT, MDS_ARG_WITH(&timeout)));
 }
 
 MDS_Err_t DEV_TIMER_OC_ChannelInit(DEV_TIMER_OC_Channel_t *oc, const char *name,
@@ -107,8 +107,8 @@ MDS_Err_t DEV_TIMER_OC_ChannelDestroy(DEV_TIMER_OC_Channel_t *oc)
 }
 
 void DEV_TIMER_OC_ChannelCallback(DEV_TIMER_OC_Channel_t *oc,
-                                  void (*callback)(DEV_TIMER_OC_Channel_t *, MDS_Arg_t *),
-                                  MDS_Arg_t *arg)
+                                  void (*callback)(DEV_TIMER_OC_Channel_t *, MDS_Arg_t),
+                                  MDS_Arg_t arg)
 {
     MDS_ASSERT(oc != NULL);
 
@@ -171,8 +171,8 @@ MDS_Err_t DEV_TIMER_IC_ChannelDestroy(DEV_TIMER_IC_Channel_t *ic)
 }
 
 void DEV_TIMER_IC_ChannelCallback(DEV_TIMER_IC_Channel_t *ic,
-                                  void (*callback)(DEV_TIMER_IC_Channel_t *, MDS_Arg_t *),
-                                  MDS_Arg_t *arg)
+                                  void (*callback)(DEV_TIMER_IC_Channel_t *, MDS_Arg_t),
+                                  MDS_Arg_t arg)
 {
     MDS_ASSERT(ic != NULL);
 

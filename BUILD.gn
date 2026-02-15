@@ -2,9 +2,6 @@ declare_args() {
   # mds config
 }
 
-declare_toolchain(profile_toolchain) {
-}
-
 group("kernel") {
   public_deps = [ "kernel/:mds_kernel" ]
 }
@@ -13,9 +10,6 @@ group("device") {
   public_deps = [ "device/:mds_device" ]
 }
 
-group("default") {
-  public_deps = [
-    ":device",
-    ":kernel",
-  ]
+group("components") {
+  public_deps = [ "components/:mds_components" ]
 }

@@ -14,7 +14,7 @@
 
 /* Define ------------------------------------------------------------------ */
 #ifndef CONFIG_MDS_TIMER_INDEPENDENT
-#define CONFIG_MDS_TIMER_INDEPENDENT 1
+#define CONFIG_MDS_TIMER_INDEPENDENT 0
 #endif
 
 /* Timer ------------------------------------------------------------------- */
@@ -59,8 +59,8 @@ static void TIMER_SkipListInsert(MDS_WorkQueue_t *workq, MDS_Timer_t *timer, MDS
     MDS_DListNode_t *skipNode[ARRAY_SIZE(timer->node)];
 
     timer->tickout = tickcurr + tickout;
-    MDS_SkipListSearchNode(skipNode, workq->list, ARRAY_SIZE(workq->list), timer,
-                           TIMER_SkipListCompare);
+    MDS_SkipListSearchNode(skipNode, workq->list, ARRAY_SIZE(workq->list), WORKQ_SkipListCompare,
+                           MDS_ARG_WITH(&(timer->node)));
 
     skipRand = skipRand + tickcurr + 1;
     MDS_SkipListInsertNode(skipNode, timer->node, ARRAY_SIZE(timer->node), skipRand,
@@ -124,7 +124,7 @@ MDS_Tick_t TIMER_SkipListNextTick(MDS_WorkQueue_t *workq)
 }
 
 MDS_Err_t MDS_TimerInit(MDS_Timer_t *timer, const char *name, MDS_TimerEntry_t entry,
-                        MDS_TimerEntry_t stop, MDS_Arg_t *arg)
+                        MDS_TimerEntry_t stop, MDS_Arg_t arg)
 {
     MDS_ASSERT(timer != NULL);
 
@@ -157,7 +157,7 @@ MDS_Err_t MDS_TimerDeInit(MDS_Timer_t *timer)
 }
 
 MDS_Timer_t *MDS_TimerCreate(const char *name, MDS_WorkEntry_t entry, MDS_WorkEntry_t stop,
-                             MDS_Arg_t *arg)
+                             MDS_Arg_t arg)
 {
     MDS_Timer_t *timer =
         (MDS_Timer_t *)MDS_ObjectCreate(sizeof(MDS_Timer_t), MDS_OBJECT_TYPE_WORKNODE, name);
@@ -349,6 +349,71 @@ size_t MDS_SemaphoreGetValue(const MDS_Semaphore_t *semaphore, size_t *max)
     return (semaphore->value);
 }
 
+/* Condition --------------------------------------------------------------- */
+MDS_Err_t MDS_ConditionInit(MDS_Condition_t *condition, const char *name)
+{
+    return (MDS_SemaphoreInit(condition, name, 0, -1));
+}
+
+MDS_Err_t MDS_ConditionDeInit(MDS_Condition_t *condition)
+{
+    return (MDS_SemaphoreDeInit(condition));
+}
+
+MDS_Err_t MDS_ConditionBroadCast(MDS_Condition_t *condition)
+{
+    MDS_ASSERT(condition != NULL);
+    MDS_ASSERT(MDS_ObjectGetType(&(condition->object)) == MDS_OBJECT_TYPE_SEMAPHORE);
+
+    MDS_Err_t err;
+    do {
+        err = MDS_SemaphoreAcquire(condition, MDS_TIMEOUT_NOWAIT);
+        if (MDS_ErrIsSame(err, MDS_ETIME) || (MDS_ErrIsSame(err, MDS_EOK))) {
+            MDS_SemaphoreRelease(condition);
+        }
+    } while (MDS_ErrIsSame(err, MDS_ETIME));
+
+    return (err);
+}
+
+MDS_Err_t MDS_ConditionWait(MDS_Condition_t *condition, MDS_Mutex_t *mutex, MDS_Timeout_t timeout)
+{
+    MDS_ASSERT(condition != NULL);
+    MDS_ASSERT(MDS_ObjectGetType(&(condition->object)) == MDS_OBJECT_TYPE_SEMAPHORE);
+    MDS_ASSERT(mutex != NULL);
+    MDS_ASSERT(MDS_ObjectGetType(&(mutex->object)) == MDS_OBJECT_TYPE_MUTEX);
+
+    MDS_Err_t err = MDS_EOK;
+
+    MDS_Lock_t lock = MDS_CoreInterruptLock();
+
+    if (condition->value > 0) {
+        condition->value -= 1;
+    } else if (timeout.ticks == MDS_CLOCK_TICK_NO_WAIT) {
+        err = MDS_ETIME;
+    } else if (timeout.ticks < MDS_CLOCK_TICK_TIMER_MAX) {
+        MDS_Tick_t tickstart = MDS_ClockGetTickCount();
+        for (;;) {
+            if ((MDS_ClockGetTickCount() - tickstart) >= timeout.ticks) {
+                err = MDS_ETIME;
+                break;
+            }
+        }
+
+        MDS_MutexRelease(mutex);
+
+        MDS_CoreInterruptRestore(lock);
+
+        MDS_MutexAcquire(mutex, MDS_TIMEOUT_FOREVER);
+    } else {
+        MDS_CoreInterruptRestore(lock);
+
+        err = MDS_EINVAL;
+    }
+
+    return (err);
+}
+
 /* Mutex ------------------------------------------------------------------- */
 MDS_Err_t MDS_MutexInit(MDS_Mutex_t *mutex, const char *name)
 {
@@ -447,7 +512,7 @@ MDS_Err_t MDS_EventInit(MDS_Event_t *event, const char *name)
 
     MDS_Err_t err = MDS_ObjectInit(&(event->object), MDS_OBJECT_TYPE_EVENT, name);
     if (MDS_ErrIsSame(err, MDS_EOK)) {
-        event->value = 0U;
+        event->value.mask = 0U;
     }
 
     return (err);
@@ -466,7 +531,7 @@ MDS_Event_t *MDS_EventCreate(const char *name)
     MDS_Event_t *event =
         (MDS_Event_t *)MDS_ObjectCreate(sizeof(MDS_Event_t), MDS_OBJECT_TYPE_EVENT, name);
     if (event != NULL) {
-        event->value = 0U;
+        event->value.mask = 0U;
     }
 
     return (event);
@@ -480,7 +545,7 @@ MDS_Err_t MDS_EventDestroy(MDS_Event_t *event)
     return (MDS_ObjectDestroy(&(event->object)));
 }
 
-MDS_Err_t MDS_EventWait(MDS_Event_t *event, MDS_Mask_t mask, MDS_EventOpt_t opt, MDS_Mask_t *recv,
+MDS_Err_t MDS_EventWait(MDS_Event_t *event, MDS_Mask_t wait, MDS_EventOpt_t opt, MDS_Mask_t *recv,
                         MDS_Timeout_t timeout)
 {
     MDS_ASSERT(event != NULL);
@@ -488,7 +553,7 @@ MDS_Err_t MDS_EventWait(MDS_Event_t *event, MDS_Mask_t mask, MDS_EventOpt_t opt,
     MDS_ASSERT((opt & (MDS_EVENT_OPT_AND | MDS_EVENT_OPT_OR)) !=
                (MDS_EVENT_OPT_AND | MDS_EVENT_OPT_OR));
 
-    if ((mask == 0U) || ((opt & (MDS_EVENT_OPT_AND | MDS_EVENT_OPT_OR)) == 0U)) {
+    if ((wait.mask == 0U) || ((opt & (MDS_EVENT_OPT_AND | MDS_EVENT_OPT_OR)) == 0U)) {
         return (MDS_EINVAL);
     }
 
@@ -497,13 +562,13 @@ MDS_Err_t MDS_EventWait(MDS_Event_t *event, MDS_Mask_t mask, MDS_EventOpt_t opt,
 
     for (;;) {
         MDS_Lock_t lock = MDS_CoreInterruptLock();
-        if ((((opt & MDS_EVENT_OPT_AND) != 0U) && ((event->value & mask) == mask)) ||
-            (((opt & MDS_EVENT_OPT_OR) != 0U) && ((event->value & mask) != 0U))) {
+        if ((((opt & MDS_EVENT_OPT_AND) != 0U) && ((event->value.mask & wait.mask) == wait.mask)) ||
+            (((opt & MDS_EVENT_OPT_OR) != 0U) && ((event->value.mask & wait.mask) != 0U))) {
             if (recv != NULL) {
                 *recv = event->value;
             }
             if ((opt & MDS_EVENT_OPT_NOCLR) == 0U) {
-                event->value &= (~mask);
+                event->value.mask &= (~wait.mask);
             }
             err = MDS_EOK;
         }
@@ -518,25 +583,25 @@ MDS_Err_t MDS_EventWait(MDS_Event_t *event, MDS_Mask_t mask, MDS_EventOpt_t opt,
     return (err);
 }
 
-MDS_Err_t MDS_EventSet(MDS_Event_t *event, MDS_Mask_t mask)
+MDS_Err_t MDS_EventSet(MDS_Event_t *event, MDS_Mask_t set)
 {
     MDS_ASSERT(event != NULL);
     MDS_ASSERT(MDS_ObjectGetType(&(event->object)) == MDS_OBJECT_TYPE_EVENT);
 
     MDS_Lock_t lock = MDS_CoreInterruptLock();
-    event->value |= mask;
+    event->value.mask |= set.mask;
     MDS_CoreInterruptRestore(lock);
 
     return (MDS_EOK);
 }
 
-MDS_Err_t MDS_EventClr(MDS_Event_t *event, MDS_Mask_t mask)
+MDS_Err_t MDS_EventClr(MDS_Event_t *event, MDS_Mask_t clr)
 {
     MDS_ASSERT(event != NULL);
     MDS_ASSERT(MDS_ObjectGetType(&(event->object)) == MDS_OBJECT_TYPE_EVENT);
 
     MDS_Lock_t lock = MDS_CoreInterruptLock();
-    event->value &= (~mask);
+    event->value.mask &= (~clr.mask);
     MDS_CoreInterruptRestore(lock);
 
     return (MDS_EOK);
@@ -561,12 +626,16 @@ MDS_Err_t MDS_ThreadDelay(MDS_Timeout_t delay)
 /* Kernel ------------------------------------------------------------------ */
 static volatile int g_sysCriticalNest = 0;
 
+__attribute__((weak)) void MDS_CoreIdleSleep(void)
+{
+}
+
 MDS_Thread_t *MDS_KernelCurrentThread(void)
 {
     return (NULL);
 }
 
-void MDS_KernelEnterCritical(void)
+void MDS_KernelSchdulerLockAcquire(void)
 {
     MDS_Lock_t lock = MDS_CoreInterruptLock();
 
@@ -575,7 +644,7 @@ void MDS_KernelEnterCritical(void)
     MDS_CoreInterruptRestore(lock);
 }
 
-void MDS_KernelExitCritical(void)
+void MDS_KernelSchdulerLockRelease(void)
 {
     MDS_Lock_t lock = MDS_CoreInterruptLock();
 
@@ -584,7 +653,7 @@ void MDS_KernelExitCritical(void)
     MDS_CoreInterruptRestore(lock);
 }
 
-size_t MDS_KernelGetCritical(void)
+size_t MDS_KernelSchdulerLockLevel(void)
 {
     return (g_sysCriticalNest);
 }
@@ -621,6 +690,11 @@ static struct MDS_SysTick {
     MDS_SpinLock_t spinlock;
 } g_sysTick;
 
+static struct MDS_UnixTime {
+    int64_t ts;
+    int8_t tz;
+} g_unixTime;
+
 void MDS_SysTickHandler(void)
 {
     MDS_ClockIncTickCount(1);
@@ -649,4 +723,31 @@ void MDS_ClockIncTickCount(MDS_Tick_t ticks)
     MDS_CriticalRestore(&(g_sysTick.spinlock), lock);
 
     MDS_SysTimerCheck();
+}
+
+__attribute__((weak)) MDS_TimeStamp_t MDS_ClockGetTimestamp(int8_t *tz)
+{
+    MDS_Lock_t lock = MDS_CriticalLock(NULL);
+
+    MDS_Tick_t ticks = MDS_ClockGetTickCount();
+    MDS_TimeStamp_t ts = {.ts = g_unixTime.ts + MDS_CLOCK_TICK_TO_MS(ticks)};
+    int8_t _tz = g_unixTime.tz;
+
+    MDS_CriticalRestore(NULL, lock);
+
+    if (tz != NULL) {
+        *tz = _tz;
+    }
+    return (ts);
+}
+
+__attribute__((weak)) void MDS_ClockSetTimestamp(MDS_TimeStamp_t ts, int8_t tz)
+{
+    MDS_Lock_t lock = MDS_CriticalLock(NULL);
+
+    MDS_Tick_t ticks = MDS_ClockGetTickCount();
+    g_unixTime.ts = ts.ts - MDS_CLOCK_TICK_TO_MS(ticks);
+    g_unixTime.tz = tz;
+
+    MDS_CriticalRestore(NULL, lock);
 }

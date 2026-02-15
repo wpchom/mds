@@ -22,12 +22,12 @@ extern "C" {
 /* Typedef ----------------------------------------------------------------- */
 typedef int MDS_DevCmd_t;
 enum MDS_DEVICE_Cmd {
+    MDS_DEVICE_CMD_HANDLESZ= 0,
+    MDS_DEVICE_CMD_GETID,
     MDS_DEVICE_CMD_INIT,
     MDS_DEVICE_CMD_DEINIT,
-    MDS_DEVICE_CMD_HANDLESZ,
     MDS_DEVICE_CMD_OPEN,
     MDS_DEVICE_CMD_CLOSE,
-    MDS_DEVICE_CMD_GETID,
     MDS_DEVICE_CMD_PROBE,
     MDS_DEVICE_CMD_DUMP,
 
@@ -43,12 +43,12 @@ typedef union MDS_DevHandle {
 } MDS_DevHandle_t;
 
 typedef struct MDS_DevDriver {
-    MDS_Err_t (*control)(const MDS_Device_t *device, MDS_DevCmd_t cmd, MDS_Arg_t *arg);
+    MDS_Err_t (*control)(const MDS_Device_t *device, MDS_DevCmd_t cmd, MDS_Arg_t arg);
 } MDS_DevDriver_t;
 
 struct MDS_Device {
     MDS_Object_t object;
-    MDS_Mask_t flags;
+    MDS_Mask_t flag;
     void (*hook)(const MDS_Device_t *device, MDS_DevCmd_t cmd);
 };
 
@@ -96,19 +96,17 @@ void MDS_DeviceRegisterHook(const MDS_Device_t *device,
                             void (*hook)(const MDS_Device_t *device, MDS_DevCmd_t cmd));
 
 MDS_Err_t MDS_DevModuleInit(MDS_DevModule_t *module, const char *name,
-                            const MDS_DevDriver_t *driver, MDS_DevHandle_t *handle,
-                            const MDS_Arg_t *init);
+                            const MDS_DevDriver_t *driver, MDS_DevHandle_t *handle, MDS_Arg_t init);
 MDS_Err_t MDS_DevModuleDeInit(MDS_DevModule_t *module);
 MDS_DevModule_t *MDS_DevModuleCreate(size_t typesz, const char *name, const MDS_DevDriver_t *driver,
-                                     const MDS_Arg_t *init);
+                                     MDS_Arg_t init);
 MDS_Err_t MDS_DevModuleDestroy(MDS_DevModule_t *module);
 
 MDS_Err_t MDS_DevAdaptrInit(MDS_DevAdaptr_t *adaptr, const char *name,
-                            const MDS_DevDriver_t *driver, MDS_DevHandle_t *handle,
-                            const MDS_Arg_t *init);
+                            const MDS_DevDriver_t *driver, MDS_DevHandle_t *handle, MDS_Arg_t init);
 MDS_Err_t MDS_DevAdaptrDeInit(MDS_DevAdaptr_t *adaptr);
 MDS_DevAdaptr_t *MDS_DevAdaptrCreate(size_t typesz, const char *name, const MDS_DevDriver_t *driver,
-                                     const MDS_Arg_t *init);
+                                     MDS_Arg_t init);
 MDS_Err_t MDS_DevAdaptrDestroy(MDS_DevAdaptr_t *adaptr);
 MDS_Err_t MDS_DevAdaptrUpdateOpen(MDS_DevAdaptr_t *adaptr);
 
@@ -124,13 +122,18 @@ bool MDS_DevPeriphIsAccessable(MDS_DevPeriph_t *periph);
 bool MDS_DeviceIsPeriph(const MDS_Device_t *device);
 const MDS_DevProbeId_t *MDS_DeviceGetId(const MDS_Device_t *device);
 MDS_Err_t MDS_DevModuleDump(const MDS_Device_t *device, MDS_DevDumpData_t *dump);
-MDS_Device_t *MDS_DeviceProbeDrivers(const MDS_DevDriver_t **driver, const MDS_Device_t *device,
+MDS_Device_t *MDS_DeviceProbeDrivers(const MDS_DevDriver_t **driver, MDS_Device_t *device,
                                      const MDS_DevProbeTable_t drvList[], size_t drvSize);
 
 /* Define ------------------------------------------------------------------ */
-#define MDS_DEVICE_ARG_HANDLE_SIZE(arg, handleT)                                                   \
-    if ((arg) != NULL) {                                                                           \
-        *((size_t *)(arg)) = sizeof(handleT);                                                      \
+#define MDS_DEVICE_ARG_DRVHDRS(arg, handleT)                                                       \
+    if ((arg.ptr) != NULL) {                                                                       \
+        *((size_t *)(arg.ptr)) = sizeof(handleT);                                                  \
+    }
+
+#define MDS_DEVICE_ARG_DRVID(arg, driverId)                                                        \
+    if ((arg.ptr) != NULL) {                                                                       \
+        *((const MDS_DevProbeId_t **)(arg.ptr)) = &driverId;                                       \
     }
 
 #ifdef __cplusplus

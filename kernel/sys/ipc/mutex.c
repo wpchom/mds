@@ -41,14 +41,17 @@ MDS_Err_t MDS_MutexDeInit(MDS_Mutex_t *mutex)
     MDS_Lock_t lock = MDS_CriticalLock(&(mutex->spinlock));
 
     MDS_KernelWaitQueueDrain(&(mutex->queueWait));
-    MDS_Err_t err = MDS_ObjectDeInit(&(mutex)->object);
 
-    MDS_CriticalRestore((!MDS_ErrIsSame(err, MDS_EOK)) ? (&(mutex->spinlock)) : (NULL), lock);
+    MDS_Err_t err = MDS_ObjectDeInit(&(mutex)->object);
+    if (MDS_ErrIsSame(err, MDS_EOK)) {
+        MDS_CriticalRestore(NULL, lock);
+    } else {
+        MDS_CriticalRestore(&(mutex->spinlock), lock);
+    }
 
     return (err);
 }
 
-#if (!defined(CONFIG_MDS_SYSMEM_HEAP_OPS) || (CONFIG_MDS_SYSMEM_HEAP_OPS > 0))
 MDS_Mutex_t *MDS_MutexCreate(const char *name)
 {
     MDS_Mutex_t *mutex =
@@ -73,13 +76,16 @@ MDS_Err_t MDS_MutexDestroy(MDS_Mutex_t *mutex)
     MDS_Lock_t lock = MDS_CriticalLock(&(mutex->spinlock));
 
     MDS_KernelWaitQueueDrain(&(mutex->queueWait));
-    MDS_Err_t err = MDS_ObjectDestroy(&(mutex->object));
 
-    MDS_CriticalRestore((!MDS_ErrIsSame(err, MDS_EOK)) ? (&(mutex->spinlock)) : (NULL), lock);
+    MDS_Err_t err = MDS_ObjectDestroy(&(mutex->object));
+    if (MDS_ErrIsSame(err, MDS_EOK)) {
+        MDS_CriticalRestore(NULL, lock);
+    } else {
+        MDS_CriticalRestore(&(mutex->spinlock), lock);
+    }
 
     return (err);
 }
-#endif
 
 MDS_Err_t MDS_MutexAcquire(MDS_Mutex_t *mutex, MDS_Timeout_t timeout)
 {

@@ -24,7 +24,7 @@ typedef struct DEV_STORAGE_Adaptr DEV_STORAGE_Adaptr_t;
 typedef struct DEV_STORAGE_Periph DEV_STORAGE_Periph_t; // parition
 
 typedef struct DEV_STORAGE_Driver {
-    MDS_Err_t (*control)(const DEV_STORAGE_Adaptr_t *flash, MDS_DevCmd_t cmd, MDS_Arg_t *arg);
+    MDS_Err_t (*control)(const DEV_STORAGE_Adaptr_t *flash, MDS_DevCmd_t cmd, MDS_Arg_t arg);
     MDS_Err_t (*read)(const DEV_STORAGE_Periph_t *periph, uintptr_t ofs, uint8_t *buff, size_t len,
                       size_t *read);
     MDS_Err_t (*write)(const DEV_STORAGE_Periph_t *periph, uintptr_t ofs, const uint8_t *buff,
@@ -59,10 +59,10 @@ struct DEV_STORAGE_Periph {
 /* Function ---------------------------------------------------------------- */
 MDS_Err_t DEV_STORAGE_AdaptrInit(DEV_STORAGE_Adaptr_t *storage, const char *name,
                                  const DEV_STORAGE_Driver_t *driver, MDS_DevHandle_t *handle,
-                                 const MDS_Arg_t *init);
+                                 MDS_Arg_t init);
 MDS_Err_t DEV_STORAGE_AdaptrDeInit(DEV_STORAGE_Adaptr_t *storage);
 DEV_STORAGE_Adaptr_t *DEV_STORAGE_AdaptrCreate(const char *name, const DEV_STORAGE_Driver_t *driver,
-                                               const MDS_Arg_t *init);
+                                               MDS_Arg_t init);
 MDS_Err_t DEV_STORAGE_AdaptrDestroy(DEV_STORAGE_Adaptr_t *storage);
 
 MDS_Err_t DEV_STORAGE_PeriphInit(DEV_STORAGE_Periph_t *periph, const char *name,

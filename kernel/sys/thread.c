@@ -54,11 +54,11 @@ static void THREAD_Entry(void *arg)
     MDS_KernelSchedulerCheck();
 }
 
-static void THREAD_Timeout(const MDS_Timer_t *timer, MDS_Arg_t *arg)
+static void THREAD_Timeout(const MDS_Timer_t *timer, MDS_Arg_t arg)
 {
     UNUSED(timer);
 
-    MDS_Thread_t *thread = (MDS_Thread_t *)arg;
+    MDS_Thread_t *thread = (MDS_Thread_t *)(arg.ptr);
 
     MDS_ASSERT(thread != NULL);
     MDS_ASSERT(MDS_ObjectGetType(&(thread->object)) == MDS_OBJECT_TYPE_THREAD);
@@ -79,14 +79,14 @@ static void THREAD_Timeout(const MDS_Timer_t *timer, MDS_Arg_t *arg)
     MDS_KernelSchedulerCheck();
 }
 
-static MDS_Err_t THREAD_Init(MDS_Thread_t *thread, MDS_ThreadEntry_t entry, MDS_Arg_t *arg,
+static MDS_Err_t THREAD_Init(MDS_Thread_t *thread, MDS_ThreadEntry_t entry, MDS_Arg_t arg,
                              void *stackPool, size_t stackSize, MDS_ThreadPriority_t priority,
-                             MDS_Timeout_t timeout)
+                             MDS_Timeout_t timeslice)
 {
     MDS_ASSERT(entry != NULL);
     MDS_ASSERT(stackPool != NULL);
     MDS_ASSERT(stackSize > 0);
-    MDS_ASSERT(timeout.ticks > 0);
+    MDS_ASSERT(timeslice.ticks > 0);
 
     MDS_SpinLockInit(&(thread->spinlock));
     MDS_DListInitNode(&(thread->nodeWait.node));
@@ -100,17 +100,17 @@ static MDS_Err_t THREAD_Init(MDS_Thread_t *thread, MDS_ThreadEntry_t entry, MDS_
         MDS_CoreThreadStackInit(thread->stackBase, thread->stackSize, (void *)THREAD_Entry,
                                 (void *)thread, (void *)THREAD_Exit);
 
-    thread->initTick = timeout.ticks;
-    thread->remainTick = timeout.ticks;
+    thread->initTick = timeslice.ticks;
+    thread->remainTick = timeslice.ticks;
     thread->err = MDS_TimerInit(&(thread->timer), thread->object.name, THREAD_Timeout, NULL,
-                                (MDS_Arg_t *)thread);
+                                MDS_ARG_WITH(thread));
 
     thread->initPrio = priority;
     thread->currPrio = priority;
 
     MDS_ThreadSetState(thread, MDS_THREAD_STATE_INACTIVED);
     thread->eventOpt = MDS_EVENT_OPT_NONE;
-    thread->eventMask = 0U;
+    thread->eventMask.mask = 0U;
 
     MDS_HOOK_CALL(KERNEL, thread, (thread, MDS_KERNEL_TRACE_THREAD_INIT));
 
@@ -135,14 +135,14 @@ static MDS_Err_t MDS_ThreadClose(MDS_Thread_t *thread)
 }
 
 MDS_Err_t MDS_ThreadInit(MDS_Thread_t *thread, const char *name, MDS_ThreadEntry_t entry,
-                         MDS_Arg_t *arg, void *stackPool, size_t stackSize,
-                         MDS_ThreadPriority_t priority, MDS_Timeout_t timeout)
+                         MDS_Arg_t arg, void *stackPool, size_t stackSize,
+                         MDS_ThreadPriority_t priority, MDS_Timeout_t timeslice)
 {
     MDS_ASSERT(thread != NULL);
 
     MDS_Err_t err = MDS_ObjectInit(&(thread->object), MDS_OBJECT_TYPE_THREAD, name);
     if (MDS_ErrIsSame(err, MDS_EOK)) {
-        err = THREAD_Init(thread, entry, arg, stackPool, stackSize, priority, timeout);
+        err = THREAD_Init(thread, entry, arg, stackPool, stackSize, priority, timeslice);
         if (!MDS_ErrIsSame(err, MDS_EOK)) {
             MDS_ObjectDeInit(&(thread->object));
         }
@@ -156,10 +156,9 @@ MDS_Err_t MDS_ThreadDeInit(MDS_Thread_t *thread)
     return (MDS_ThreadClose(thread));
 }
 
-#if (!defined(CONFIG_MDS_SYSMEM_HEAP_OPS) || (CONFIG_MDS_SYSMEM_HEAP_OPS > 0))
-MDS_Thread_t *MDS_ThreadCreate(const char *name, MDS_ThreadEntry_t entry, MDS_Arg_t *arg,
+MDS_Thread_t *MDS_ThreadCreate(const char *name, MDS_ThreadEntry_t entry, MDS_Arg_t arg,
                                size_t stackSize, MDS_ThreadPriority_t priority,
-                               MDS_Timeout_t timeout)
+                               MDS_Timeout_t timeslice)
 {
     MDS_ASSERT(stackSize > 0);
 
@@ -170,7 +169,7 @@ MDS_Thread_t *MDS_ThreadCreate(const char *name, MDS_ThreadEntry_t entry, MDS_Ar
             (MDS_Thread_t *)MDS_ObjectCreate(sizeof(MDS_Thread_t), MDS_OBJECT_TYPE_THREAD, name);
         if (thread != NULL) {
             MDS_Err_t err =
-                THREAD_Init(thread, entry, arg, stackPool, stackSize, priority, timeout);
+                THREAD_Init(thread, entry, arg, stackPool, stackSize, priority, timeslice);
             if (MDS_ErrIsSame(err, MDS_EOK)) {
                 return (thread);
             }
@@ -181,7 +180,7 @@ MDS_Thread_t *MDS_ThreadCreate(const char *name, MDS_ThreadEntry_t entry, MDS_Ar
 
     MDS_LOG_D("[thread] entry:%p stack size:%" PRIuPTR " priority:%d ticks:%" PRIuTICK
               " create failed",
-              entry, stackSize, priority.priority, timeout.ticks);
+              entry, stackSize, priority.priority, timeslice.ticks);
 
     return (NULL);
 }
@@ -190,7 +189,6 @@ MDS_Err_t MDS_ThreadDestroy(MDS_Thread_t *thread)
 {
     return (MDS_ThreadClose(thread));
 }
-#endif
 
 MDS_Err_t MDS_ThreadStartup(MDS_Thread_t *thread)
 {

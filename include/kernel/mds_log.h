@@ -59,7 +59,7 @@ typedef void (*MDS_LOG_VaPrint_t)(const MDS_LOG_Module_t *module, uint8_t level,
 
 typedef struct MDS_LOG_Filter {
     MDS_LOG_VaPrint_t print;
-    MDS_Arg_t *arg;
+    MDS_Arg_t arg;
     uint8_t level;
 } MDS_LOG_Filter_t;
 
@@ -180,7 +180,7 @@ __attribute__((format(printf, 2, 3))) void MDS_PanicPrintf(size_t va_cnt, const 
         MDS_PanicPrintf(__LOG_ARGUMENT_SIZE(__VA_ARGS__), __logfmt, ##__VA_ARGS__);                \
     } while (0)
 #else
-#define MDS_LOG_P(_fmt, ...) (void)(__THIS_LOG_MODULE_LEVEL)
+#define MDS_LOG_P(_fmt, ...)
 #endif
 
 #define MDS_PANIC(_fmt, ...)                                                                       \

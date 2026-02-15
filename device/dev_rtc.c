@@ -15,7 +15,7 @@
 /* RTC device -------------------------------------------------------------- */
 MDS_Err_t DEV_RTC_DeviceInit(DEV_RTC_Device_t *rtc, const char *name,
                              const DEV_RTC_Driver_t *driver, MDS_DevHandle_t *handle,
-                             const MDS_Arg_t *init)
+                             MDS_Arg_t init)
 {
     return (MDS_DevModuleInit((MDS_DevModule_t *)rtc, name, (const MDS_DevDriver_t *)driver, handle,
                               init));
@@ -27,7 +27,7 @@ MDS_Err_t DEV_RTC_DeviceDeInit(DEV_RTC_Device_t *rtc)
 }
 
 DEV_RTC_Device_t *DEV_RTC_DeviceCreate(const char *name, const DEV_RTC_Driver_t *driver,
-                                       const MDS_Arg_t *init)
+                                       MDS_Arg_t init)
 {
     return ((DEV_RTC_Device_t *)MDS_DevModuleCreate(sizeof(DEV_RTC_Device_t), name,
                                                     (const MDS_DevDriver_t *)driver, init));
@@ -44,7 +44,7 @@ MDS_Err_t DEV_RTC_GetTimeDate(DEV_RTC_Device_t *rtc, MDS_TimeDate_t *tm)
     MDS_ASSERT(rtc->driver != NULL);
     MDS_ASSERT(rtc->driver->control != NULL);
 
-    return (rtc->driver->control(rtc, DEV_RTC_CMD_TIMEDATE_GET, (MDS_Arg_t *)tm));
+    return (rtc->driver->control(rtc, DEV_RTC_CMD_TIMEDATE_GET, MDS_ARG_WITH(tm)));
 }
 
 MDS_Err_t DEV_RTC_SetTimeDate(DEV_RTC_Device_t *rtc, const MDS_TimeDate_t *tm)
@@ -53,7 +53,7 @@ MDS_Err_t DEV_RTC_SetTimeDate(DEV_RTC_Device_t *rtc, const MDS_TimeDate_t *tm)
     MDS_ASSERT(rtc->driver != NULL);
     MDS_ASSERT(rtc->driver->control != NULL);
 
-    return (rtc->driver->control(rtc, DEV_RTC_CMD_TIMEDATE_SET, (MDS_Arg_t *)tm));
+    return (rtc->driver->control(rtc, DEV_RTC_CMD_TIMEDATE_SET, MDS_ARG_WITH(tm)));
 }
 
 MDS_Err_t DEV_RTC_GetTimeStamp(DEV_RTC_Device_t *rtc, MDS_TimeStamp_t *timestamp)
@@ -62,7 +62,7 @@ MDS_Err_t DEV_RTC_GetTimeStamp(DEV_RTC_Device_t *rtc, MDS_TimeStamp_t *timestamp
     MDS_ASSERT(rtc->driver != NULL);
     MDS_ASSERT(rtc->driver->control != NULL);
 
-    return (rtc->driver->control(rtc, DEV_RTC_CMD_TIMESTAMP_GET, (MDS_Arg_t *)(&timestamp)));
+    return (rtc->driver->control(rtc, DEV_RTC_CMD_TIMESTAMP_GET, MDS_ARG_WITH(&timestamp)));
 }
 
 MDS_Err_t DEV_RTC_SetTimeStamp(DEV_RTC_Device_t *rtc, MDS_TimeStamp_t timestamp)
@@ -71,7 +71,7 @@ MDS_Err_t DEV_RTC_SetTimeStamp(DEV_RTC_Device_t *rtc, MDS_TimeStamp_t timestamp)
     MDS_ASSERT(rtc->driver != NULL);
     MDS_ASSERT(rtc->driver->control != NULL);
 
-    return (rtc->driver->control(rtc, DEV_RTC_CMD_TIMESTAMP_SET, (MDS_Arg_t *)(&timestamp)));
+    return (rtc->driver->control(rtc, DEV_RTC_CMD_TIMESTAMP_SET, MDS_ARG_WITH(&timestamp)));
 }
 
 /* RTC Timer --------------------------------------------------------------- */
@@ -96,8 +96,8 @@ MDS_Err_t DEV_RTC_TimerDestroy(DEV_RTC_Timer_t *timer)
     return (MDS_DevPeriphDestroy((MDS_DevPeriph_t *)timer));
 }
 
-void DEV_RTC_TimerCallback(DEV_RTC_Timer_t *timer, void (*callback)(DEV_RTC_Timer_t *, MDS_Arg_t *),
-                           MDS_Arg_t *arg)
+void DEV_RTC_TimerCallback(DEV_RTC_Timer_t *timer, void (*callback)(DEV_RTC_Timer_t *, MDS_Arg_t),
+                           MDS_Arg_t arg)
 {
     MDS_ASSERT(timer != NULL);
 
@@ -157,8 +157,8 @@ MDS_Err_t DEV_RTC_AlarmDestroy(DEV_RTC_Alarm_t *alarm)
     return (MDS_DevPeriphDestroy((MDS_DevPeriph_t *)alarm));
 }
 
-void DEV_RTC_AlarmCallback(DEV_RTC_Alarm_t *alarm, void (*callback)(DEV_RTC_Alarm_t *, MDS_Arg_t *),
-                           MDS_Arg_t *arg)
+void DEV_RTC_AlarmCallback(DEV_RTC_Alarm_t *alarm, void (*callback)(DEV_RTC_Alarm_t *, MDS_Arg_t),
+                           MDS_Arg_t arg)
 {
     MDS_ASSERT(alarm != NULL);
 

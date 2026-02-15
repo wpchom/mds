@@ -36,8 +36,8 @@ static inline void MDS_SysMemHeapAddress(void **begin, void **limit)
 #else
 static inline void MDS_SysMemHeapAddress(void **begin, void **limit)
 {
-    extern void __HeapBase(void);
-    extern void __HeapLimit(void);
+    extern uint8_t __HeapBase[];
+    extern uint8_t __HeapLimit[];
 
     *begin = (void *)(uintptr_t)__HeapBase;
     *limit = (void *)(uintptr_t)__HeapLimit;
@@ -83,7 +83,9 @@ static inline void MDS_SysMemHeapAddress(void **begin, void **limit)
 
 #define MDS_ARGUMENT_GET_N(N, ...) __ARGUMENT_GET_##N(__VA_ARGS__)
 
-#define __ARGUMENT_FOREACH_0(_call, _sep, _arg, ...) _arg
+#define __ARGUMENT_ELEM(_n, _elem, _arg)             (_elem)
+#define __ARGUMENT_ELEM_SHIFT(_n, _elem, _arg)       (1UL << _elem)
+#define __ARGUMENT_FOREACH_0(_call, _sep, _arg, ...) (_arg)
 
 #define __ARGUMENT_FOREACH_1(_call, _sep, _arg, _elem)                                             \
     _call(0, _elem, _arg) __DEBRACKET _sep __ARGUMENT_FOREACH_0(_call, _sep, _arg)
@@ -198,6 +200,28 @@ static inline void MDS_SysMemHeapAddress(void **begin, void **limit)
     __CONDITION_CODE(__COND_CODE_RSV0_##_flag, _if_0_code, _else_code)
 #define __COND_CODE_RSV0_0                             __COND_CODE_RSV0_,
 #define MDS_COND_CODE_0(_flag, _if_0_code, _else_code) __COND_CODE_0(_flag, _if_0_code, _else_code)
+
+/* Skip List --------------------------------------------------------------- */
+void MDS_SkipListInitNode(MDS_DListNode_t node[], size_t size);
+void MDS_SkipListRemoveNode(MDS_DListNode_t node[], size_t size);
+MDS_DListNode_t *MDS_SkipListSearchNode(MDS_DListNode_t *prev[], MDS_DListNode_t list[],
+                                        size_t size, int (*cmp)(const MDS_DListNode_t *, MDS_Arg_t),
+                                        MDS_Arg_t arg);
+size_t MDS_SkipListInsertNode(MDS_DListNode_t *prev[], MDS_DListNode_t node[], size_t size,
+                              size_t rand, size_t shift);
+
+/* Tree -------------------------------------------------------------------- */
+typedef struct MDS_TreeNode {
+    struct MDS_TreeNode *parent;
+    MDS_DListNode_t sibling;
+    MDS_DListNode_t child;
+} MDS_TreeNode_t;
+
+void MDS_TreeInitNode(MDS_TreeNode_t *node);
+MDS_TreeNode_t *MDS_TreeInsertNode(MDS_TreeNode_t *parent, MDS_TreeNode_t *node);
+MDS_TreeNode_t *MDS_TreeRemoveNode(MDS_TreeNode_t *node);
+size_t MDS_TreeForeachNode(const MDS_TreeNode_t *tree,
+                           void (*func)(const MDS_TreeNode_t *, MDS_Arg_t), MDS_Arg_t arg);
 
 #ifdef __cplusplus
 }

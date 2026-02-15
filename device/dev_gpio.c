@@ -15,7 +15,7 @@
 /* GPIO module ------------------------------------------------------------- */
 MDS_Err_t DEV_GPIO_ModuleInit(DEV_GPIO_Module_t *gpio, const char *name,
                               const DEV_GPIO_Driver_t *driver, MDS_DevHandle_t *handle,
-                              const MDS_Arg_t *init)
+                              MDS_Arg_t init)
 {
     return (MDS_DevModuleInit((MDS_DevModule_t *)gpio, name, (const MDS_DevDriver_t *)driver,
                               handle, init));
@@ -27,7 +27,7 @@ MDS_Err_t DEV_GPIO_ModuleDeInit(DEV_GPIO_Module_t *gpio)
 }
 
 DEV_GPIO_Module_t *DEV_GPIO_ModuleCreate(const char *name, const DEV_GPIO_Driver_t *driver,
-                                         const MDS_Arg_t *init)
+                                         MDS_Arg_t init)
 {
     return ((DEV_GPIO_Module_t *)MDS_DevModuleCreate(sizeof(DEV_GPIO_Module_t), name,
                                                      (const MDS_DevDriver_t *)driver, init));
@@ -81,7 +81,7 @@ MDS_Err_t DEV_GPIO_PinConfig(DEV_GPIO_Pin_t *pin, const DEV_GPIO_Config_t *confi
 }
 
 void DEV_GPIO_PinInterruptCallback(DEV_GPIO_Pin_t *pin,
-                                   void (*callback)(DEV_GPIO_Pin_t *, MDS_Arg_t *), MDS_Arg_t *arg)
+                                   void (*callback)(DEV_GPIO_Pin_t *, MDS_Arg_t), MDS_Arg_t arg)
 {
     MDS_ASSERT(pin != NULL);
 
@@ -126,15 +126,15 @@ void DEV_GPIO_PinToggle(DEV_GPIO_Pin_t *pin)
     MDS_ASSERT(pin->mount->driver != NULL);
     MDS_ASSERT(pin->mount->driver->control != NULL);
 
-    pin->mount->driver->control(pin->mount, DEV_GPIO_CMD_PIN_TOGGLE, (MDS_Arg_t *)pin);
+    pin->mount->driver->control(pin->mount, DEV_GPIO_CMD_PIN_TOGGLE, MDS_ARG_WITH(pin));
 }
 
 void DEV_GPIO_PinLow(DEV_GPIO_Pin_t *pin)
 {
-    DEV_GPIO_PinWrite(pin, (MDS_Mask_t)(0));
+    DEV_GPIO_PinWrite(pin, (MDS_Mask_t) {0});
 }
 
 void DEV_GPIO_PinHigh(DEV_GPIO_Pin_t *pin)
 {
-    DEV_GPIO_PinWrite(pin, (MDS_Mask_t)(-1));
+    DEV_GPIO_PinWrite(pin, (MDS_Mask_t) {-1});
 }

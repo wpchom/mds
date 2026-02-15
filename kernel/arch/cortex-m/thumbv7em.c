@@ -150,15 +150,17 @@ void MDS_CoreIdleSleep(void)
     __asm volatile("wfi");
 }
 
-size_t MDS_SchedulerFFS(size_t value)
+size_t MDS_SchedulerFFS(register size_t value)
 {
+    register size_t ffs = 0;
+
     if (value != 0) {
         __asm volatile("rbit        %0, %0" : "=r"(value));
         __asm volatile("clz         %0, %0" : : "r"(value));
-        __asm volatile("adds        %0, %0, #1" : "=r"(value) : "r"(value));
+        __asm volatile("adds        %0, %0, #1" : "=r"(ffs) : "r"(value));
     }
 
-    return (value);
+    return (ffs);
 }
 
 /* CoreInterrupt ----------------------------------------------------------- */

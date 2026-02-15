@@ -61,14 +61,17 @@ MDS_Err_t MDS_MemPoolDeInit(MDS_MemPool_t *memPool)
     MDS_Lock_t lock = MDS_CriticalLock(&(memPool->spinlock));
 
     MDS_KernelWaitQueueDrain(&(memPool->queueWait));
-    MDS_Err_t err = MDS_ObjectDeInit(&(memPool->object));
 
-    MDS_CriticalRestore((!MDS_ErrIsSame(err, MDS_EOK)) ? (&(memPool->spinlock)) : (NULL), lock);
+    MDS_Err_t err = MDS_ObjectDeInit(&(memPool->object));
+    if (MDS_ErrIsSame(err, MDS_EOK)) {
+        MDS_CriticalRestore(NULL, lock);
+    } else {
+        MDS_CriticalRestore(&(memPool->spinlock), lock);
+    }
 
     return (err);
 }
 
-#if (!defined(CONFIG_MDS_SYSMEM_HEAP_OPS) || (CONFIG_MDS_SYSMEM_HEAP_OPS > 0))
 MDS_MemPool_t *MDS_MemPoolCreate(const char *name, size_t blkSize, size_t blkNums)
 {
     MDS_MemPool_t *memPool =
@@ -99,16 +102,17 @@ MDS_Err_t MDS_MemPoolDestroy(MDS_MemPool_t *memPool)
 
     void *memBuff = memPool->memBuff;
     MDS_KernelWaitQueueDrain(&(memPool->queueWait));
+
     MDS_Err_t err = MDS_ObjectDestroy(&(memPool->object));
     if (MDS_ErrIsSame(err, MDS_EOK)) {
         MDS_SysMemFree(memBuff);
+        MDS_CriticalRestore(NULL, lock);
+    } else {
+        MDS_CriticalRestore(&(memPool->spinlock), lock);
     }
-
-    MDS_CriticalRestore((!MDS_ErrIsSame(err, MDS_EOK)) ? (&(memPool->spinlock)) : (NULL), lock);
 
     return (err);
 }
-#endif
 
 void *MDS_MemPoolAlloc(MDS_MemPool_t *memPool, MDS_Timeout_t timeout)
 {

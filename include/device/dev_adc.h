@@ -27,12 +27,12 @@ typedef enum DEV_ADC_Resolution {
     DEV_ADC_RESOLUTION_12 = 12U,
     DEV_ADC_RESOLUTION_13 = 13U,
     DEV_ADC_RESOLUTION_16 = 16U,
-} DEV_ADC_Resolution_t;
+} __attribute__((packed)) DEV_ADC_Resolution_t;
 
 typedef enum DEV_ADC_InputMode {
     DEV_ADC_INPUTMODE_SINGLE,
     DEV_ADC_INPUTMODE_DIFF,
-} DEV_ADC_InputMode_t;
+} __attribute__((packed)) DEV_ADC_InputMode_t;
 
 typedef struct DEV_ADC_Config {
     DEV_ADC_Resolution_t resolution : 8;
@@ -50,7 +50,7 @@ typedef struct DEV_ADC_Adaptr DEV_ADC_Adaptr_t;
 typedef struct DEV_ADC_Periph DEV_ADC_Periph_t;
 
 typedef struct DEV_ADC_Driver {
-    MDS_Err_t (*control)(const DEV_ADC_Adaptr_t *adc, MDS_DevCmd_t cmd, MDS_Arg_t *arg);
+    MDS_Err_t (*control)(const DEV_ADC_Adaptr_t *adc, MDS_DevCmd_t cmd, MDS_Arg_t arg);
     MDS_Err_t (*convert)(const DEV_ADC_Periph_t *periph, int32_t *val);
 } DEV_ADC_Driver_t;
 
@@ -75,10 +75,10 @@ struct DEV_ADC_Periph {
 /* Function ---------------------------------------------------------------- */
 MDS_Err_t DEV_ADC_AdaptrInit(DEV_ADC_Adaptr_t *adc, const char *name,
                              const DEV_ADC_Driver_t *driver, MDS_DevHandle_t *handle,
-                             const MDS_Arg_t *init);
+                             MDS_Arg_t init);
 MDS_Err_t DEV_ADC_AdaptrDeInit(DEV_ADC_Adaptr_t *adc);
 DEV_ADC_Adaptr_t *DEV_ADC_AdaptrCreate(const char *name, const DEV_ADC_Driver_t *driver,
-                                       const MDS_Arg_t *init);
+                                       MDS_Arg_t init);
 MDS_Err_t DEV_ADC_AdaptrDestroy(DEV_ADC_Adaptr_t *adc);
 
 MDS_Err_t DEV_ADC_PeriphInit(DEV_ADC_Periph_t *periph, const char *name, DEV_ADC_Adaptr_t *adc);

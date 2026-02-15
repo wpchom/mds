@@ -23,28 +23,28 @@ extern "C" {
 typedef enum DEV_GPIO_Level {
     DEV_GPIO_LEVEL_LOW = 0,
     DEV_GPIO_LEVEL_HIGH = !DEV_GPIO_LEVEL_LOW,
-} DEV_GPIO_Level_t;
+} __attribute__((packed)) DEV_GPIO_Level_t;
 
 typedef enum DEV_GPIO_Mode {
     DEV_GPIO_MODE_INPUT,
     DEV_GPIO_MODE_OUTPUT,
     DEV_GPIO_MODE_ANALOG,
     DEV_GPIO_MODE_ALTERNATE,
-} DEV_GPIO_Mode_t;
+} __attribute__((packed)) DEV_GPIO_Mode_t;
 
 typedef enum DEV_GPIO_Type {
     DEV_GPIO_TYPE_PP_NO,
     DEV_GPIO_TYPE_PP_UP,
     DEV_GPIO_TYPE_PP_DOWN,
     DEV_GPIO_TYPE_OD,
-} DEV_GPIO_Type_t;
+} __attribute__((packed)) DEV_GPIO_Type_t;
 
 typedef enum DEV_GPIO_Interrupt {
     DEV_GPIO_INTR_NONE = 0x00U,
     DEV_GPIO_INTR_FALLING = 0x01U,
     DEV_GPIO_INTR_RISING = 0x02U,
     DEV_GPIO_INTR_BOTH = 0x03U,
-} DEV_GPIO_Interrupt_t;
+} __attribute__((packed)) DEV_GPIO_Interrupt_t;
 
 typedef struct DEV_GPIO_Config {
     uint8_t alternate;
@@ -61,7 +61,7 @@ typedef struct DEV_GPIO_Module DEV_GPIO_Module_t;
 typedef struct DEV_GPIO_Pin DEV_GPIO_Pin_t;
 
 typedef struct DEV_GPIO_Driver {
-    MDS_Err_t (*control)(const DEV_GPIO_Module_t *gpio, MDS_DevCmd_t cmd, MDS_Arg_t *arg);
+    MDS_Err_t (*control)(const DEV_GPIO_Module_t *gpio, MDS_DevCmd_t cmd, MDS_Arg_t arg);
     MDS_Err_t (*config)(const DEV_GPIO_Pin_t *pin, const DEV_GPIO_Config_t *config);
     MDS_Mask_t (*read)(const DEV_GPIO_Pin_t *pin, bool input);
     void (*write)(const DEV_GPIO_Pin_t *pin, MDS_Mask_t val);
@@ -87,17 +87,17 @@ struct DEV_GPIO_Pin {
 
     DEV_GPIO_Object_t object;
 
-    void (*callback)(DEV_GPIO_Pin_t *pin, MDS_Arg_t *arg);
-    MDS_Arg_t *arg;
+    void (*callback)(DEV_GPIO_Pin_t *pin, MDS_Arg_t arg);
+    MDS_Arg_t arg;
 };
 
 /* Function ---------------------------------------------------------------- */
 MDS_Err_t DEV_GPIO_ModuleInit(DEV_GPIO_Module_t *gpio, const char *name,
                               const DEV_GPIO_Driver_t *driver, MDS_DevHandle_t *handle,
-                              const MDS_Arg_t *init);
+                              MDS_Arg_t init);
 MDS_Err_t DEV_GPIO_ModuleDeInit(DEV_GPIO_Module_t *gpio);
 DEV_GPIO_Module_t *DEV_GPIO_ModuleCreate(const char *name, const DEV_GPIO_Driver_t *driver,
-                                         const MDS_Arg_t *init);
+                                         MDS_Arg_t init);
 MDS_Err_t DEV_GPIO_ModuleDestroy(DEV_GPIO_Module_t *gpio);
 
 MDS_Err_t DEV_GPIO_PinInit(DEV_GPIO_Pin_t *pin, const char *name, DEV_GPIO_Module_t *gpio);
@@ -107,7 +107,7 @@ MDS_Err_t DEV_GPIO_PinDestroy(DEV_GPIO_Pin_t *pin);
 
 MDS_Err_t DEV_GPIO_PinConfig(DEV_GPIO_Pin_t *pin, const DEV_GPIO_Config_t *config);
 void DEV_GPIO_PinInterruptCallback(DEV_GPIO_Pin_t *pin,
-                                   void (*callback)(DEV_GPIO_Pin_t *, MDS_Arg_t *), MDS_Arg_t *arg);
+                                   void (*callback)(DEV_GPIO_Pin_t *, MDS_Arg_t ), MDS_Arg_t arg);
 MDS_Mask_t DEV_GPIO_PinReadInput(const DEV_GPIO_Pin_t *pin);
 MDS_Mask_t DEV_GPIO_PinReadOutput(const DEV_GPIO_Pin_t *pin);
 void DEV_GPIO_PinWrite(DEV_GPIO_Pin_t *pin, MDS_Mask_t val);

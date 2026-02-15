@@ -64,14 +64,17 @@ MDS_Err_t MDS_MsgQueueDeInit(MDS_MsgQueue_t *msgQueue)
 
     MDS_KernelWaitQueueDrain(&(msgQueue->queueRecv));
     MDS_KernelWaitQueueDrain(&(msgQueue->queueSend));
-    MDS_Err_t err = MDS_ObjectDeInit(&(msgQueue->object));
 
-    MDS_CriticalRestore((!MDS_ErrIsSame(err, MDS_EOK)) ? (&(msgQueue->spinlock)) : (NULL), lock);
+    MDS_Err_t err = MDS_ObjectDeInit(&(msgQueue->object));
+    if (MDS_ErrIsSame(err, MDS_EOK)) {
+        MDS_CriticalRestore(NULL, lock);
+    } else {
+        MDS_CriticalRestore(&(msgQueue->spinlock), lock);
+    }
 
     return (err);
 }
 
-#if (!defined(CONFIG_MDS_SYSMEM_HEAP_OPS) || (CONFIG_MDS_SYSMEM_HEAP_OPS > 0))
 MDS_MsgQueue_t *MDS_MsgQueueCreate(const char *name, size_t msgSize, size_t msgNums)
 {
     MDS_MsgQueue_t *msgQueue =
@@ -108,13 +111,13 @@ MDS_Err_t MDS_MsgQueueDestroy(MDS_MsgQueue_t *msgQueue)
     MDS_Err_t err = MDS_ObjectDestroy(&(msgQueue->object));
     if (MDS_ErrIsSame(err, MDS_EOK)) {
         MDS_SysMemFree(queBuff);
+        MDS_CriticalRestore(NULL, lock);
+    } else {
+        MDS_CriticalRestore(&(msgQueue->spinlock), lock);
     }
-
-    MDS_CriticalRestore((!MDS_ErrIsSame(err, MDS_EOK)) ? (&(msgQueue->spinlock)) : (NULL), lock);
 
     return (err);
 }
-#endif
 
 MDS_Err_t MDS_MsgQueueRecvAcquire(MDS_MsgQueue_t *msgQueue, void *recv, MDS_Timeout_t timeout)
 {

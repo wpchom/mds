@@ -394,7 +394,7 @@ MDS_Err_t MDS_LPC_RunModeWait(MDS_LPC_Run_t run, MDS_Timeout_t timeout)
     return (err);
 }
 
-MDS_Err_t MDS_LPC_DeviceRegister(MDS_LPC_Device_t *device, MDS_Arg_t *dev,
+MDS_Err_t MDS_LPC_DeviceRegister(MDS_LPC_Device_t *device, MDS_Arg_t dev,
                                  const MDS_LPC_DeviceOps_t *ops)
 {
     MDS_ASSERT(device != NULL);

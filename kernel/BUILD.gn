@@ -1,8 +1,12 @@
 declare_args() {
   # config
   mds_core_arch = ""
+
   mds_with_nosys = false
+
   mds_config_file = ""
+
+  mds_log_enable = true
 }
 
 config("mds_kernel_cfg") {
@@ -37,12 +41,15 @@ static_library("mds_kernel") {
     "utils.c",
   ]
 
+  defines = [ "CONFIG_MDS_LOG_ENABLE=${mds_log_enable}" ]
+
   if (mds_core_arch != "") {
     sources += [ "arch/" + mds_core_arch + ".c" ]
   }
 
   if (mds_with_nosys) {
     sources += [ "nosys.c" ]
+    defines += [ "CONFIG_MDS_KERNEL_THREAD_PRIORITY_MAX=0" ]
   } else {
     sources += [
       "sys/clock.c",

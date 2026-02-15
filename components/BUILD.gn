@@ -1,0 +1,14 @@
+config("mds_component_cfg") {
+  include_dirs = [ "." ]
+}
+
+group("mds_components") {
+  public_deps = [
+    "algo/:algo",
+    "boot/:boot",
+    "fs/:fs",
+    "fsm/:fsm",
+  ]
+
+  public_configs = [ ":mds_component_cfg" ]
+}

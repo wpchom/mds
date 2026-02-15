@@ -26,13 +26,13 @@ typedef enum DEV_QSPI_ClockMode {
     DEV_QSPI_CLKMODE_1, // CPOL_0, CPHA_1
     DEV_QSPI_CLKMODE_2, // CPOL_1, CPHA_0
     DEV_QSPI_CLKMODE_3, // CPOL_1, CPHA_1
-} DEV_QSPI_ClockMode_t;
+} __attribute__((packed)) DEV_QSPI_ClockMode_t;
 
 typedef enum DEV_QSPI_BusCS {
     DEV_QSPI_BUSCS_LOW,
     DEV_QSPI_BUSCS_HIGH,
     DEV_QSPI_BUSCS_NO,
-} DEV_QSPI_BusCS_t;
+} __attribute__((packed)) DEV_QSPI_BusCS_t;
 
 typedef struct DEV_QSPI_Config {
     uint32_t clock; // Hz
@@ -50,34 +50,34 @@ typedef enum DEV_QSPI_CmdLine {
     DEV_QSPI_CMDLINE_1,
     DEV_QSPI_CMDLINE_2,
     DEV_QSPI_CMDLINE_4,
-} DEV_QSPI_CmdLine_t;
+} __attribute__((packed)) DEV_QSPI_CmdLine_t;
 
 typedef enum DEV_QSPI_CmdSize {
     DEV_QSPI_CMDSIZE_1B,
     DEV_QSPI_CMDSIZE_2B,
     DEV_QSPI_CMDSIZE_3B,
     DEV_QSPI_CMDSIZE_4B,
-} DEV_QSPI_CmdSize_t;
+} __attribute__((packed)) DEV_QSPI_CmdSize_t;
 
 typedef enum DEV_QSPI_SIOOMode {
     DEV_QSPI_SIOOMODE_INST_EVERY,
     DEV_QSPI_SIOOMODE_INST_FIRST,
-} DEV_QSPI_SIOOMode_t;
+} __attribute__((packed)) DEV_QSPI_SIOOMode_t;
 
 typedef enum DEV_QSPI_DDRMode {
     DEV_QSPI_DDRMODE_DISABLE,
     DEV_QSPI_DDRMODE_ENABLE,
-} DEV_QSPI_DDRMode_t;
+} __attribute__((packed)) DEV_QSPI_DDRMode_t;
 
 typedef enum DEV_QSPI_MatchMode {
     DEV_QSPI_MATCHMODE_AND,
     DEV_QSPI_MATCHMODE_OR,
-} DEV_QSPI_MatchMode_t;
+} __attribute__((packed)) DEV_QSPI_MatchMode_t;
 
 typedef enum DEV_QSPI_AutoStop {
     DEV_QSPI_AUTOMODE_DISABLE,
     DEV_QSPI_AUTOMODE_ENABLE,
-} DEV_QSPI_AutoStop_t;
+} __attribute__((packed)) DEV_QSPI_AutoStop_t;
 
 typedef struct DEV_QSPI_Command {
     uint8_t instruction;
@@ -110,7 +110,7 @@ typedef struct DEV_QSPI_Adaptr DEV_QSPI_Adaptr_t;
 typedef struct DEV_QSPI_Periph DEV_QSPI_Periph_t;
 
 typedef struct DEV_QSPI_Driver {
-    MDS_Err_t (*control)(const DEV_QSPI_Adaptr_t *qspi, MDS_DevCmd_t cmd, MDS_Arg_t *arg);
+    MDS_Err_t (*control)(const DEV_QSPI_Adaptr_t *qspi, MDS_DevCmd_t cmd, MDS_Arg_t arg);
     MDS_Err_t (*command)(const DEV_QSPI_Periph_t *periph, const DEV_QSPI_Command_t *cmd,
                          const DEV_QSPI_Polling_t *poll);
     MDS_Err_t (*transmit)(const DEV_QSPI_Periph_t *periph, const uint8_t *tx, size_t size,
@@ -134,18 +134,18 @@ struct DEV_QSPI_Periph {
     DEV_QSPI_Object_t object;
     DEV_QSPI_Config_t config;
 
-    void (*callback)(DEV_QSPI_Periph_t *periph, MDS_Arg_t *arg, const uint8_t *tx, uint8_t *rx,
+    void (*callback)(DEV_QSPI_Periph_t *periph, MDS_Arg_t arg, const uint8_t *tx, uint8_t *rx,
                      size_t size, size_t trans);
-    MDS_Arg_t *arg;
+    MDS_Arg_t arg;
 };
 
 /* Function ---------------------------------------------------------------- */
 MDS_Err_t DEV_QSPI_AdaptrInit(DEV_QSPI_Adaptr_t *qspi, const char *name,
                               const DEV_QSPI_Driver_t *driver, MDS_DevHandle_t *handle,
-                              const MDS_Arg_t *init);
+                              MDS_Arg_t init);
 MDS_Err_t DEV_QSPI_AdaptrDeInit(DEV_QSPI_Adaptr_t *qspi);
 DEV_QSPI_Adaptr_t *DEV_QSPI_AdaptrCreate(const char *name, const DEV_QSPI_Driver_t *driver,
-                                         const MDS_Arg_t *init);
+                                         MDS_Arg_t init);
 MDS_Err_t DEV_QSPI_AdaptrDestroy(DEV_QSPI_Adaptr_t *qspi);
 
 MDS_Err_t DEV_QSPI_PeriphInit(DEV_QSPI_Periph_t *periph, const char *name, DEV_QSPI_Adaptr_t *qspi);
@@ -156,9 +156,9 @@ MDS_Err_t DEV_QSPI_PeriphDestroy(DEV_QSPI_Periph_t *periph);
 MDS_Err_t DEV_QSPI_PeriphOpen(DEV_QSPI_Periph_t *periph, MDS_Timeout_t timeout);
 MDS_Err_t DEV_QSPI_PeriphClose(DEV_QSPI_Periph_t *periph);
 void DEV_QSPI_PeriphCallback(DEV_QSPI_Periph_t *periph,
-                             void (*callback)(DEV_QSPI_Periph_t *, MDS_Arg_t *, const uint8_t *,
+                             void (*callback)(DEV_QSPI_Periph_t *, MDS_Arg_t , const uint8_t *,
                                               uint8_t *, size_t, size_t),
-                             MDS_Arg_t *arg);
+                             MDS_Arg_t arg);
 MDS_Err_t DEV_QSPI_PeriphCommand(DEV_QSPI_Periph_t *periph, const DEV_QSPI_Command_t *cmd);
 MDS_Err_t DEV_QSPI_PeriphPolling(DEV_QSPI_Periph_t *periph, const DEV_QSPI_Command_t *cmd,
                                  const DEV_QSPI_Polling_t *poll);

@@ -39,14 +39,17 @@ MDS_Err_t MDS_SemaphoreDeInit(MDS_Semaphore_t *semaphore)
     MDS_Lock_t lock = MDS_CriticalLock(&(semaphore->spinlock));
 
     MDS_KernelWaitQueueDrain(&(semaphore->queueWait));
-    MDS_Err_t err = MDS_ObjectDeInit(&(semaphore->object));
 
-    MDS_CriticalRestore((!MDS_ErrIsSame(err, MDS_EOK)) ? (&(semaphore->spinlock)) : (NULL), lock);
+    MDS_Err_t err = MDS_ObjectDeInit(&(semaphore->object));
+    if (MDS_ErrIsSame(err, MDS_EOK)) {
+        MDS_CriticalRestore(NULL, lock);
+    } else {
+        MDS_CriticalRestore(&(semaphore->spinlock), lock);
+    }
 
     return (err);
 }
 
-#if (!defined(CONFIG_MDS_SYSMEM_HEAP_OPS) || (CONFIG_MDS_SYSMEM_HEAP_OPS > 0))
 MDS_Semaphore_t *MDS_SemaphoreCreate(const char *name, size_t init, size_t max)
 {
     MDS_Semaphore_t *semaphore = (MDS_Semaphore_t *)MDS_ObjectCreate(
@@ -69,13 +72,16 @@ MDS_Err_t MDS_SemaphoreDestroy(MDS_Semaphore_t *semaphore)
     MDS_Lock_t lock = MDS_CriticalLock(&(semaphore->spinlock));
 
     MDS_KernelWaitQueueDrain(&(semaphore->queueWait));
-    MDS_Err_t err = MDS_ObjectDestroy(&(semaphore->object));
 
-    MDS_CriticalRestore((!MDS_ErrIsSame(err, MDS_EOK)) ? (&(semaphore->spinlock)) : (NULL), lock);
+    MDS_Err_t err = MDS_ObjectDestroy(&(semaphore->object));
+    if (MDS_ErrIsSame(err, MDS_EOK)) {
+        MDS_CriticalRestore(NULL, lock);
+    } else {
+        MDS_CriticalRestore(&(semaphore->spinlock), lock);
+    }
 
     return (err);
 }
-#endif
 
 MDS_Err_t MDS_SemaphoreAcquire(MDS_Semaphore_t *semaphore, MDS_Timeout_t timeout)
 {
