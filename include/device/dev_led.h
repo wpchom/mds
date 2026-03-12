@@ -64,15 +64,15 @@ typedef struct DEV_LED_Driver {
 
 struct DEV_LED_Device {
     const MDS_Device_t device;
+    const MDS_DevHandle_t handle;
     const DEV_LED_Driver_t *driver;
-    const MDS_DevHandle_t *handle;
 
     DEV_LED_Config_t config;
 };
 
 /* Function ---------------------------------------------------------------- */
 MDS_Err_t DEV_LED_DeviceInit(DEV_LED_Device_t *led, const char *name,
-                             const DEV_LED_Driver_t *driver, MDS_DevHandle_t *handle,
+                             const DEV_LED_Driver_t *driver, MDS_DevHandle_t handle,
                              MDS_Arg_t init);
 MDS_Err_t DEV_LED_DeviceDeInit(DEV_LED_Device_t *led);
 DEV_LED_Device_t *DEV_LED_DeviceCreate(const char *name, const DEV_LED_Driver_t *driver,

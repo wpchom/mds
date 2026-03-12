@@ -99,8 +99,8 @@ typedef struct DEV_I2S_Driver {
 
 struct DEV_I2S_Adaptr {
     const MDS_Device_t device;
+    const MDS_DevHandle_t handle;
     const DEV_I2S_Driver_t *driver;
-    const MDS_DevHandle_t *handle;
     const DEV_I2S_Periph_t *owner;
     const MDS_Mutex_t mutex;
 };
@@ -123,7 +123,7 @@ struct DEV_I2S_Periph {
 
 /* Function ---------------------------------------------------------------- */
 MDS_Err_t DEV_I2S_AdaptrInit(DEV_I2S_Adaptr_t *i2s, const char *name,
-                             const DEV_I2S_Driver_t *driver, MDS_DevHandle_t *handle,
+                             const DEV_I2S_Driver_t *driver, MDS_DevHandle_t handle,
                              MDS_Arg_t init);
 MDS_Err_t DEV_I2S_AdaptrDeInit(DEV_I2S_Adaptr_t *i2s);
 DEV_I2S_Adaptr_t *DEV_I2S_AdaptrCreate(const char *name, const DEV_I2S_Driver_t *driver,
@@ -138,11 +138,11 @@ MDS_Err_t DEV_I2S_PeriphDestroy(DEV_I2S_Periph_t *periph);
 MDS_Err_t DEV_I2S_PeriphOpen(DEV_I2S_Periph_t *periph, MDS_Timeout_t timeout);
 MDS_Err_t DEV_I2S_PeriphClose(DEV_I2S_Periph_t *periph);
 void DEV_I2S_PeriphTxCallback(DEV_I2S_Periph_t *periph,
-                              void (*callback)(DEV_I2S_Periph_t *, MDS_Arg_t , const uint8_t *,
+                              void (*callback)(DEV_I2S_Periph_t *, MDS_Arg_t, const uint8_t *,
                                                size_t, size_t),
                               MDS_Arg_t arg);
 void DEV_I2S_PeriphRxCallback(DEV_I2S_Periph_t *periph,
-                              void (*callback)(DEV_I2S_Periph_t *, MDS_Arg_t , uint8_t *, size_t,
+                              void (*callback)(DEV_I2S_Periph_t *, MDS_Arg_t, uint8_t *, size_t,
                                                size_t),
                               MDS_Arg_t arg);
 MDS_Err_t DEV_I2S_PeriphTransmit(DEV_I2S_Periph_t *periph, const uint8_t *buff, size_t len);

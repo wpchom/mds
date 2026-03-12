@@ -14,7 +14,7 @@
 
 /* Storage adaptr ---------------------------------------------------------- */
 MDS_Err_t DEV_STORAGE_AdaptrInit(DEV_STORAGE_Adaptr_t *storage, const char *name,
-                                 const DEV_STORAGE_Driver_t *driver, MDS_DevHandle_t *handle,
+                                 const DEV_STORAGE_Driver_t *driver, MDS_DevHandle_t handle,
                                  MDS_Arg_t init)
 {
     return (MDS_DevAdaptrInit((MDS_DevAdaptr_t *)storage, name, (const MDS_DevDriver_t *)driver,

@@ -56,8 +56,8 @@ typedef struct DEV_ADC_Driver {
 
 struct DEV_ADC_Adaptr {
     const MDS_Device_t device;
+    const MDS_DevHandle_t handle;
     const DEV_ADC_Driver_t *driver;
-    const MDS_DevHandle_t *handle;
     const DEV_ADC_Periph_t *owner;
     const MDS_Mutex_t mutex;
 
@@ -74,7 +74,7 @@ struct DEV_ADC_Periph {
 
 /* Function ---------------------------------------------------------------- */
 MDS_Err_t DEV_ADC_AdaptrInit(DEV_ADC_Adaptr_t *adc, const char *name,
-                             const DEV_ADC_Driver_t *driver, MDS_DevHandle_t *handle,
+                             const DEV_ADC_Driver_t *driver, MDS_DevHandle_t handle,
                              MDS_Arg_t init);
 MDS_Err_t DEV_ADC_AdaptrDeInit(DEV_ADC_Adaptr_t *adc);
 DEV_ADC_Adaptr_t *DEV_ADC_AdaptrCreate(const char *name, const DEV_ADC_Driver_t *driver,

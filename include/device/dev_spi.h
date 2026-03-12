@@ -28,19 +28,19 @@ typedef struct DEV_SPI_Msg {
     struct DEV_SPI_Msg *next;
 } DEV_SPI_Msg_t;
 
-typedef enum DEV_SPI_BusMode {
-    DEV_SPI_BUSMODE_MASTER,
-    DEV_SPI_BUSMODE_MASTER_HALF,
-    DEV_SPI_BUSMODE_SLAVE,
-    DEV_SPI_BUSMODE_SLAVE_HALF,
-} __attribute__((packed)) DEV_SPI_BusMode_t;
-
 typedef enum DEV_SPI_ClkMode {
     DEV_SPI_CLKMODE_0, // CPOL_0, CPHA_0
     DEV_SPI_CLKMODE_1, // CPOL_0, CPHA_1
     DEV_SPI_CLKMODE_2, // CPOL_1, CPHA_0
     DEV_SPI_CLKMODE_3, // CPOL_1, CPHA_1
 } __attribute__((packed)) DEV_SPI_ClkMode_t;
+
+typedef enum DEV_SPI_BusMode {
+    DEV_SPI_BUSMODE_MASTER,
+    DEV_SPI_BUSMODE_MASTER_HALF,
+    DEV_SPI_BUSMODE_SLAVE,
+    DEV_SPI_BUSMODE_SLAVE_HALF,
+} __attribute__((packed)) DEV_SPI_BusMode_t;
 
 typedef enum DEV_SPI_DataBits {
     DEV_SPI_DATABITS_8 = 8,
@@ -61,10 +61,10 @@ typedef enum DEV_SPI_BusCS {
 
 typedef struct DEV_SPI_Config {
     uint32_t clock; // Hz
-    DEV_SPI_BusMode_t busMode : 8;
     DEV_SPI_ClkMode_t clkMode : 8;
-    DEV_SPI_FirstBit_t firstBit : 8;
+    DEV_SPI_BusMode_t busMode : 8;
     DEV_SPI_DataBits_t dataBits : 8;
+    DEV_SPI_FirstBit_t firstBit : 8;
 } DEV_SPI_Config_t;
 
 typedef struct DEV_SPI_Object {
@@ -85,8 +85,8 @@ typedef struct DEV_SPI_Driver {
 
 struct DEV_SPI_Adaptr {
     const MDS_Device_t device;
+    const MDS_DevHandle_t handle;
     const DEV_SPI_Driver_t *driver;
-    const MDS_DevHandle_t *handle;
     const DEV_SPI_Periph_t *owner;
     const MDS_Mutex_t mutex;
 };
@@ -105,7 +105,7 @@ struct DEV_SPI_Periph {
 
 /* Function ---------------------------------------------------------------- */
 MDS_Err_t DEV_SPI_AdaptrInit(DEV_SPI_Adaptr_t *spi, const char *name,
-                             const DEV_SPI_Driver_t *driver, MDS_DevHandle_t *handle,
+                             const DEV_SPI_Driver_t *driver, MDS_DevHandle_t handle,
                              MDS_Arg_t init);
 MDS_Err_t DEV_SPI_AdaptrDeInit(DEV_SPI_Adaptr_t *spi);
 DEV_SPI_Adaptr_t *DEV_SPI_AdaptrCreate(const char *name, const DEV_SPI_Driver_t *driver,
@@ -120,7 +120,7 @@ MDS_Err_t DEV_SPI_PeriphDestroy(DEV_SPI_Periph_t *periph);
 MDS_Err_t DEV_SPI_PeriphOpen(DEV_SPI_Periph_t *periph, MDS_Timeout_t timeout);
 MDS_Err_t DEV_SPI_PeriphClose(DEV_SPI_Periph_t *periph);
 void DEV_SPI_PeriphCallback(DEV_SPI_Periph_t *periph,
-                            void (*callback)(DEV_SPI_Periph_t *, MDS_Arg_t , const uint8_t *,
+                            void (*callback)(DEV_SPI_Periph_t *, MDS_Arg_t, const uint8_t *,
                                              uint8_t *, size_t, size_t),
                             MDS_Arg_t arg);
 MDS_Err_t DEV_SPI_PeriphTransferMsg(DEV_SPI_Periph_t *periph, const DEV_SPI_Msg_t *msg);

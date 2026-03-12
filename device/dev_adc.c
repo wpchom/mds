@@ -14,8 +14,7 @@
 
 /* ADC adaptr -------------------------------------------------------------- */
 MDS_Err_t DEV_ADC_AdaptrInit(DEV_ADC_Adaptr_t *adc, const char *name,
-                             const DEV_ADC_Driver_t *driver, MDS_DevHandle_t *handle,
-                             MDS_Arg_t init)
+                             const DEV_ADC_Driver_t *driver, MDS_DevHandle_t handle, MDS_Arg_t init)
 {
     return (MDS_DevAdaptrInit((MDS_DevAdaptr_t *)adc, name, (const MDS_DevDriver_t *)driver, handle,
                               init));

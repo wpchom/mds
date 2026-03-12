@@ -68,8 +68,8 @@ typedef struct DEV_I2C_Driver {
 
 struct DEV_I2C_Adaptr {
     const MDS_Device_t device;
+    const MDS_DevHandle_t handle;
     const DEV_I2C_Driver_t *driver;
-    const MDS_DevHandle_t *handle;
     const DEV_I2C_Periph_t *owner;
     const MDS_Mutex_t mutex;
 };
@@ -87,7 +87,7 @@ struct DEV_I2C_Periph {
 
 /* Function ---------------------------------------------------------------- */
 MDS_Err_t DEV_I2C_AdaptrInit(DEV_I2C_Adaptr_t *i2c, const char *name,
-                             const DEV_I2C_Driver_t *driver, MDS_DevHandle_t *handle,
+                             const DEV_I2C_Driver_t *driver, MDS_DevHandle_t handle,
                              MDS_Arg_t init);
 MDS_Err_t DEV_I2C_AdaptrDeInit(DEV_I2C_Adaptr_t *i2c);
 DEV_I2C_Adaptr_t *DEV_I2C_AdaptrCreate(const char *name, const DEV_I2C_Driver_t *driver,
@@ -103,7 +103,7 @@ MDS_Err_t DEV_I2C_PeriphOpen(DEV_I2C_Periph_t *periph, MDS_Timeout_t timeout);
 MDS_Err_t DEV_I2C_PeriphClose(DEV_I2C_Periph_t *periph);
 
 void DEV_I2C_PeriphSlaveCallback(DEV_I2C_Periph_t *periph,
-                                 void (*callback)(DEV_I2C_Periph_t *, MDS_Arg_t , MDS_Mask_t),
+                                 void (*callback)(DEV_I2C_Periph_t *, MDS_Arg_t, MDS_Mask_t),
                                  MDS_Arg_t arg);
 MDS_Err_t DEV_I2C_PeriphSlaveListen(DEV_I2C_Periph_t *periph, MDS_Timeout_t timeout);
 MDS_Err_t DEV_I2C_PeriphSlaveTransfer(DEV_I2C_Periph_t *periph, DEV_I2C_Msg_t *msg, size_t *len,

@@ -14,8 +14,7 @@
 
 /* I2C adaptr -------------------------------------------------------------- */
 MDS_Err_t DEV_I2C_AdaptrInit(DEV_I2C_Adaptr_t *i2c, const char *name,
-                             const DEV_I2C_Driver_t *driver, MDS_DevHandle_t *handle,
-                             MDS_Arg_t init)
+                             const DEV_I2C_Driver_t *driver, MDS_DevHandle_t handle, MDS_Arg_t init)
 {
     return (MDS_DevAdaptrInit((MDS_DevAdaptr_t *)i2c, name, (const MDS_DevDriver_t *)driver, handle,
                               init));
@@ -75,7 +74,7 @@ MDS_Err_t DEV_I2C_PeriphClose(DEV_I2C_Periph_t *periph)
 }
 
 void DEV_I2C_PeriphSlaveCallback(DEV_I2C_Periph_t *periph,
-                                 void (*callback)(DEV_I2C_Periph_t *, MDS_Arg_t , MDS_Mask_t),
+                                 void (*callback)(DEV_I2C_Periph_t *, MDS_Arg_t, MDS_Mask_t),
                                  MDS_Arg_t arg)
 {
     MDS_ASSERT(periph != NULL);

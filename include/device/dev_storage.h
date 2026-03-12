@@ -36,8 +36,8 @@ typedef struct DEV_STORAGE_Driver {
 
 struct DEV_STORAGE_Adaptr {
     const MDS_Device_t device;
+    const MDS_DevHandle_t handle;
     const DEV_STORAGE_Driver_t *driver;
-    const MDS_DevHandle_t *handle;
     const DEV_STORAGE_Periph_t *onwer;
     const MDS_Mutex_t mutex;
 };
@@ -58,7 +58,7 @@ struct DEV_STORAGE_Periph {
 
 /* Function ---------------------------------------------------------------- */
 MDS_Err_t DEV_STORAGE_AdaptrInit(DEV_STORAGE_Adaptr_t *storage, const char *name,
-                                 const DEV_STORAGE_Driver_t *driver, MDS_DevHandle_t *handle,
+                                 const DEV_STORAGE_Driver_t *driver, MDS_DevHandle_t handle,
                                  MDS_Arg_t init);
 MDS_Err_t DEV_STORAGE_AdaptrDeInit(DEV_STORAGE_Adaptr_t *storage);
 DEV_STORAGE_Adaptr_t *DEV_STORAGE_AdaptrCreate(const char *name, const DEV_STORAGE_Driver_t *driver,

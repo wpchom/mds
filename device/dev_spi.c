@@ -14,8 +14,7 @@
 
 /* SPI adaptr -------------------------------------------------------------- */
 MDS_Err_t DEV_SPI_AdaptrInit(DEV_SPI_Adaptr_t *spi, const char *name,
-                             const DEV_SPI_Driver_t *driver, MDS_DevHandle_t *handle,
-                             MDS_Arg_t init)
+                             const DEV_SPI_Driver_t *driver, MDS_DevHandle_t handle, MDS_Arg_t init)
 {
     return (MDS_DevAdaptrInit((MDS_DevAdaptr_t *)spi, name, (const MDS_DevDriver_t *)driver, handle,
                               init));
@@ -75,7 +74,7 @@ MDS_Err_t DEV_SPI_PeriphClose(DEV_SPI_Periph_t *periph)
 }
 
 void DEV_SPI_PeriphCallback(DEV_SPI_Periph_t *periph,
-                            void (*callback)(DEV_SPI_Periph_t *, MDS_Arg_t , const uint8_t *,
+                            void (*callback)(DEV_SPI_Periph_t *, MDS_Arg_t, const uint8_t *,
                                              uint8_t *, size_t, size_t),
                             MDS_Arg_t arg)
 {

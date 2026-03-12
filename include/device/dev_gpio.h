@@ -69,8 +69,8 @@ typedef struct DEV_GPIO_Driver {
 
 struct DEV_GPIO_Module {
     const MDS_Device_t device;
+    const MDS_DevHandle_t handle;
     const DEV_GPIO_Driver_t *driver;
-    const MDS_DevHandle_t *handle;
 };
 
 typedef struct DEV_GPIO_Object {
@@ -93,7 +93,7 @@ struct DEV_GPIO_Pin {
 
 /* Function ---------------------------------------------------------------- */
 MDS_Err_t DEV_GPIO_ModuleInit(DEV_GPIO_Module_t *gpio, const char *name,
-                              const DEV_GPIO_Driver_t *driver, MDS_DevHandle_t *handle,
+                              const DEV_GPIO_Driver_t *driver, MDS_DevHandle_t handle,
                               MDS_Arg_t init);
 MDS_Err_t DEV_GPIO_ModuleDeInit(DEV_GPIO_Module_t *gpio);
 DEV_GPIO_Module_t *DEV_GPIO_ModuleCreate(const char *name, const DEV_GPIO_Driver_t *driver,
@@ -107,7 +107,7 @@ MDS_Err_t DEV_GPIO_PinDestroy(DEV_GPIO_Pin_t *pin);
 
 MDS_Err_t DEV_GPIO_PinConfig(DEV_GPIO_Pin_t *pin, const DEV_GPIO_Config_t *config);
 void DEV_GPIO_PinInterruptCallback(DEV_GPIO_Pin_t *pin,
-                                   void (*callback)(DEV_GPIO_Pin_t *, MDS_Arg_t ), MDS_Arg_t arg);
+                                   void (*callback)(DEV_GPIO_Pin_t *, MDS_Arg_t), MDS_Arg_t arg);
 MDS_Mask_t DEV_GPIO_PinReadInput(const DEV_GPIO_Pin_t *pin);
 MDS_Mask_t DEV_GPIO_PinReadOutput(const DEV_GPIO_Pin_t *pin);
 void DEV_GPIO_PinWrite(DEV_GPIO_Pin_t *pin, MDS_Mask_t val);

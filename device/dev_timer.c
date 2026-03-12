@@ -14,7 +14,7 @@
 
 /* Timer device ------------------------------------------------------------ */
 MDS_Err_t DEV_TIMER_DeviceInit(DEV_TIMER_Device_t *timer, const char *name,
-                               const DEV_TIMER_Driver_t *driver, MDS_DevHandle_t *handle,
+                               const DEV_TIMER_Driver_t *driver, MDS_DevHandle_t handle,
                                MDS_Arg_t init)
 {
     return (MDS_DevModuleInit((MDS_DevModule_t *)timer, name, (const MDS_DevDriver_t *)driver,

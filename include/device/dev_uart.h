@@ -97,8 +97,8 @@ typedef struct DEV_UART_Driver {
 
 struct DEV_UART_Adaptr {
     const MDS_Device_t device;
+    const MDS_DevHandle_t handle;
     const DEV_UART_Driver_t *driver;
-    const MDS_DevHandle_t *handle;
     const DEV_UART_Periph_t *owner;
     const MDS_Mutex_t mutex;
 };
@@ -117,7 +117,7 @@ struct DEV_UART_Periph {
 
 /* Function ---------------------------------------------------------------- */
 MDS_Err_t DEV_UART_AdaptrInit(DEV_UART_Adaptr_t *uart, const char *name,
-                              const DEV_UART_Driver_t *driver, MDS_DevHandle_t *handle,
+                              const DEV_UART_Driver_t *driver, MDS_DevHandle_t handle,
                               MDS_Arg_t init);
 MDS_Err_t DEV_UART_AdaptrDeInit(DEV_UART_Adaptr_t *uart);
 DEV_UART_Adaptr_t *DEV_UART_AdaptrCreate(const char *name, const DEV_UART_Driver_t *driver,

@@ -14,7 +14,7 @@
 
 /* UART adaptr ------------------------------------------------------------- */
 MDS_Err_t DEV_UART_AdaptrInit(DEV_UART_Adaptr_t *uart, const char *name,
-                              const DEV_UART_Driver_t *driver, MDS_DevHandle_t *handle,
+                              const DEV_UART_Driver_t *driver, MDS_DevHandle_t handle,
                               MDS_Arg_t init)
 {
     return (MDS_DevAdaptrInit((MDS_DevAdaptr_t *)uart, name, (const MDS_DevDriver_t *)driver,
