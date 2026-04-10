@@ -1,15 +1,19 @@
 declare_args() {
-  mds_fs_with_littlefs = false
+  mds_component_fs_pkgcfg = {
+    littlefs = false
+  }
 }
 
-source_set("fs") {
+source_set("mds_components_fs") {
   sources = [ "mds_fs.c" ]
 
   defines = []
+  deps = []
 
-  deps = [ "../../:kernel" ]
-
-  if (defined(mds_fs_with_littlefs) && mds_fs_with_littlefs) {
-    deps += [ "filesystem/littlefs/:fs_littlefs" ]
+  if (defined(mds_component_fs_pkgcfg.littlefs) &&
+      mds_component_fs_pkgcfg.littlefs) {
+    deps += [ "littlefs/:fs_littlefs" ]
   }
+
+  public_configs = [ "../:mds_component_cfg" ]
 }

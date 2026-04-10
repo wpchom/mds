@@ -1,14 +1,46 @@
+declare_args() {
+  mds_component_pkgcfg = {
+    algo = true
+    boot = false
+    button = false
+    fs = false
+    fsm = false
+    topic = false
+  }
+}
+
 config("mds_component_cfg") {
-  include_dirs = [ "." ]
+  include_dirs = [
+    "../include/kernel",
+    "../include/device",
+    "../include/components",
+  ]
 }
 
 group("mds_components") {
-  public_deps = [
-    "algo/:algo",
-    "boot/:boot",
-    "fs/:fs",
-    "fsm/:fsm",
-  ]
+  public_deps = []
 
-  public_configs = [ ":mds_component_cfg" ]
+  if (mds_component_pkgcfg.algo) {
+    public_deps += [ "algo/:mds_components_algo" ]
+  }
+
+  if (mds_component_pkgcfg.boot) {
+    public_deps += [ "boot/:mds_components_boot" ]
+  }
+
+  if (mds_component_pkgcfg.button) {
+    public_deps += [ "button/:mds_components_button" ]
+  }
+
+  if (mds_component_pkgcfg.fs) {
+    public_deps += [ "fs/:mds_components_fs" ]
+  }
+
+  if (mds_component_pkgcfg.fsm) {
+    public_deps += [ "fsm/:mds_components_fsm" ]
+  }
+
+  if (mds_component_pkgcfg.topic) {
+    public_deps += [ "topic/:mds_components_topic" ]
+  }
 }

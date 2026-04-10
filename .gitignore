@@ -1,3 +1,6 @@
+# vscode
+.vscode/
+
 # gnbuild
 outdir/
 
@@ -7,5 +10,4 @@ build/
 
 # MacOS Cache
 .DS_Store
-
 

@@ -1,15 +1,8 @@
-declare_args() {
-  # mds config
-}
 
-group("kernel") {
-  public_deps = [ "kernel/:mds_kernel" ]
-}
-
-group("device") {
-  public_deps = [ "device/:mds_device" ]
-}
-
-group("components") {
-  public_deps = [ "components/:mds_components" ]
+static_library("mds") {
+  public_deps = [
+    "components/:mds_components",
+    "device/:mds_device",
+    "kernel/:mds_kernel",
+  ]
 }

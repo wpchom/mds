@@ -53,6 +53,16 @@ extern "C" {
 #define VALUE_ALIGN(val, align) ((val) & (~((align) - (1ULL))))
 #endif
 
+#ifndef INT_TYPE_MAX
+#define INT_TYPE_MAX(type)                                                                         \
+    (((type)(-1) > 0) ? (type)(-1) : (type)((1 << ((sizeof(type) * __CHAR_BIT__) - 1)) - 1))
+#endif
+
+#ifndef INT_TYPE_MIN
+#define INT_TYPE_MIN(type)                                                                         \
+    (((type)(-1) > 0) ? (type)(0) : (type)((1 << ((sizeof(type) * __CHAR_BIT__) - 1))))
+#endif
+
 /* Typedef ----------------------------------------------------------------- */
 #if (defined(CONFIG_MDS_TICK_U64) && (CONFIG_MDS_TICK_U64))
 typedef uint64_t MDS_Tick_t;

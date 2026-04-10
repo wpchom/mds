@@ -109,7 +109,7 @@ MDS_Err_t MDS_MutexAcquire(MDS_Mutex_t *mutex, MDS_Timeout_t timeout)
     MDS_Lock_t lock = MDS_CriticalLock(&(mutex->spinlock));
 
     if (thread == mutex->owner) {
-        if (mutex->nest < (__typeof__(mutex->nest))(-1)) {
+        if (mutex->nest < INT_TYPE_MAX(__typeof__(mutex->nest))) {
             mutex->nest += 1;
         } else {
             err = MDS_ERANGE;
@@ -118,7 +118,7 @@ MDS_Err_t MDS_MutexAcquire(MDS_Mutex_t *mutex, MDS_Timeout_t timeout)
         mutex->value -= 1;
         mutex->owner = thread;
         mutex->priority = thread->currPrio;
-        if (mutex->nest < (__typeof__(mutex->nest))(-1)) {
+        if (mutex->nest < INT_TYPE_MAX(__typeof__(mutex->nest))) {
             mutex->nest += 1;
         } else {
             err = MDS_ERANGE;
@@ -191,14 +191,14 @@ MDS_Err_t MDS_MutexRelease(MDS_Mutex_t *mutex)
         if (thread == NULL) {
             mutex->owner = NULL;
             mutex->priority = MDS_THREAD_PRIORITY(CONFIG_MDS_KERNEL_THREAD_PRIORITY_MAX);
-            if (mutex->value < (__typeof__(mutex->value))(-1)) {
+            if (mutex->value < INT_TYPE_MAX(__typeof__(mutex->value))) {
                 mutex->value += 1;
             }
         } else {
             reSchedule = true;
             mutex->owner = thread;
             mutex->priority = mutex->owner->currPrio;
-            if (mutex->nest < (__typeof__(mutex->nest))(-1)) {
+            if (mutex->nest < INT_TYPE_MAX(__typeof__(mutex->nest))) {
                 mutex->nest += 1;
             }
         }

@@ -2,7 +2,7 @@
 #define __ALGO_CRC_H__
 
 /* Include ----------------------------------------------------------------- */
-#include "algo_common.h"
+#include "algo/algo_common.h"
 
 #ifdef __cplusplus
 extern "C" {

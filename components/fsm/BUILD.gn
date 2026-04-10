@@ -1,6 +1,5 @@
-source_set("fsm") {
+source_set("mds_components_fsm") {
   sources = [ "mds_fsm.c" ]
 
-  defines = []
-  deps = [ "../../:kernel" ]
+  public_configs = [ "../:mds_component_cfg" ]
 }

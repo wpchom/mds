@@ -1,0 +1,5 @@
+source_set("mds_components_topic") {
+  sources = [ "mds_topic.c" ]
+
+  public_configs = [ "../:mds_component_cfg" ]
+}

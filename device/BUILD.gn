@@ -1,8 +1,11 @@
 config("mds_device_cfg") {
-  include_dirs = [ "../include/device" ]
+  include_dirs = [
+    "../include/kernel",
+    "../include/device",
+  ]
 }
 
-static_library("mds_device") {
+source_set("mds_device") {
   sources = [
     "dev_adc.c",
     "dev_gpio.c",
@@ -18,6 +21,4 @@ static_library("mds_device") {
   ]
 
   public_configs = [ ":mds_device_cfg" ]
-
-  public_deps = [ "../:kernel" ]
 }

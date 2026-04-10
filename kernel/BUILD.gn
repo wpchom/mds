@@ -1,37 +1,34 @@
 declare_args() {
-  # config
-  mds_core_arch = ""
-
-  mds_with_nosys = false
-
-  mds_config_file = ""
-
-  mds_log_enable = true
+  mds_kernel_pkgcfg = {
+    confile = ""
+    archcore = ""
+    nosys = false
+  }
 }
 
 config("mds_kernel_cfg") {
   include_dirs = [ "../include/kernel" ]
   defines = []
 
-  if (defined(mds_config_file) && mds_config_file != "") {
-    defines += [ "MDS_CONFIG_FILE=\"" + mds_config_file + "\"" ]
-  } else if (mds_core_arch == "") {
-    if (defined(target_os) && target_os != "") {
-      _target_os = target_os
-    } else {
-      _target_os = host_os
-    }
+  if (defined(mds_kernel_pkgcfg.confile) && mds_kernel_pkgcfg.confile != "") {
+    defines += [ "MDS_CONFIG_FILE=\"" + mds_kernel_pkgcfg.confile + "\"" ]
+  }
 
-    if (_target_os == "mac") {
-      defines += [
-        "CONFIG_MDS_INIT_SECTION=\"rodata,init.mdsInit.\"",
-        "CONFIG_MDS_LOG_FORMAT_SECTION=\"rodata,logfmt.\"",
-      ]
-    }
+  if (defined(target_os) && target_os != "") {
+    _target_os = target_os
+  } else {
+    _target_os = host_os
+  }
+
+  if (_target_os == "mac") {
+    defines += [
+      "CONFIG_MDS_INIT_SECTION=\"rodata,init.mdsInit.\"",
+      "CONFIG_MDS_LOG_FORMAT_SECTION=\"rodata,logfmt.\"",
+    ]
   }
 }
 
-static_library("mds_kernel") {
+source_set("mds_kernel") {
   sources = [
     "critical.c",
     "device.c",
@@ -41,13 +38,13 @@ static_library("mds_kernel") {
     "utils.c",
   ]
 
-  defines = [ "CONFIG_MDS_LOG_ENABLE=${mds_log_enable}" ]
+  defines = []
 
-  if (mds_core_arch != "") {
-    sources += [ "arch/" + mds_core_arch + ".c" ]
+  if (mds_kernel_pkgcfg.archcore != "") {
+    sources += [ "arch/" + mds_kernel_pkgcfg.archcore + ".c" ]
   }
 
-  if (mds_with_nosys) {
+  if (mds_kernel_pkgcfg.nosys) {
     sources += [ "nosys.c" ]
     defines += [ "CONFIG_MDS_KERNEL_THREAD_PRIORITY_MAX=0" ]
   } else {

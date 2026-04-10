@@ -1,23 +1,26 @@
 declare_args() {
-  mds_boot_with_lzma = true
-}
-
-if (defined(mds_boot_with_lzma) && mds_boot_with_lzma) {
-  pkggroup("lzma_sdk") {
+  mds_component_boot_pkgcfg = {
+    lzma = false
   }
 }
 
-source_set("boot") {
-  sources = [ "mds_boot.c" ]
+if (defined(mds_component_boot_pkgcfg.lzma) && mds_component_boot_pkgcfg.lzma) {
+  pkggroup("lzma") {
+  }
+}
 
-  include_dirs = [ "../" ]
+source_set("mds_components_boot") {
+  sources = [ "mds_boot.c" ]
 
   defines = []
   deps = []
 
-  if (defined(mds_boot_with_lzma) && mds_boot_with_lzma) {
+  if (defined(mds_component_boot_pkgcfg.lzma) &&
+      mds_component_boot_pkgcfg.lzma) {
     sources += [ "boot_lzma.c" ]
     defines += [ "CONFIG_MDS_BOOT_UPGRADE_WITH_LZMA=1" ]
     deps += [ ":lzma_sdk" ]
   }
+
+  public_configs = [ "../:mds_component_cfg" ]
 }

@@ -106,6 +106,7 @@ MDS_Err_t MDS_ObjectDestroy(MDS_Object_t *object)
 MDS_Object_t *MDS_ObjectFind(const MDS_ObjectType_t type, const char *name)
 {
     MDS_ASSERT((type != MDS_OBJECT_TYPE_NONE) && (type < ARRAY_SIZE(g_objectList)));
+    MDS_ASSERT(strlen(name) < sizeof(((MDS_Object_t *)0)->name));
 
     if ((name == NULL) || (name[0] == '\0')) {
         return (NULL);
