@@ -148,7 +148,7 @@ void *MDS_MemHeapCalloc(MDS_MemHeap_t *memheap, size_t nmemb, size_t size)
     return (pbuf);
 }
 
-extern void MDS_MemHeapSize(MDS_MemHeap_t *memheap, MDS_MemHeapSize_t *size)
+void MDS_MemHeapStatus(MDS_MemHeap_t *memheap, MDS_MemHeapSize_t *size)
 {
     MDS_ASSERT(memheap != NULL);
     MDS_ASSERT(MDS_ObjectGetType(&(memheap->object)) == MDS_OBJECT_TYPE_MEMHEAP);

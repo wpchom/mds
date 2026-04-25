@@ -25,34 +25,25 @@ static volatile uint32_t g_sysThreadPrioMask = 0x00U;
 static MDS_DListNode_t g_sysSchedulerTable[CONFIG_MDS_KERNEL_THREAD_PRIORITY_MAX];
 
 /* Function ---------------------------------------------------------------- */
-__attribute__((weak)) size_t MDS_SchedulerFFS(register size_t value)
+__attribute__((weak, optimize("-Ofast"))) size_t MDS_CoreSchedulerFFS(register size_t value)
 {
-    register size_t num = 0;
-#if __SIZE_MAX__ == __UINT64_MAX__
-    if ((value & 0xFFFFFFFF) == 0) {
-        num += 0x20;
-        value >>= 0x20;
+    if (value == 0) {
+        return (0);
     }
-#endif
-    if ((value & 0xFFFF) == 0) {
-        num += 0x10;
-        value >>= 0x10;
-    }
-    if ((value & 0xFF) == 0) {
-        num += 0x8;
-        value >>= 0x8;
-    }
-    if ((value & 0xF) == 0) {
-        num += 0x4;
-        value >>= 0x4;
-    }
-    if ((value & 0x3) == 0) {
-        num += 0x2;
-        value >>= 0x2;
-    }
-    if ((value & 0x1) == 0) {
-        num += 0x1;
-    }
+
+    size_t shift = __CHAR_BIT__ * sizeof(size_t) >> 1;
+    size_t mask = __SIZE_MAX__ >> shift;
+
+    size_t num = 1;
+    do {
+        if ((value & mask) == 0) {
+            num += shift;
+            value >>= shift;
+        }
+        shift >>= 1;
+        mask >>= shift;
+    } while (shift > 0);
+
     return (num);
 }
 
@@ -99,7 +90,7 @@ MDS_Thread_t *MDS_SchedulerPeekThread(void)
 {
     MDS_Thread_t *thread = NULL;
 
-    size_t highestPrio = MDS_SchedulerFFS(g_sysThreadPrioMask);
+    size_t highestPrio = MDS_CoreSchedulerFFS(g_sysThreadPrioMask);
     if (highestPrio != 0U) {
         thread =
             CONTAINER_OF(g_sysSchedulerTable[highestPrio - 1].next, MDS_Thread_t, nodeWait.node);

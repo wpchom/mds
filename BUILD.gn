@@ -1,4 +1,3 @@
-
 static_library("mds") {
   public_deps = [
     "components/:mds_components",

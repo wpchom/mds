@@ -1,0 +1,5 @@
+source_set("mds_component_cpp") {
+  sources = [ "crt.cpp" ]
+
+  public_configs = [ "../:mds_component_cfg" ]
+}

@@ -81,7 +81,7 @@ static inline void MDS_SysMemHeapAddress(void **begin, void **limit)
                           ...)                                                                     \
     _15
 
-#define MDS_ARGUMENT_GET_N(N, ...) __ARGUMENT_GET_##N(__VA_ARGS__)
+#define MDS_ARGUMENT_GET_N(N, ...) __ARGUMENT_CAT(__ARGUMENT_GET_, N)(__VA_ARGS__)
 
 #define __ARGUMENT_ELEM(_n, _elem, _arg)             (_elem)
 #define __ARGUMENT_ELEM_SHIFT(_n, _elem, _arg)       (1UL << _elem)

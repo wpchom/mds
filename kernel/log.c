@@ -13,7 +13,7 @@
 #include "mds_sys.h"
 
 /* Define ------------------------------------------------------------------ */
-MDS_LOG_MODULE_DEFINE(kernel, CONFIG_MDS_KERNEL_LOG_LEVEL);
+MDS_LOG_MODULE_DEFINE(default, CONFIG_MDS_LOG_BUILD_LEVEL);
 
 #ifndef CONFIG_MDS_LOG_MSGQUEUE_NUMS
 #define CONFIG_MDS_LOG_MSGQUEUE_NUMS 0
@@ -32,7 +32,10 @@ MDS_LOG_MODULE_DEFINE(kernel, CONFIG_MDS_KERNEL_LOG_LEVEL);
 #endif
 
 /* Variable ---------------------------------------------------------------- */
+#if (defined(CONFIG_MDS_LOG_FILTER_ENABLE) && (CONFIG_MDS_LOG_FILTER_ENABLE != 0))
+#else
 static MDS_LOG_VaPrint_t g_logVaPrintFunc = NULL;
+#endif
 
 #if ((CONFIG_MDS_KERNEL_THREAD_PRIORITY_MAX > 0) &&                                                \
      ((defined(CONFIG_MDS_LOG_MSGQUEUE_NUMS) && (CONFIG_MDS_LOG_MSGQUEUE_NUMS > 0))))
@@ -66,7 +69,11 @@ typedef struct MDS_LOG_Message {
 /* Function ---------------------------------------------------------------- */
 void MDS_LOG_RegisterVaPrint(MDS_LOG_VaPrint_t logVaPrint)
 {
+#if (defined(CONFIG_MDS_LOG_FILTER_ENABLE) && (CONFIG_MDS_LOG_FILTER_ENABLE != 0))
+    MDS_LOG_MODULE_PRINT(default, logVaPrint);
+#else
     g_logVaPrintFunc = logVaPrint;
+#endif
 }
 
 #if ((CONFIG_MDS_KERNEL_THREAD_PRIORITY_MAX > 0) &&                                                \
@@ -81,12 +88,12 @@ static void MDS_LOG_ModuleWrite(const MDS_LOG_Module_t *module, uint8_t level, s
 #if (defined(CONFIG_MDS_LOG_FILTER_ENABLE) && (CONFIG_MDS_LOG_FILTER_ENABLE != 0))
         if ((module != NULL) && (module->filter != NULL) && (module->filter->print != NULL)) {
             module->filter->print(module, level, va_cnt, fmt, va_args);
-            break;
         }
-#endif
+#else
         if (g_logVaPrintFunc != NULL) {
             g_logVaPrintFunc(module, level, va_cnt, fmt, va_args);
         }
+#endif
     } while (0);
 
     va_end(va_args);
@@ -200,16 +207,18 @@ void MDS_LOG_ModulePrintf(const MDS_LOG_Module_t *module, uint8_t level, size_t 
 
     va_start(va_args, fmt);
 
+    MDS_Tick_t tick = MDS_ClockGetTickCount();
+
     do {
 #if (defined(CONFIG_MDS_LOG_FILTER_ENABLE) && (CONFIG_MDS_LOG_FILTER_ENABLE != 0))
         if ((module != NULL) && (module->filter != NULL) && (module->filter->print != NULL)) {
-            module->filter->print(module, level, va_cnt, fmt, va_args);
-            break;
+            module->filter->print(module, level, tick, va_cnt, fmt, va_args);
+        }
+#else
+        if (g_logVaPrintFunc != NULL) {
+            g_logVaPrintFunc(module, level, tick, va_cnt, fmt, va_args);
         }
 #endif
-        if (g_logVaPrintFunc != NULL) {
-            g_logVaPrintFunc(module, level, va_cnt, fmt, va_args);
-        }
     } while (0);
 
     va_end(va_args);
@@ -225,21 +234,23 @@ __attribute__((weak, noreturn)) void MDS_CorePanicTrace(void)
 
 void MDS_PanicPrintf(size_t va_cnt, const char *fmt, ...)
 {
+    MDS_Tick_t tick = MDS_ClockGetTickCount();
+
 #if (defined(CONFIG_MDS_LOG_ENABLE) && (CONFIG_MDS_LOG_ENABLE != 0))
-    const MDS_LOG_Module_t *module = __THIS_LOG_MODULE_HANDLE;
+    const MDS_LOG_Module_t *module = &(__LOG_MODULE_HANDLE(default));
     va_list va_args;
 
     va_start(va_args, fmt);
     do {
 #if (defined(CONFIG_MDS_LOG_FILTER_ENABLE) && (CONFIG_MDS_LOG_FILTER_ENABLE != 0))
         if ((module != NULL) && (module->filter != NULL) && (module->filter->print != NULL)) {
-            module->filter->print(module, MDS_LOG_LEVEL_FAT, va_cnt, fmt, va_args);
-            break;
+            module->filter->print(module, MDS_LOG_LEVEL_ERR, tick, va_cnt, fmt, va_args);
+        }
+#else
+        if (g_logVaPrintFunc != NULL) {
+            g_logVaPrintFunc(module, MDS_LOG_LEVEL_ERR, tick, va_cnt, fmt, va_args);
         }
 #endif
-        if (g_logVaPrintFunc != NULL) {
-            g_logVaPrintFunc(module, MDS_LOG_LEVEL_FAT, va_cnt, fmt, va_args);
-        }
     } while (0);
     va_end(va_args);
 #else

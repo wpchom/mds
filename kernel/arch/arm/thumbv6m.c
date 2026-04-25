@@ -15,15 +15,6 @@
 /* Define ----------------------------------------------------------------- */
 MDS_LOG_MODULE_DECLARE(kernel, CONFIG_MDS_KERNEL_LOG_LEVEL);
 
-#if ((defined(__CC_ARM) && defined(__TARGET_FPU_VFP)) ||                                           \
-     (defined(__clang__) && defined(__VFP_FP__) && !defined(__SOFTFP__)) ||                        \
-     (defined(__ICCARM__) && defined(__ARMVFP__)) ||                                               \
-     (defined(__GNUC__) && defined(__VFP_FP__) && !defined(__SOFTFP__)))
-#define CORE_WITH_FPU 1
-#else
-#define CORE_WITH_FPU 0
-#endif
-
 struct SCB_Typedef {
     volatile uint32_t CPUID;
     volatile uint32_t ICSR;
@@ -62,34 +53,9 @@ struct ExceptionStackFrame {
     uint32_t lr;
     uint32_t pc;
     uint32_t psr;
-
-#if CORE_WITH_FPU
-    uint32_t s0;
-    uint32_t s1;
-    uint32_t s2;
-    uint32_t s3;
-    uint32_t s4;
-    uint32_t s5;
-    uint32_t s6;
-    uint32_t s7;
-    uint32_t s8;
-    uint32_t s9;
-    uint32_t s10;
-    uint32_t s11;
-    uint32_t s12;
-    uint32_t s13;
-    uint32_t s14;
-    uint32_t s15;
-    uint32_t fpscr;
-    uint32_t rsv;
-#endif
 };
 
 struct StackFrame {
-#if CORE_WITH_FPU
-    uint32_t exc_flag;
-#endif
-
     uint32_t r4;
     uint32_t r5;
     uint32_t r6;
@@ -98,25 +64,6 @@ struct StackFrame {
     uint32_t r9;
     uint32_t r10;
     uint32_t r11;
-
-#if CORE_WITH_FPU
-    uint32_t s16;
-    uint32_t s17;
-    uint32_t s18;
-    uint32_t s19;
-    uint32_t s20;
-    uint32_t s21;
-    uint32_t s22;
-    uint32_t s23;
-    uint32_t s24;
-    uint32_t s25;
-    uint32_t s26;
-    uint32_t s27;
-    uint32_t s28;
-    uint32_t s29;
-    uint32_t s30;
-    uint32_t s31;
-#endif
 
     struct ExceptionStackFrame exception;
 };
@@ -148,19 +95,6 @@ __attribute__((always_inline)) static inline uintptr_t CORE_GetPSP(void)
 void MDS_CoreIdleSleep(void)
 {
     __asm volatile("wfi");
-}
-
-size_t MDS_SchedulerFFS(register size_t value)
-{
-    register size_t ffs = 0;
-
-    if (value != 0) {
-        __asm volatile("rbit        %0, %0" : "=r"(value));
-        __asm volatile("clz         %0, %0" : : "r"(value));
-        __asm volatile("adds        %0, %0, #1" : "=r"(ffs) : "r"(value));
-    }
-
-    return (ffs);
 }
 
 /* CoreInterrupt ----------------------------------------------------------- */
@@ -210,10 +144,6 @@ void *MDS_CoreThreadStackInit(void *stackBase, size_t stackSize, void *entry, vo
     stack->exception.pc = (uint32_t)(entry);
     stack->exception.psr = 0x01000000;
 
-#if CORE_WITH_FPU
-    stack->exc_flag = 0xFFFFFFED;
-#endif
-
     return (stack);
 }
 
@@ -248,14 +178,6 @@ void MDS_CoreSchedulerStartup(void *toSP)
     g_coreScheduler.swflag = true;
     g_coreScheduler.fromSP = NULL;
     g_coreScheduler.toSP = toSP;
-
-#if CORE_WITH_FPU
-    uintptr_t control;
-    // CONTROL.FPCA = 0
-    __asm volatile("mrs         %0, control" : "=r"(control));
-    __asm volatile("bic         %0, #0x04" : "=r"(control));
-    __asm volatile("msr         control, %0" : : "r"(control));
-#endif
 
     // SCB_SHPR3 Priority: PendSV = 0xFF, SysTick = 0x00
     SCB->SHPR3 = 0x00FF0000;
@@ -293,7 +215,8 @@ __attribute__((naked)) void PendSV_Handler(void)
 
     // if (g_coreScheduler.swflag) {
     __asm volatile("ldr         r2, [r1, #0x00]");
-    __asm volatile("cbz         r2, %0" : : "X"(PendSV_SwtichExit));
+    __asm volatile("cmp         r2, #0");
+    __asm volatile("beq         PendSV_SwtichExit");
 
     // g_coreScheduler.swflag = false;
     __asm volatile("mov         r2, #0");
@@ -301,43 +224,38 @@ __attribute__((naked)) void PendSV_Handler(void)
 
     // if (g_coreScheduler.fromSP != NULL)
     __asm volatile("ldr         r2, [r1, #0x04]");
-    __asm volatile("cbz         r2, %0" : : "X"(PendSV_SwtichThread));
+    __asm volatile("cmp         r2, #0");
+    __asm volatile("beq         PendSV_SwtichThread");
 
     __asm volatile("mrs         r3, psp");
 
-#if CORE_WITH_FPU
-    // exc_return[4] == 0
-    __asm volatile(
-        "tst         lr, #0x10       \n" "it          eq              \n" "vstmdbeq    r3!, {d8 - d15} \n");
-#endif
-
-    __asm volatile("stmfd       r3!, {r4 - r11}");
-
-#if CORE_WITH_FPU
-    __asm volatile("stmfd       r3!, {lr}");
-#endif
-
+    __asm volatile("sub         r3, r3, #0x20");
     __asm volatile("str         r3, [r2]");
+
+    __asm volatile("stmia       r3!, {r4 - r7}");
+    __asm volatile("mov         r4, r8");
+    __asm volatile("mov         r5, r9");
+    __asm volatile("mov         r6, r10");
+    __asm volatile("mov         r7, r11");
+    __asm volatile("stmia       r3!, {r4 - r7}");
 
     __asm volatile("PendSV_SwtichThread:");
 
     // if (g_coreScheduler.toSP != NULL)
     __asm volatile("ldr         r2, [r1, #0x08]");
-    __asm volatile("cbz         r2, %0" : : "X"(PendSV_SwtichExit));
+    __asm volatile("cmp         r2, #0");
+    __asm volatile("beq         PendSV_SwtichExit");
 
     __asm volatile("ldr         r3, [r2]");
 
-#if CORE_WITH_FPU
-    __asm volatile("ldmfd       r3!, {lr}");
-#endif
-
-    __asm volatile("ldmfd       r3!, {r4 - r11}");
-
-#if CORE_WITH_FPU
-    // exc_return[4] == 0
-    __asm volatile(
-        "tst         lr, #0x10       \n" "it          eq              \n" "vldmiaeq    r3!, {d8 - d15} \n");
-#endif
+    __asm volatile("ldmia       r3!, {r4 - r7}");
+    __asm volatile("push        {r4 - r7}");
+    __asm volatile("ldmia       r3!, {r4 - r7}");
+    __asm volatile("mov         r8, r4");
+    __asm volatile("mov         r9, r5");
+    __asm volatile("mov         r10, r6");
+    __asm volatile("mov         r11, r7");
+    __asm volatile("pop         {r4 - r7}");
 
     __asm volatile("msr         psp, r3");
 
@@ -347,14 +265,16 @@ __attribute__((naked)) void PendSV_Handler(void)
     // MDS_CoreInterruptRestore(r0);
     __asm volatile("msr         primask, r0" : : : "memory");
 
-    __asm volatile("orr         lr, lr, #0x04");
+    __asm volatile("mov         r0, lr");
+    __asm volatile("mov         r1, #4");
+    __asm volatile("orr         r0, r0, r1");
 
-    __asm volatile("bx          lr");
+    __asm volatile("bx          r0");
 }
 #endif
 
 /* Backtrace --------------------------------------------------------------- */
-#if (defined(CONFIG_MDS_CORE_BACKTRACE_DEPTH) && (CONFIG_MDS_CORE_BACKTRACE_DEPTH != 0))
+#if (defined(CONFIG_MDS_BACKTRACE_DEPTH) && (CONFIG_MDS_BACKTRACE_DEPTH != 0))
 __attribute__((weak)) bool MDS_CoreStackPointerInCode(uintptr_t pc)
 {
 #if defined(__IAR_SYSTEMS_ICC__)
@@ -411,11 +331,11 @@ __attribute__((weak)) void MDS_CoreExceptionCallback(bool exit)
 
 static void CORE_ExceptionBacktrace(void)
 {
-#if (defined(CONFIG_MDS_CORE_BACKTRACE_DEPTH) && (CONFIG_MDS_CORE_BACKTRACE_DEPTH != 0))
+#if (defined(CONFIG_MDS_BACKTRACE_DEPTH) && (CONFIG_MDS_BACKTRACE_DEPTH != 0))
     uintptr_t msp = CORE_GetMSP();
     const uintptr_t **SCB_VTOR_STACK = (const uintptr_t **)0xE000ED08;
     MDS_LOG_P("msp:%p stacklimit:%p backtrace", (void *)msp, (void *)**SCB_VTOR_STACK);
-    CORE_StackBacktrace(msp, **SCB_VTOR_STACK, CONFIG_MDS_CORE_BACKTRACE_DEPTH);
+    CORE_StackBacktrace(msp, **SCB_VTOR_STACK, CONFIG_MDS_BACKTRACE_DEPTH);
 
     MDS_Thread_t *thread = MDS_KernelCurrentThread();
     if (thread != NULL) {
@@ -423,7 +343,7 @@ static void CORE_ExceptionBacktrace(void)
         MDS_LOG_P("backtrace thread(%p) entry:%p psp:%p stackbase:%p stacksize:%" PRIuPTR, thread,
                   thread->entry, (void *)psp, thread->stackBase, thread->stackSize);
         CORE_StackBacktrace(psp, (uintptr_t)(thread->stackBase) + thread->stackSize,
-                            CONFIG_MDS_CORE_BACKTRACE_DEPTH);
+                            CONFIG_MDS_BACKTRACE_DEPTH);
     }
 #endif
 }
@@ -440,7 +360,7 @@ void MDS_CorePanicTrace(void)
     }
 }
 
-static __attribute__((noreturn)) void MDS_CoreHardFaultException(struct ExceptionInfo *excInfo)
+__attribute__((noreturn)) void MDS_CoreHardFaultException(struct ExceptionInfo *excInfo)
 {
     MDS_CoreExceptionCallback(false);
 
@@ -476,22 +396,31 @@ static __attribute__((noreturn)) void MDS_CoreHardFaultException(struct Exceptio
 __attribute__((naked, noreturn)) void HardFault_Handler(void)
 {
     // exc_return[2] == 0
+    __asm volatile("mov         r0, lr");
+    __asm volatile("mov         r1, #4");
+    __asm volatile("and         r1, r2, r1");
+
     __asm volatile(
-        "tst         lr, #0x04       \n" "ite         eq              \n" "mrseq       r0, msp         \n" "mrsne       r0, psp         \n");
+        "cmp         r1, #0         \n"
+        "beq         _ExceptionPSP  \n"
+        "mrs         r0, msp        \n"
+        "b           _ExceptionCall \n"
+        "_ExceptionPSP:             \n"
+        "mrs         r0, psp        \n"
+        "_ExceptionCall:");
 
-#if CORE_WITH_FPU
-    // exc_return[4] == 0
-    __asm volatile(
-        "tst         lr, #0x10       \n" "it          eq              \n" "vstmdbeq    r0!, {d8 - d15} \n");
-#endif
+    __asm volatile("sub         r0, r0, #0x24");
+    __asm volatile("mov         r1, r0");
 
-    __asm volatile("stmfd       r0!, {r4 - r11}");
-#if CORE_WITH_FPU
-    __asm volatile("stmfd       r0!, {lr}");
-#endif
-    __asm volatile("stmfd       r0!, {lr}");
+    __asm volatile("stmia       r1!, {r2}"); // exc_return
+    __asm volatile("stmia       r1!, {r4 - r7}");
+    __asm volatile("mov         r4, r8");
+    __asm volatile("mov         r5, r9");
+    __asm volatile("mov         r6, r10");
+    __asm volatile("mov         r7, r11");
+    __asm volatile("stmia       r1!, {r4 - r7}");
 
-    __asm volatile("bl          %0" : : "X"(MDS_CoreHardFaultException));
+    __asm volatile("bl          MDS_CoreHardFaultException");
 
     __asm volatile("b           .");
 }

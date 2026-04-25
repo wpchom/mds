@@ -53,7 +53,7 @@ typedef enum MDS_LPC_Sleep {
 #undef MDS_LPC_SLEEP
 
         MDS_LPC_SLEEP_NUMS,
-} MDS_LPC_Sleep_t;
+} __attribute__((packed)) MDS_LPC_Sleep_t;
 
 typedef enum MDS_LPC_Run {
 #define MDS_LPC_RUN(run) MDS_LPC_RUN_##run,
@@ -62,7 +62,7 @@ typedef enum MDS_LPC_Run {
         MDS_LPC_RUN_LOCK,
 
     MDS_LPC_RUN_NUMS,
-} MDS_LPC_Run_t;
+} __attribute__((packed)) MDS_LPC_Run_t;
 
 typedef struct MDS_LPC_DeviceOps {
     void (*suspend)(MDS_Arg_t dev, MDS_LPC_Sleep_t sleep);

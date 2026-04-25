@@ -26,8 +26,8 @@ extern "C" {
 #define CONFIG_MDS_CLOCK_TICK_FREQ_HZ 1000U
 #endif
 
-#ifndef CONFIG_MDS_CORE_BACKTRACE_DEPTH
-#define CONFIG_MDS_CORE_BACKTRACE_DEPTH 16
+#ifndef CONFIG_MDS_BACKTRACE_DEPTH
+#define CONFIG_MDS_BACKTRACE_DEPTH 16
 #endif
 
 #ifndef CONFIG_MDS_OBJECT_NAME_SIZE
@@ -51,11 +51,11 @@ extern "C" {
 #endif
 
 #ifndef CONFIG_MDS_TIMER_INDEPENDENT
-#define CONFIG_MDS_TIMER_INDEPENDENT 1
+#define CONFIG_MDS_TIMER_INDEPENDENT 0
 #endif
 
 #ifndef CONFIG_MDS_TIMER_SKIPLIST_LEVEL
-#define CONFIG_MDS_TIMER_SKIPLIST_LEVEL 0
+#define CONFIG_MDS_TIMER_SKIPLIST_LEVEL 1
 #endif
 
 #ifndef CONFIG_MDS_TIMER_SKIPLIST_SHIFT
@@ -552,7 +552,7 @@ void MDS_MemHeapFree(MDS_MemHeap_t *memheap, void *ptr);
 void *MDS_MemHeapAlloc(MDS_MemHeap_t *memheap, size_t size);
 void *MDS_MemHeapRealloc(MDS_MemHeap_t *memheap, void *ptr, size_t size);
 void *MDS_MemHeapCalloc(MDS_MemHeap_t *memheap, size_t nmemb, size_t size);
-void MDS_MemHeapSize(MDS_MemHeap_t *memheap, MDS_MemHeapSize_t *size);
+void MDS_MemHeapStatus(MDS_MemHeap_t *memheap, MDS_MemHeapSize_t *size);
 
 extern const MDS_MemHeapOps_t G_MDS_MEMHEAP_OPS_LLFF;
 extern const MDS_MemHeapOps_t G_MDS_MEMHEAP_OPS_TLSF;

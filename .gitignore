@@ -11,3 +11,6 @@ build/
 # MacOS Cache
 .DS_Store
 
+# agent
+AGENTS.md
+.kilo/

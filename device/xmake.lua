@@ -8,6 +8,6 @@ target("device", function()
     )
 
     add_headerfiles("../include/(device/**.h)")
-    
+
     add_files("**.c")
 end)

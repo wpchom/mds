@@ -16,12 +16,12 @@
 针对于MCU的RTOS，暂时仅根据自身需求做的功能适配；
 
 ### 内核
-`kernel/arch/*`，通过gn脚本的`mds_core_arch`的字段控制，当前支持:
+`kernel/arch/*`，通过gn脚本的`mds_pkgcfg.archcore`的字段控制，当前支持:
 - ARM Cortex-M
 - RISC-V
 
 配置项：
-- `CONFIG_MDS_CORE_BACKTRACE_DEPTH` backtrace回溯深度，0为不回溯
+- `CONFIG_MDS_BACKTRACE_DEPTH` backtrace回溯深度，0为不回溯
 
 ### 对象
 `kernel/object.c`，内核对下述对象进行抽象化管理，在初始化或创建是进行命名。
@@ -50,8 +50,8 @@ typedef enum MDS_ObjectType {
 ### 日志
 `kernel/log.c`，模块化日志框架，不具备打印能力，日志等级分为：
 ```
-#define MDS_LOG_LEVEL_OFF 0
-#define MDS_LOG_LEVEL_FAT 1
+#define MDS_LOG_LEVLE_OFF 0
+#define MDS_LOG_LEVEL_USR 1
 #define MDS_LOG_LEVEL_ERR 2
 #define MDS_LOG_LEVEL_WRN 3
 #define MDS_LOG_LEVEL_INF 4

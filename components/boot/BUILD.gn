@@ -9,7 +9,7 @@ if (defined(mds_component_boot_pkgcfg.lzma) && mds_component_boot_pkgcfg.lzma) {
   }
 }
 
-source_set("mds_components_boot") {
+source_set("mds_component_boot") {
   sources = [ "mds_boot.c" ]
 
   defines = []
@@ -19,7 +19,7 @@ source_set("mds_components_boot") {
       mds_component_boot_pkgcfg.lzma) {
     sources += [ "boot_lzma.c" ]
     defines += [ "CONFIG_MDS_BOOT_UPGRADE_WITH_LZMA=1" ]
-    deps += [ ":lzma_sdk" ]
+    deps += [ ":lzma" ]
   }
 
   public_configs = [ "../:mds_component_cfg" ]

@@ -4,7 +4,7 @@ declare_args() {
   }
 }
 
-source_set("mds_components_fs") {
+source_set("mds_component_fs") {
   sources = [ "mds_fs.c" ]
 
   defines = []

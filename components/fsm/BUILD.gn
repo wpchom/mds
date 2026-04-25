@@ -1,4 +1,4 @@
-source_set("mds_components_fsm") {
+source_set("mds_component_fsm") {
   sources = [ "mds_fsm.c" ]
 
   public_configs = [ "../:mds_component_cfg" ]

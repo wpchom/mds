@@ -30,7 +30,7 @@ extern "C" {
 #endif
 
 #ifndef CONFIG_MDS_LOG_FILTER_ENABLE
-#define CONFIG_MDS_LOG_FILTER_ENABLE 0
+#define CONFIG_MDS_LOG_FILTER_ENABLE 1
 #endif
 
 #ifndef CONFIG_MDS_LOG_ASSERT_ENABLE
@@ -47,15 +47,15 @@ extern "C" {
 
 /* Log --------------------------------------------------------------------- */
 #define MDS_LOG_LEVEL_OFF 0
-#define MDS_LOG_LEVEL_FAT 1
+#define MDS_LOG_LEVEL_USR 1
 #define MDS_LOG_LEVEL_ERR 2
 #define MDS_LOG_LEVEL_WRN 3
 #define MDS_LOG_LEVEL_INF 4
 #define MDS_LOG_LEVEL_DBG 5
 
 typedef struct MDS_LOG_Module MDS_LOG_Module_t;
-typedef void (*MDS_LOG_VaPrint_t)(const MDS_LOG_Module_t *module, uint8_t level, size_t va_cnt,
-                                  const char *fmt, va_list va_args);
+typedef void (*MDS_LOG_VaPrint_t)(const MDS_LOG_Module_t *module, uint8_t level, MDS_Tick_t tick,
+                                  size_t va_cnt, const char *fmt, va_list va_args);
 
 typedef struct MDS_LOG_Filter {
     MDS_LOG_VaPrint_t print;
@@ -79,41 +79,47 @@ struct MDS_LOG_Module {
 #define __LOG_FORMAT_SECTION_4 "info"
 #define __LOG_FORMAT_SECTION_5 "debug"
 
-#define __LOG_MODULE_LEVEL(...) MDS_ARGUMENT_GET_N(1, ##__VA_ARGS__, CONFIG_MDS_LOG_BUILD_LEVEL)
+#define __LOG_MODULE_LEVEL(...)     MDS_ARGUMENT_GET_N(1, ##__VA_ARGS__, CONFIG_MDS_LOG_BUILD_LEVEL)
+#define __LOG_MODULE_HANDLE(_name)  MDS_ARGUMENT_CAT(G_MDS_LOG_MODULE_, _name)
+#define __LOG_MODULE_FILETER(_name) MDS_ARGUMENT_CAT(g_mds_log_filter_, _name)
 
 #if (defined(CONFIG_MDS_LOG_FILTER_ENABLE) && (CONFIG_MDS_LOG_FILTER_ENABLE != 0))
 #define MDS_LOG_MODULE_DEFINE(_name, ...)                                                          \
-    static __attribute__((used)) const uint8_t __THIS_LOG_MODULE_LEVEL =                           \
-        __LOG_MODULE_LEVEL(__VA_ARGS__);                                                           \
-    static MDS_LOG_Filter_t g_mds_log_filter_##_name = {                                           \
+    static MDS_LOG_Filter_t __LOG_MODULE_FILETER(_name) = {                                        \
         .level = __LOG_MODULE_LEVEL(__VA_ARGS__),                                                  \
         .print = NULL,                                                                             \
     };                                                                                             \
-    const MDS_LOG_Module_t G_MDS_LOG_MODULE_##_name = {.name = #_name,                             \
-                                                       .filter = &(g_mds_log_filter_##_name)};     \
+    const MDS_LOG_Module_t __LOG_MODULE_HANDLE(_name) = {                                          \
+        .name = MDS_ARGUMENT_STR(_name),                                                           \
+        .filter = &(__LOG_MODULE_FILETER(_name)),                                                  \
+    };                                                                                             \
     static __attribute__((used)) const MDS_LOG_Module_t *const __THIS_LOG_MODULE_HANDLE =          \
-        &(G_MDS_LOG_MODULE_##_name)
+        &__LOG_MODULE_HANDLE(_name);                                                               \
+    static __attribute__((used)) const uint8_t __THIS_LOG_MODULE_LEVEL =                           \
+        __LOG_MODULE_LEVEL(__VA_ARGS__)
 
-#define MDS_LOG_MODULE_LEVEL(_lvl)   __THIS_LOG_MODULE_HANDLE->filter->level = _lvl
-#define MDS_LOG_MODULE_PRINT(_print) __THIS_LOG_MODULE_HANDLE->filter->print = _print
+#define MDS_LOG_MODULE_LEVEL(_name, _lvl)   (&__LOG_MODULE_HANDLE(_name))->filter->level = _lvl
+#define MDS_LOG_MODULE_PRINT(_name, _print) (&__LOG_MODULE_HANDLE(_name))->filter->print = _print
 #else
 #define MDS_LOG_MODULE_DEFINE(_name, ...)                                                          \
-    static __attribute__((used)) const uint8_t __THIS_LOG_MODULE_LEVEL =                           \
-        __LOG_MODULE_LEVEL(__VA_ARGS__);                                                           \
-    const MDS_LOG_Module_t G_MDS_LOG_MODULE_##_name = {.name = #_name};                            \
+    const MDS_LOG_Module_t __LOG_MODULE_HANDLE(_name) = {                                          \
+        .name = MDS_ARGUMENT_STR(_name),                                                           \
+    };                                                                                             \
     static __attribute__((used)) const MDS_LOG_Module_t *const __THIS_LOG_MODULE_HANDLE =          \
-        &(G_MDS_LOG_MODULE_##_name)
+        &__LOG_MODULE_HANDLE(_name);                                                               \
+    static __attribute__((used)) const uint8_t __THIS_LOG_MODULE_LEVEL =                           \
+        __LOG_MODULE_LEVEL(__VA_ARGS__)
 
-#define MDS_LOG_MODULE_LEVEL(_lvl)   (void)(__THIS_LOG_MODULE_LEVEL)
-#define MDS_LOG_MODULE_PRINT(_print) (void)(__THIS_LOG_MODULE_LEVEL)
+#define MDS_LOG_MODULE_LEVEL(_name, _lvl)   (void)(_lvl)
+#define MDS_LOG_MODULE_PRINT(_name, _print) (void)(_print)
 #endif
 
 #define MDS_LOG_MODULE_DECLARE(_name, ...)                                                         \
-    static __attribute__((used)) const uint8_t __THIS_LOG_MODULE_LEVEL =                           \
-        __LOG_MODULE_LEVEL(__VA_ARGS__);                                                           \
-    extern const MDS_LOG_Module_t G_MDS_LOG_MODULE_##_name;                                        \
+    extern const MDS_LOG_Module_t __LOG_MODULE_HANDLE(_name);                                      \
     static __attribute__((used)) const MDS_LOG_Module_t *const __THIS_LOG_MODULE_HANDLE =          \
-        &(G_MDS_LOG_MODULE_##_name)
+        &(__LOG_MODULE_HANDLE(_name));                                                             \
+    static __attribute__((used)) const uint8_t __THIS_LOG_MODULE_LEVEL =                           \
+        __LOG_MODULE_LEVEL(__VA_ARGS__)
 
 #define __LOG_ARGSIZE_INDEX(idx, x, ...)                                                           \
     _Generic((x),                                                                                  \
@@ -152,14 +158,10 @@ struct MDS_LOG_Module {
 #define MDS_LOG_PRINT(_lvl, _fmt, ...) (void)(__THIS_LOG_MODULE_LEVEL)
 #endif
 
-#define MDS_LOG_F(_fmt, ...) MDS_LOG_PRINT(MDS_LOG_LEVEL_FAT, _fmt, ##__VA_ARGS__)
-
+#define MDS_LOG_U(_fmt, ...) MDS_LOG_PRINT(MDS_LOG_LEVEL_USR, _fmt, ##__VA_ARGS__)
 #define MDS_LOG_E(_fmt, ...) MDS_LOG_PRINT(MDS_LOG_LEVEL_ERR, _fmt, ##__VA_ARGS__)
-
 #define MDS_LOG_W(_fmt, ...) MDS_LOG_PRINT(MDS_LOG_LEVEL_WRN, _fmt, ##__VA_ARGS__)
-
 #define MDS_LOG_I(_fmt, ...) MDS_LOG_PRINT(MDS_LOG_LEVEL_INF, _fmt, ##__VA_ARGS__)
-
 #define MDS_LOG_D(_fmt, ...) MDS_LOG_PRINT(MDS_LOG_LEVEL_DBG, _fmt, ##__VA_ARGS__)
 
 /* Function ---------------------------------------------------------------- */

@@ -29,9 +29,9 @@ typedef struct MDS_LPC_Manager {
     MDS_Mutex_t runMutex;
 
     MDS_Tick_t sleepThreshold;
-    MDS_LPC_Sleep_t sleepDefault : 8;
-    MDS_LPC_Run_t runDefault : 8;
-    MDS_LPC_Run_t runMode : 8;
+    MDS_LPC_Sleep_t sleepDefault;
+    MDS_LPC_Run_t runDefault;
+    MDS_LPC_Run_t runMode;
 
     MDS_LPC_Vote_t sleepVote[MDS_LPC_SLEEP_NUMS];
     MDS_LPC_Vote_t runVote[MDS_LPC_RUN_NUMS];

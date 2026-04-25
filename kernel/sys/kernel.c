@@ -13,7 +13,7 @@
 #include "kernel.h"
 
 /* Define ------------------------------------------------------------------ */
-MDS_LOG_MODULE_DECLARE(kernel, CONFIG_MDS_KERNEL_LOG_LEVEL);
+MDS_LOG_MODULE_DEFINE(kernel, CONFIG_MDS_KERNEL_LOG_LEVEL);
 MDS_HOOK_DEFINE(KERNEL, __attribute__((weak)) MDS_HOOK_Kernel_t, ());
 
 /* Variable ---------------------------------------------------------------- */

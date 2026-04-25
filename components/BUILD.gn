@@ -17,30 +17,30 @@ config("mds_component_cfg") {
   ]
 }
 
-group("mds_components") {
-  public_deps = []
+source_set("mds_components") {
+  public_deps = [ "cpp/:mds_component_cpp" ]
 
-  if (mds_component_pkgcfg.algo) {
-    public_deps += [ "algo/:mds_components_algo" ]
+  if (defined(mds_component_pkgcfg.algo) && mds_component_pkgcfg.algo) {
+    public_deps += [ "algo/:mds_component_algo" ]
   }
 
-  if (mds_component_pkgcfg.boot) {
-    public_deps += [ "boot/:mds_components_boot" ]
+  if (defined(mds_component_pkgcfg.boot) && mds_component_pkgcfg.boot) {
+    public_deps += [ "boot/:mds_component_boot" ]
   }
 
-  if (mds_component_pkgcfg.button) {
-    public_deps += [ "button/:mds_components_button" ]
+  if (defined(mds_component_pkgcfg.button) && mds_component_pkgcfg.button) {
+    public_deps += [ "button/:mds_component_button" ]
   }
 
-  if (mds_component_pkgcfg.fs) {
-    public_deps += [ "fs/:mds_components_fs" ]
+  if (defined(mds_component_pkgcfg.fs) && mds_component_pkgcfg.fs) {
+    public_deps += [ "fs/:mds_component_fs" ]
   }
 
-  if (mds_component_pkgcfg.fsm) {
-    public_deps += [ "fsm/:mds_components_fsm" ]
+  if (defined(mds_component_pkgcfg.fsm) && mds_component_pkgcfg.fsm) {
+    public_deps += [ "fsm/:mds_component_fsm" ]
   }
 
-  if (mds_component_pkgcfg.topic) {
-    public_deps += [ "topic/:mds_components_topic" ]
+  if (defined(mds_component_pkgcfg.topic) && mds_component_pkgcfg.topic) {
+    public_deps += [ "topic/:mds_component_topic" ]
   }
 }

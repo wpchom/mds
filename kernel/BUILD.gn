@@ -44,7 +44,7 @@ source_set("mds_kernel") {
     sources += [ "arch/" + mds_kernel_pkgcfg.archcore + ".c" ]
   }
 
-  if (mds_kernel_pkgcfg.nosys) {
+  if (defined(mds_kernel_pkgcfg.nosys) && mds_kernel_pkgcfg.nosys) {
     sources += [ "nosys.c" ]
     defines += [ "CONFIG_MDS_KERNEL_THREAD_PRIORITY_MAX=0" ]
   } else {
