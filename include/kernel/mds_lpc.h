@@ -46,23 +46,25 @@ typedef uint8_t MDS_LPC_Vote_t;
 #endif
 
 /* Typedef ----------------------------------------------------------------- */
+/* clang-format off */
 typedef enum MDS_LPC_Sleep {
     MDS_LPC_SLEEP_IDLE,
 #define MDS_LPC_SLEEP(sleep) MDS_LPC_SLEEP_##sleep,
     CONFIG_MDS_LPC_LIST_OF_SLEEP
 #undef MDS_LPC_SLEEP
 
-        MDS_LPC_SLEEP_NUMS,
+    MDS_LPC_SLEEP_NUMS,
 } __attribute__((packed)) MDS_LPC_Sleep_t;
 
 typedef enum MDS_LPC_Run {
 #define MDS_LPC_RUN(run) MDS_LPC_RUN_##run,
     CONFIG_MDS_LPC_LIST_OF_RUN
 #undef MDS_LPC_RUN
-        MDS_LPC_RUN_LOCK,
+    MDS_LPC_RUN_LOCK,
 
     MDS_LPC_RUN_NUMS,
 } __attribute__((packed)) MDS_LPC_Run_t;
+/* clang-format on */
 
 typedef struct MDS_LPC_DeviceOps {
     void (*suspend)(MDS_Arg_t dev, MDS_LPC_Sleep_t sleep);

@@ -14,7 +14,7 @@
 
 /* Define ------------------------------------------------------------------ */
 #ifndef CONFIG_MDS_IDLE_THREAD_STACKSIZE
-#define CONFIG_MDS_IDLE_THREAD_STACKSIZE 384
+#define CONFIG_MDS_IDLE_THREAD_STACKSIZE 512
 #endif
 
 #ifndef CONFIG_MDS_IDLE_THREAD_TICKS

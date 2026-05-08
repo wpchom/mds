@@ -1,4 +1,5 @@
 static_library("mds") {
+  complete_static_lib = true
   public_deps = [
     "components/:mds_components",
     "device/:mds_device",

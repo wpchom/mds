@@ -13,10 +13,10 @@
 #define __MDS_DEF_H__
 
 /* Include ----------------------------------------------------------------- */
+#include <stdlib.h>
+#include <string.h>
 #include <stdarg.h>
 #include <stdbool.h>
-#include <stddef.h>
-#include <string.h>
 #include <stdint.h>
 #include <inttypes.h>
 
@@ -223,7 +223,6 @@ static inline size_t MDS_MsgListCopyBuff(void *buff, size_t size, const MDS_MsgL
 }
 
 /* Number ------------------------------------------------------------------ */
-#define MDS_BITS_OF_BYTE 8U
 #define MDS_NUM_BIN_BASE 2U
 #define MDS_NUM_OCT_BASE 8U
 #define MDS_NUM_DEC_BASE 10U

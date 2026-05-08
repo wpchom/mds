@@ -223,6 +223,20 @@ MDS_TreeNode_t *MDS_TreeRemoveNode(MDS_TreeNode_t *node);
 size_t MDS_TreeForeachNode(const MDS_TreeNode_t *tree,
                            void (*func)(const MDS_TreeNode_t *, MDS_Arg_t), MDS_Arg_t arg);
 
+/* String ------------------------------------------------------------------ */
+size_t MDS_StrAscLetterLength(const char *str);
+size_t MDS_StrAscNumberLength(const char *str, int base);
+size_t MDS_StrAsc2Hex(uint8_t *hex, size_t size, const char *asc, bool leftAlign);
+size_t MDS_StrHex2Asc(char *asc, size_t size, const uint8_t *hex, size_t len, bool lowerCase);
+
+/* Format ------------------------------------------------------------------ */
+int MDS_Vsnprintf(char *buff, size_t size, const char *fmt, va_list ap);
+int MDS_Snprintf(char *buff, size_t size, const char *fmt, ...);
+int MDS_Vsprintf(char *buff, const char *fmt, va_list ap);
+int MDS_Sprintf(char *buff, const char *fmt, ...);
+int MDS_Vsscanf(const char *buff, const char *fmt, va_list ap);
+int MDS_Sscanf(const char *buff, const char *fmt, ...);
+
 #ifdef __cplusplus
 }
 #endif

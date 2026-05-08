@@ -15,9 +15,8 @@
 /* Define ----------------------------------------------------------------- */
 MDS_LOG_MODULE_DECLARE(kernel, CONFIG_MDS_KERNEL_LOG_LEVEL);
 
-#if ((defined(__CC_ARM) && defined(__TARGET_FPU_VFP)) || \
-     (defined(__ICCARM__) && defined(__ARMVFP__)) || \
-     (defined(__ARM_FP) && !defined(__SOFTFP__)))
+#if ((defined(__CC_ARM) && defined(__TARGET_FPU_VFP)) ||                                           \
+     (defined(__ICCARM__) && defined(__ARMVFP__)) || (defined(__ARM_FP) && !defined(__SOFTFP__)))
 #define CORE_WITH_FPU 1
 #else
 #define CORE_WITH_FPU 0
@@ -176,8 +175,9 @@ MDS_Lock_t MDS_CoreInterruptLock(void)
 {
     register intptr_t result;
 
-    __asm volatile("mrs         %0, primask" : "=r"(result));
+    __asm volatile("mrs         %0, primask" : "=r"(result) : : "memory");
     __asm volatile("cpsid       i" : : : "memory");
+    __asm volatile("dsb" : : : "memory");
     __asm volatile("isb" : : : "memory");
 
     return ((MDS_Lock_t) {.key = result});
@@ -185,6 +185,7 @@ MDS_Lock_t MDS_CoreInterruptLock(void)
 
 void MDS_CoreInterruptRestore(MDS_Lock_t lock)
 {
+    __asm volatile("dsb" : : : "memory");
     __asm volatile("msr         primask, %0" : : "r"(lock.key) : "memory");
     __asm volatile("isb" : : : "memory");
 }
@@ -306,10 +307,9 @@ __attribute__((naked)) void PendSV_Handler(void)
 
 #if CORE_WITH_FPU
     // exc_return[4] == 0
-    __asm volatile(
-        "tst         lr, #0x10       \n"
-        "it          eq              \n"
-        "vstmdbeq    r3!, {d8 - d15} \n");
+    __asm volatile("tst         lr, #0x10       \n"
+                   "it          eq              \n"
+                   "vstmdbeq    r3!, {d8 - d15} \n");
 #endif
 
     __asm volatile("stmfd       r3!, {r4 - r11}");
@@ -336,10 +336,9 @@ __attribute__((naked)) void PendSV_Handler(void)
 
 #if CORE_WITH_FPU
     // exc_return[4] == 0
-    __asm volatile(
-        "tst         lr, #0x10       \n"
-        "it          eq              \n"
-        "vldmiaeq    r3!, {d8 - d15} \n");
+    __asm volatile("tst         lr, #0x10       \n"
+                   "it          eq              \n"
+                   "vldmiaeq    r3!, {d8 - d15} \n");
 #endif
 
     __asm volatile("msr         psp, r3");
@@ -479,19 +478,16 @@ __attribute__((noreturn)) void MDS_CoreHardFaultException(struct ExceptionInfo *
 __attribute__((naked, noreturn)) void HardFault_Handler(void)
 {
     // exc_return[2] == 0
-    __asm volatile(
-        "tst         lr, #0x04       \n"
-        "ite         eq              \n"
-        "mrseq       r0, msp         \n"
-        "mrsne       r0, psp         \n"
-    );
+    __asm volatile("tst         lr, #0x04       \n"
+                   "ite         eq              \n"
+                   "mrseq       r0, msp         \n"
+                   "mrsne       r0, psp         \n");
 
 #if CORE_WITH_FPU
     // exc_return[4] == 0
-    __asm volatile(
-        "tst         lr, #0x10       \n"
-        "it          eq              \n"
-        "vstmdbeq    r0!, {d8 - d15} \n");
+    __asm volatile("tst         lr, #0x10       \n"
+                   "it          eq              \n"
+                   "vstmdbeq    r0!, {d8 - d15} \n");
 #endif
 
     __asm volatile("stmfd       r0!, {r4 - r11}");

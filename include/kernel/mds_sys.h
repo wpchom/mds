@@ -31,7 +31,7 @@ extern "C" {
 #endif
 
 #ifndef CONFIG_MDS_OBJECT_NAME_SIZE
-#define CONFIG_MDS_OBJECT_NAME_SIZE 8
+#define CONFIG_MDS_OBJECT_NAME_SIZE 7
 #endif
 
 #ifndef CONFIG_MDS_SYSMEM_HEAP_OPS

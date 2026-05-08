@@ -333,16 +333,17 @@ intptr_t MDS_CoreInterruptCurrent(void)
 
 MDS_Lock_t MDS_CoreInterruptLock(void)
 {
-    register MDS_Lock_t result;
+    register intptr_t result;
 
-    __asm volatile("csrrci      %0, mstatus, %1" : "=r"(result.key) : "i"(MSTATUS_MIE));
+    __asm volatile("csrrci      %0, mstatus, %1" : "=r"(result) : "i"(MSTATUS_MIE) : "memory");
+    __asm volatile("fence       rw, rw" : : : "memory");
 
-    return (result);
+    return ((MDS_Lock_t) {.key = result & MSTATUS_MIE});
 }
 
 void MDS_CoreInterruptRestore(MDS_Lock_t lock)
 {
-    __asm volatile("csrw        mstatus, %0" : : "r"(lock.key) : "memory");
+    __asm volatile("csrs        mstatus, %0" : : "r"(lock.key) : "memory");
 }
 
 void MDS_CoreIdleSleep(void)
@@ -512,7 +513,7 @@ static uintptr_t CORE_DisassemblyInsIsBL(uintptr_t addr)
 #define RV32C_JALR_INS  0x9002
 
     uint32_t ins2 = *((uint16_t *)(addr + sizeof(uint16_t)));
-    uint32_t ins1 = ins2 << (MDS_BITS_OF_BYTE * sizeof(uint16_t)) | *((uint16_t *)(addr));
+    uint32_t ins1 = ins2 << (__CHAR_BIT__ * sizeof(uint16_t)) | *((uint16_t *)(addr));
 
     if (((ins1 & RV32I_JAL_MASK) == RV32I_JAL_INS) || (ins1 & RV32I_JALR_MASK) == RV32I_JALR_INS) {
         return (addr);

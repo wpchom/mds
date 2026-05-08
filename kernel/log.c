@@ -33,6 +33,13 @@ MDS_LOG_MODULE_DEFINE(default, CONFIG_MDS_LOG_BUILD_LEVEL);
 
 /* Variable ---------------------------------------------------------------- */
 #if (defined(CONFIG_MDS_LOG_FILTER_ENABLE) && (CONFIG_MDS_LOG_FILTER_ENABLE != 0))
+#define MDS_LOG_DEFAULT_PRINT(module, ...)                                                         \
+    do {                                                                                           \
+        if ((G_MDS_LOG_MODULE_default.filter != NULL) &&                                           \
+            (G_MDS_LOG_MODULE_default.filter->print != NULL)) {                                    \
+            G_MDS_LOG_MODULE_default.filter->print(module, ##__VA_ARGS__);                         \
+        }                                                                                          \
+    } while (0)
 #else
 static MDS_LOG_VaPrint_t g_logVaPrintFunc = NULL;
 #endif
@@ -88,6 +95,8 @@ static void MDS_LOG_ModuleWrite(const MDS_LOG_Module_t *module, uint8_t level, s
 #if (defined(CONFIG_MDS_LOG_FILTER_ENABLE) && (CONFIG_MDS_LOG_FILTER_ENABLE != 0))
         if ((module != NULL) && (module->filter != NULL) && (module->filter->print != NULL)) {
             module->filter->print(module, level, va_cnt, fmt, va_args);
+        } else {
+            MDS_LOG_DEFAULT_PRINT(module, level, va_cnt, fmt, va_args);
         }
 #else
         if (g_logVaPrintFunc != NULL) {
@@ -213,6 +222,8 @@ void MDS_LOG_ModulePrintf(const MDS_LOG_Module_t *module, uint8_t level, size_t 
 #if (defined(CONFIG_MDS_LOG_FILTER_ENABLE) && (CONFIG_MDS_LOG_FILTER_ENABLE != 0))
         if ((module != NULL) && (module->filter != NULL) && (module->filter->print != NULL)) {
             module->filter->print(module, level, tick, va_cnt, fmt, va_args);
+        } else {
+            MDS_LOG_DEFAULT_PRINT(module, level, tick, va_cnt, fmt, va_args);
         }
 #else
         if (g_logVaPrintFunc != NULL) {
@@ -245,6 +256,8 @@ void MDS_PanicPrintf(size_t va_cnt, const char *fmt, ...)
 #if (defined(CONFIG_MDS_LOG_FILTER_ENABLE) && (CONFIG_MDS_LOG_FILTER_ENABLE != 0))
         if ((module != NULL) && (module->filter != NULL) && (module->filter->print != NULL)) {
             module->filter->print(module, MDS_LOG_LEVEL_ERR, tick, va_cnt, fmt, va_args);
+        } else {
+            MDS_LOG_DEFAULT_PRINT(module, MDS_LOG_LEVEL_ERR, tick, va_cnt, fmt, va_args);
         }
 #else
         if (g_logVaPrintFunc != NULL) {
@@ -266,7 +279,7 @@ void MDS_PanicPrintf(size_t va_cnt, const char *fmt, ...)
 
 #ifndef MDS_LOG_COMPRESS_ARG_FIX
 /* 0xFFFFFFFF => -1111111111 (2's complement: 0xBDC5CA39) */
-#define MDS_LOG_COMPRESS_ARG_FIX(x) ((x == 0xFFFFFFFF) ? (0xBDC5CA39) : (x))
+#define MDS_LOG_COMPRESS_ARG_FIX(x) (((x) == 0xFFFFFFFF) ? (0xBDC5CA39) : (x))
 #endif
 
 size_t MDS_LOG_CompressStructVa(MDS_LOG_Compress_t *log, size_t level, size_t va_cnt,

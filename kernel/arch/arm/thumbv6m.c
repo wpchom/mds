@@ -111,8 +111,9 @@ MDS_Lock_t MDS_CoreInterruptLock(void)
 {
     register intptr_t result;
 
-    __asm volatile("mrs         %0, primask" : "=r"(result));
+    __asm volatile("mrs         %0, primask" : "=r"(result) : : "memory");
     __asm volatile("cpsid       i" : : : "memory");
+    __asm volatile("dsb" : : : "memory");
     __asm volatile("isb" : : : "memory");
 
     return ((MDS_Lock_t) {.key = result});
@@ -120,6 +121,7 @@ MDS_Lock_t MDS_CoreInterruptLock(void)
 
 void MDS_CoreInterruptRestore(MDS_Lock_t lock)
 {
+    __asm volatile("dsb" : : : "memory");
     __asm volatile("msr         primask, %0" : : "r"(lock.key) : "memory");
     __asm volatile("isb" : : : "memory");
 }

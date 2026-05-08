@@ -25,7 +25,7 @@ static volatile uint32_t g_sysThreadPrioMask = 0x00U;
 static MDS_DListNode_t g_sysSchedulerTable[CONFIG_MDS_KERNEL_THREAD_PRIORITY_MAX];
 
 /* Function ---------------------------------------------------------------- */
-__attribute__((weak, optimize("-Ofast"))) size_t MDS_CoreSchedulerFFS(register size_t value)
+__attribute__((weak)) size_t MDS_CoreSchedulerFFS(register size_t value)
 {
     if (value == 0) {
         return (0);

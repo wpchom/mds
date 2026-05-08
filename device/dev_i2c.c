@@ -173,7 +173,7 @@ MDS_Err_t DEV_I2C_PeriphMasterWriteMem(DEV_I2C_Periph_t *periph, uint32_t memAdd
     uint8_t reg[sizeof(uint32_t)];
 
     for (idx = 0; idx < memAddrSz; idx++) {
-        reg[idx] = (uint8_t)(memAddr >> (MDS_BITS_OF_BYTE * (memAddrSz - idx - 1)));
+        reg[idx] = (uint8_t)(memAddr >> (__CHAR_BIT__ * (memAddrSz - idx - 1)));
     }
     DEV_I2C_Msg_t msg[] = {
         {.flag.mask = DEV_I2C_MSGFLAG_WR | DEV_I2C_MSGFLAG_NO_STOP, .buff = reg, .len = memAddrSz},
@@ -194,7 +194,7 @@ MDS_Err_t DEV_I2C_PeriphMasterReadMem(DEV_I2C_Periph_t *periph, uint32_t memAddr
     uint8_t reg[sizeof(uint32_t)];
 
     for (idx = 0; idx < memAddrSz; idx++) {
-        reg[idx] = (uint8_t)(memAddr >> (MDS_BITS_OF_BYTE * (memAddrSz - idx - 1)));
+        reg[idx] = (uint8_t)(memAddr >> (__CHAR_BIT__ * (memAddrSz - idx - 1)));
     }
     DEV_I2C_Msg_t msg[] = {
         {.flag.mask = DEV_I2C_MSGFLAG_WR | DEV_I2C_MSGFLAG_NO_STOP, .buff = reg, .len = memAddrSz},
