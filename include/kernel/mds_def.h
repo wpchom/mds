@@ -176,13 +176,13 @@ static inline MDS_DListNode_t *MDS_DListForeachPrev(const MDS_DListNode_t *list,
 #define MDS_DLIST_CONTAINER_FOREACH_NEXT(iter, member, list)                                       \
     for (MDS_DListNode_t *node = ((list) != NULL) ? ((list)->next) : (NULL), *next = NULL;         \
          (node != NULL) && (node != (list)) &&                                                     \
-         (next = node->next, ((iter) = CONTAINER_OF(node, __typeof__(*iter), member)) != NULL);    \
+         (next = node->next, ((iter) = CONTAINER_OF(node, __typeof__(*(iter)), member)) != NULL);    \
          node = next)
 
 #define MDS_DLIST_CONTAINER_FOREACH_PREV(iter, member, list)                                       \
     for (MDS_DListNode_t *node = ((list) != NULL) ? ((list)->prev) : (NULL), *prev = NULL;         \
          (node != NULL) && (node != (list)) &&                                                     \
-         (prev = node->prev, ((iter) = CONTAINER_OF(node, __typeof__(*iter), member)) != NULL);    \
+         (prev = node->prev, ((iter) = CONTAINER_OF(node, __typeof__(*(iter)), member)) != NULL);    \
          node = prev)
 
 /* Message ----------------------------------------------------------------- */

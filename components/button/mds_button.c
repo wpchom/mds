@@ -228,6 +228,6 @@ bool MDS_BUTTON_FakedState(const MDS_BUTTON_Device_t *button, MDS_BUTTON_Mask_t 
 
 void MDS_BUTTON_FakeButton(MDS_BUTTON_Device_t *button, bool faked, MDS_BUTTON_Mask_t level)
 {
-    button->isFaked = faked;
+    button->isFaked = (int8_t)faked;
     button->fakedLevel = level;
 }

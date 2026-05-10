@@ -129,13 +129,13 @@ MDS_Device_t *MDS_DeviceProbeDrivers(const MDS_DevDriver_t **driver, MDS_Device_
 #define MDS_DEVICE_HANDLE(x) ((MDS_DevHandle_t) {x})
 
 #define MDS_DEVICE_ARG_DRVHS(arg, handleT)                                                         \
-    if ((arg.ptr) != NULL) {                                                                       \
-        *((size_t *)(arg.ptr)) = sizeof(handleT);                                                  \
+    if (((arg).ptr) != NULL) {                                                                     \
+        *((size_t *)((arg).ptr)) = sizeof(handleT);                                                \
     }
 
 #define MDS_DEVICE_ARG_DRVID(arg, driverId)                                                        \
-    if ((arg.ptr) != NULL) {                                                                       \
-        *((const MDS_DevProbeId_t **)(arg.ptr)) = &driverId;                                       \
+    if (((arg).ptr) != NULL) {                                                                     \
+        *((const MDS_DevProbeId_t **)((arg).ptr)) = &(driverId);                                   \
     }
 
 #ifdef __cplusplus

@@ -283,7 +283,15 @@ MDS_Err_t MDS_ThreadSuspend(MDS_Thread_t *thread)
     return (err);
 }
 
-MDS_Err_t MDS_ThreadSetPriority(MDS_Thread_t *thread, MDS_ThreadPriority_t priority)
+MDS_ThreadPriority_t MDS_ThreadGetPriority(MDS_Thread_t *thread)
+{
+    MDS_ASSERT(thread != NULL);
+    MDS_ASSERT(MDS_ObjectGetType(&(thread->object)) == MDS_OBJECT_TYPE_THREAD);
+
+    return (thread->currPrio);
+}
+
+MDS_ThreadPriority_t MDS_ThreadSetPriority(MDS_Thread_t *thread, MDS_ThreadPriority_t priority)
 {
     MDS_ASSERT(thread != NULL);
     MDS_ASSERT(MDS_ObjectGetType(&(thread->object)) == MDS_OBJECT_TYPE_THREAD);
@@ -293,21 +301,21 @@ MDS_Err_t MDS_ThreadSetPriority(MDS_Thread_t *thread, MDS_ThreadPriority_t prior
 
     MDS_Lock_t lock = MDS_CriticalLock(&(thread->spinlock));
 
+    MDS_ThreadPriority_t origPrio = thread->currPrio;
+    MDS_SchedulerRemoveThread(thread);
+    thread->currPrio = priority;
+
     MDS_ThreadState_t state = MDS_ThreadGetState(thread);
     if (state == MDS_THREAD_STATE_READY) {
-        MDS_SchedulerRemoveThread(thread);
-        thread->currPrio = priority;
         MDS_SchedulerInsertThread(thread);
-    } else {
-        thread->currPrio = priority;
     }
 
     MDS_CriticalRestore(&(thread->spinlock), lock);
 
-    return (MDS_EOK);
+    return (origPrio);
 }
 
-MDS_Err_t MDS_ThreadResetPriority(MDS_Thread_t *thread)
+MDS_ThreadPriority_t MDS_ThreadResetPriority(MDS_Thread_t *thread)
 {
     return (MDS_ThreadSetPriority(thread, thread->initPrio));
 }

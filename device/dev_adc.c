@@ -103,12 +103,13 @@ MDS_Err_t DEV_ADC_PeriphConvert(DEV_ADC_Periph_t *periph, int32_t *value, int32_
         }
     }
 
-    val = (times > 0x2U) ? ((sum - max - min) / (times - 0x2U)) : (sum / times);
+    val = (int32_t)((times > 0x2U) ? ((sum - max - min) / (times - 0x2U)) : (sum / times));
     if (value != NULL) {
         *value = val;
     }
     if (voltage != NULL) {
-        *voltage = ((int64_t)(val + 1) * periph->mount->refVoltage) >> periph->config.resolution;
+        *voltage = (int32_t)(((int64_t)(val + 1) * periph->mount->refVoltage) >>
+                             periph->config.resolution);
     }
 
     return (err);

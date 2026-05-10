@@ -12,6 +12,9 @@
 #ifndef __MDS_UTILS_H__
 #define __MDS_UTILS_H__
 
+/* Include ----------------------------------------------------------------- */
+#include "mds_def.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -84,7 +87,7 @@ static inline void MDS_SysMemHeapAddress(void **begin, void **limit)
 #define MDS_ARGUMENT_GET_N(N, ...) __ARGUMENT_CAT(__ARGUMENT_GET_, N)(__VA_ARGS__)
 
 #define __ARGUMENT_ELEM(_n, _elem, _arg)             (_elem)
-#define __ARGUMENT_ELEM_SHIFT(_n, _elem, _arg)       (1UL << _elem)
+#define __ARGUMENT_ELEM_SHIFT(_n, _elem, _arg)       (1UL << (_elem))
 #define __ARGUMENT_FOREACH_0(_call, _sep, _arg, ...) (_arg)
 
 #define __ARGUMENT_FOREACH_1(_call, _sep, _arg, _elem)                                             \
@@ -230,12 +233,12 @@ size_t MDS_StrAsc2Hex(uint8_t *hex, size_t size, const char *asc, bool leftAlign
 size_t MDS_StrHex2Asc(char *asc, size_t size, const uint8_t *hex, size_t len, bool lowerCase);
 
 /* Format ------------------------------------------------------------------ */
-int MDS_Vsnprintf(char *buff, size_t size, const char *fmt, va_list ap);
-int MDS_Snprintf(char *buff, size_t size, const char *fmt, ...);
-int MDS_Vsprintf(char *buff, const char *fmt, va_list ap);
-int MDS_Sprintf(char *buff, const char *fmt, ...);
-int MDS_Vsscanf(const char *buff, const char *fmt, va_list ap);
-int MDS_Sscanf(const char *buff, const char *fmt, ...);
+size_t MDS_Vsnprintf(char *buff, size_t size, const char *fmt, va_list ap);
+size_t MDS_Snprintf(char *buff, size_t size, const char *fmt, ...);
+size_t MDS_Vsprintf(char *buff, const char *fmt, va_list ap);
+size_t MDS_Sprintf(char *buff, const char *fmt, ...);
+size_t MDS_Vsscanf(const char *buff, const char *fmt, va_list ap);
+size_t MDS_Sscanf(const char *buff, const char *fmt, ...);
 
 #ifdef __cplusplus
 }

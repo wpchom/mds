@@ -168,8 +168,10 @@ __attribute__((unused)) static void LPC_SleepModeSwitch(MDS_LPC_Manager_t *mgr)
         mgr->hook(MDS_LPC_EVENT_SLEEP_EXIT, sleepMode);
     }
 
-    MDS_LOG_W("[lpc] sleepMode:%d plan:%" PRIuTICK " real:%" PRIuTICK " resume runMode:%d",
-              sleepMode, planSleep, realSleep, mgr->runMode);
+    if (sleepMode != MDS_LPC_SLEEP_IDLE) {
+        MDS_LOG_W("[lpc] sleepMode:%d plan:%" PRIuTICK " real:%" PRIuTICK " resume runMode:%d",
+                  sleepMode, planSleep, realSleep, mgr->runMode);
+    }
 }
 
 static void LPC_RunModeSwitch(MDS_LPC_Manager_t *mgr)

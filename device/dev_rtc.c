@@ -61,7 +61,7 @@ MDS_Err_t DEV_RTC_GetTimeStamp(DEV_RTC_Device_t *rtc, MDS_TimeStamp_t *timestamp
     MDS_ASSERT(rtc->driver != NULL);
     MDS_ASSERT(rtc->driver->control != NULL);
 
-    return (rtc->driver->control(rtc, DEV_RTC_CMD_TIMESTAMP_GET, MDS_ARG_WITH(&timestamp)));
+    return (rtc->driver->control(rtc, DEV_RTC_CMD_TIMESTAMP_GET, MDS_ARG_WITH(timestamp)));
 }
 
 MDS_Err_t DEV_RTC_SetTimeStamp(DEV_RTC_Device_t *rtc, MDS_TimeStamp_t timestamp)

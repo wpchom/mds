@@ -90,11 +90,22 @@ MDS_Thread_t *MDS_SchedulerPeekThread(void)
 {
     MDS_Thread_t *thread = NULL;
 
-    size_t highestPrio = MDS_CoreSchedulerFFS(g_sysThreadPrioMask);
-    if (highestPrio != 0U) {
-        thread =
-            CONTAINER_OF(g_sysSchedulerTable[highestPrio - 1].next, MDS_Thread_t, nodeWait.node);
-    } else {
+    do {
+        size_t highestPrio = MDS_CoreSchedulerFFS(g_sysThreadPrioMask);
+        if (highestPrio == 0U) {
+            break;
+        }
+
+        MDS_DListNode_t *list = &(g_sysSchedulerTable[highestPrio - 1]);
+        if (MDS_DListIsEmpty(list)) {
+            MDS_LOG_E("[scheduler] priority list empty, mask may be inconsistent");
+            break;
+        }
+
+        thread = CONTAINER_OF(list->next, MDS_Thread_t, nodeWait.node);
+    } while (0);
+
+    if (thread == NULL) {
         thread = MDS_KernelIdleThread();
     }
 

@@ -59,9 +59,9 @@ uint8_t MDS_FSM_TaskNodeEventSet(MDS_FSM_TaskNode_t *taskNode, uint8_t event, bo
         static __attribute__((section("mds.fsm."))) MDS_FSM_TaskNode_t fsmTaskNode_##name = {      \
             .node.prev = &(fsmTaskNode_##name.node),                                               \
             .node.next = &(fsmTaskNode_##name.node),                                               \
-            .taskEntry = entry,                                                                    \
+            .taskEntry = (entry),                                                                  \
             .ticknext = 0,                                                                         \
-            .priority = prio,                                                                      \
+            .priority = (prio),                                                                    \
             .taskStep = 0,                                                                         \
             .waitEvent = 0,                                                                        \
             .pollCount = 0,                                                                        \

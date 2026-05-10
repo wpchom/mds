@@ -109,7 +109,8 @@ void MDS_KernelSchedulerCheck(void)
             // cpuInfo
             g_sysCurrThread = toThread;
 
-            MDS_CoreSchedulerSwitch(&(currThread->stackPoint), &(toThread->stackPoint));
+            MDS_CoreSchedulerSwitch((void *)&(currThread->stackPoint),
+                                    (void *)&(toThread->stackPoint));
         }
     } while (0);
 
@@ -253,7 +254,7 @@ void MDS_KernelStartup(void)
     MDS_ThreadSetState(toThread, MDS_THREAD_STATE_RUNNING);
     g_sysCurrThread = toThread;
 
-    MDS_CoreSchedulerStartup(&(toThread->stackPoint));
+    MDS_CoreSchedulerStartup((void *)&(toThread->stackPoint));
 }
 
 MDS_Thread_t *MDS_KernelCurrentThread(void)

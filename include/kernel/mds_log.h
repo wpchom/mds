@@ -13,7 +13,6 @@
 #define __MDS_LOG_H__
 
 /* Include ----------------------------------------------------------------- */
-#include "mds_def.h"
 #include "mds_utils.h"
 
 #ifdef __cplusplus

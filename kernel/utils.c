@@ -10,7 +10,6 @@
  * See the Mulan PSL v2 for more details.
  **/
 /* Include ----------------------------------------------------------------- */
-#include "mds_def.h"
 #include "mds_utils.h"
 
 /* SkipList ---------------------------------------------------------------- */
@@ -385,7 +384,7 @@ static void FMT_lltoa(char *buff, size_t size, size_t *pos, unsigned long long v
     FMT_PrintBuffInterger(buff, size, pos, valbuf, len, args);
 }
 
-static unsigned int FMT_PrintIntegerBase(const char ch)
+static int FMT_PrintIntegerBase(const char ch)
 {
     if ((ch == 'd') || (ch == 'i') || (ch == 'u')) {
         return (MDS_NUM_DEC_BASE);
@@ -494,7 +493,7 @@ static int FMT_VaParsePrint(char *buff, size_t size, size_t *pos, const char **f
     return (0);
 }
 
-int MDS_Vsnprintf(char *buff, size_t size, const char *fmt, va_list ap)
+size_t MDS_Vsnprintf(char *buff, size_t size, const char *fmt, va_list ap)
 {
     size_t pos;
     va_list acpy;
@@ -522,9 +521,9 @@ int MDS_Vsnprintf(char *buff, size_t size, const char *fmt, va_list ap)
     return (pos);
 }
 
-int MDS_Snprintf(char *buff, size_t size, const char *fmt, ...)
+size_t MDS_Snprintf(char *buff, size_t size, const char *fmt, ...)
 {
-    int ret;
+    size_t ret;
     va_list ap;
 
     va_start(ap, fmt);
@@ -534,14 +533,14 @@ int MDS_Snprintf(char *buff, size_t size, const char *fmt, ...)
     return (ret);
 }
 
-int MDS_Vsprintf(char *buff, const char *fmt, va_list ap)
+size_t MDS_Vsprintf(char *buff, const char *fmt, va_list ap)
 {
     return (MDS_Vsnprintf(buff, __SIZE_MAX__, fmt, ap));
 }
 
-int MDS_Sprintf(char *buff, const char *fmt, ...)
+size_t MDS_Sprintf(char *buff, const char *fmt, ...)
 {
-    int ret;
+    size_t ret;
     va_list ap;
 
     va_start(ap, fmt);
@@ -593,7 +592,7 @@ static char *FMT_SkipSpace(const char *str)
 static const char *FMT_ScanInteger(const char *buff, va_list *ap, FMT_Args_t *args)
 {
     char *endptr = NULL;
-    long long value = strtoll(buff, &endptr, args->base);
+    long long value = strtoll(buff, &endptr, (int)(args->base));
 
     if ((args->flags & FMT_FLAG_IGNORE) == 0U) {
         if ((args->flags & FMT_FLAG_CHAR) != 0U) {
@@ -696,13 +695,13 @@ static const char *FMT_ParseScan(const char *buff, const char **fmt, va_list *ap
     return (buff);
 }
 
-static int FMT_VaStringScanf(const char *buff, const char *fmt, va_list ap)
+static size_t FMT_VaStringScanf(const char *buff, const char *fmt, va_list ap)
 {
     if ((buff == NULL) || (fmt == NULL)) {
         return (0);
     }
 
-    int ret = 0;
+    size_t ret = 0;
     va_list acpy;
 
     buff = FMT_SkipSpace(buff);
@@ -738,14 +737,14 @@ static int FMT_VaStringScanf(const char *buff, const char *fmt, va_list ap)
     return (ret);
 }
 
-int MDS_Vsscanf(const char *buff, const char *fmt, va_list ap)
+size_t MDS_Vsscanf(const char *buff, const char *fmt, va_list ap)
 {
     return (FMT_VaStringScanf(buff, fmt, ap));
 }
 
-int MDS_Sscanf(const char *buff, const char *fmt, ...)
+size_t MDS_Sscanf(const char *buff, const char *fmt, ...)
 {
-    int ret;
+    size_t ret;
     va_list ap;
 
     va_start(ap, fmt);

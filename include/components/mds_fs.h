@@ -190,7 +190,7 @@ char *MDS_FileSystemJoinPath(const char *path, ...);
 void MDS_FileSystemFreePath(char **path);
 
 #define MDS_FS_JOIN_PATH(path, ...) MDS_FileSystemJoinPath(path, __VA_ARGS__, NULL)
-#define MDS_FS_FREE_PATH(path)      MDS_FileSystemFreePath(&path)
+#define MDS_FS_FREE_PATH(path)      MDS_FileSystemFreePath(&(path))
 
 MDS_Err_t MDS_FsMkfs(MDS_FsDevice_t *device, const char *fsName, MDS_Arg_t init);
 MDS_Err_t MDS_FsMount(MDS_FileSystem_t *fs, const MDS_FsDevice_t *device, const char *path,

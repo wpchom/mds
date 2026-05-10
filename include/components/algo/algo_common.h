@@ -2,9 +2,8 @@
 #define __ALGO_COMMON_H__
 
 /* Include ----------------------------------------------------------------- */
-#include <stdint.h>
-#include <stddef.h>
 #include <string.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
