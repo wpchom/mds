@@ -125,7 +125,7 @@ MDS_Err_t MDS_MutexAcquire(MDS_Mutex_t *mutex, MDS_Timeout_t timeout)
         }
     } else if (timeout.ticks == MDS_CLOCK_TICK_NO_WAIT) {
         err = thread->err = MDS_ETIME;
-    } else if (timeout.ticks < MDS_CLOCK_TICK_TIMER_MAX) {
+    } else {
         MDS_ThreadPriority_t tempPrio = mutex->owner->currPrio;
         if (thread->currPrio.priority < mutex->owner->currPrio.priority) {
             MDS_ThreadSetPriority(mutex->owner, thread->currPrio);
@@ -136,8 +136,6 @@ MDS_Err_t MDS_MutexAcquire(MDS_Mutex_t *mutex, MDS_Timeout_t timeout)
         } else {
             reSchedule = true;
         }
-    } else {
-        err = MDS_EINVAL;
     }
 
     MDS_CriticalRestore(&(mutex->spinlock), lock);

@@ -7,3 +7,7 @@ build/
 
 # MacOS Cache
 .DS_Store
+
+# agents
+AGENTS.md
+.qoder/

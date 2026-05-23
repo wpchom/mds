@@ -103,8 +103,8 @@ MDS_Err_t MDS_SemaphoreAcquire(MDS_Semaphore_t *semaphore, MDS_Timeout_t timeout
     if (semaphore->value > 0) {
         semaphore->value -= 1;
     } else if (timeout.ticks == MDS_CLOCK_TICK_NO_WAIT) {
-        err = thread->err = MDS_ETIME;
-    } else if ((timeout.ticks < MDS_CLOCK_TICK_TIMER_MAX) && (thread != NULL)) {
+        err = MDS_ETIME;
+    } else if (thread != NULL) {
         err = MDS_KernelWaitQueueSuspend(&(semaphore->queueWait), thread, timeout, true);
         if (MDS_ErrIsSame(err, MDS_EOK)) {
             reSchedule = true;

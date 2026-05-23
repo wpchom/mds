@@ -8,6 +8,7 @@ config("mds_device_cfg") {
 source_set("mds_device") {
   sources = [
     "dev_adc.c",
+    "dev_dsi.c",
     "dev_gpio.c",
     "dev_i2c.c",
     "dev_i2s.c",

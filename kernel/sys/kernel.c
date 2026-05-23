@@ -120,6 +120,11 @@ void MDS_KernelSchedulerCheck(void)
 MDS_Err_t MDS_KernelWaitQueueSuspend(MDS_WaitQueue_t *queueWait, MDS_Thread_t *thread,
                                      MDS_Timeout_t timeout, bool isPrio)
 {
+    if (thread == NULL) {
+        MDS_LOG_E("[kernel]wait queue suspend thread is null");
+        return (MDS_EFAULT);
+    }
+
     MDS_Err_t err = MDS_ThreadSuspend(thread);
     if (!MDS_ErrIsSame(err, MDS_EOK)) {
         return (err);

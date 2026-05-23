@@ -61,7 +61,7 @@ struct DEV_ADC_Adaptr {
     const DEV_ADC_Periph_t *owner;
     const MDS_Mutex_t mutex;
 
-    uint32_t refVoltage; // mV
+    uint32_t refMVolt; // mV
 };
 
 struct DEV_ADC_Periph {

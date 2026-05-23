@@ -137,8 +137,8 @@ MDS_Err_t MDS_ConditionWait(MDS_Condition_t *condition, MDS_Mutex_t *mutex, MDS_
     if (condition->value > 0) {
         condition->value -= 1;
     } else if (timeout.ticks == MDS_CLOCK_TICK_NO_WAIT) {
-        err = thread->err = MDS_ETIME;
-    } else if ((timeout.ticks < MDS_CLOCK_TICK_TIMER_MAX) && (thread != NULL)) {
+        err = MDS_ETIME;
+    } else if (thread != NULL) {
         err = MDS_KernelWaitQueueSuspend(&(condition->queueWait), thread, timeout, false);
         MDS_MutexRelease(mutex);
 

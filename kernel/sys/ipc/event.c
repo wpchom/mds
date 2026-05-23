@@ -97,8 +97,8 @@ MDS_Err_t MDS_EventWait(MDS_Event_t *event, MDS_Mask_t wait, MDS_EventOpt_t opt,
     bool reSchedule = false;
     MDS_Thread_t *thread = MDS_KernelCurrentThread();
 
-    MDS_LOG_D("[event] thread(%p) wait event(%p)" "which value:%" PRIxPTR " mask:%" PRIxPTR
-              " opt:%" PRIx32,
+    MDS_LOG_D("[event] thread(%p) wait event(%p)"
+              "which value:%" PRIxPTR " mask:%" PRIxPTR " opt:%" PRIx32,
               thread, event, event->value.mask, wait.mask, (uint32_t)opt);
 
     MDS_HOOK_CALL(KERNEL, event, (event, MDS_KERNEL_TRACE_EVENT_TRY_ACQUIRE, err, timeout));
@@ -116,8 +116,8 @@ MDS_Err_t MDS_EventWait(MDS_Event_t *event, MDS_Mask_t wait, MDS_EventOpt_t opt,
             event->value.mask &= ~(wait.mask);
         }
     } else if (timeout.ticks == MDS_CLOCK_TICK_NO_WAIT) {
-        err = thread->err = MDS_ETIME;
-    } else if ((timeout.ticks < MDS_CLOCK_TICK_TIMER_MAX) && (thread != NULL)) {
+        err = MDS_ETIME;
+    } else if (thread != NULL) {
         thread->eventMask = wait;
         thread->eventOpt = opt;
         err = MDS_KernelWaitQueueSuspend(&(event->queueWait), thread, timeout, true);

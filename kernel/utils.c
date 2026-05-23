@@ -278,7 +278,9 @@ static const char *FMT_ParsePrintFormatFlags(const char *fmt, va_list *ap, FMT_A
             (*++fmt == 'l') ? (fmt++, FMT_FLAG_LONG_LONG | FMT_FLAG_LONG) : (FMT_FLAG_LONG);
     } else if (*fmt == 'h') {
         args->flags |= (*++fmt == 'h') ? (fmt++, FMT_FLAG_SHORT | FMT_FLAG_CHAR) : (FMT_FLAG_SHORT);
-    } else if (*fmt == 'X') {
+    }
+
+    if (*fmt == 'X') {
         args->flags |= FMT_FLAG_UPCASE;
     }
 
