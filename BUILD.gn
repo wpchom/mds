@@ -1,8 +1,26 @@
+declare_args() {
+  mds_pkgcfg = {
+    confile = ""
+  }
+}
+
+config("mds_cfg") {
+  include_dirs = [ "include/" ]
+  defines = []
+
+  if (defined(mds_pkgcfg.confile) && mds_pkgcfg.confile != "") {
+    if (!path_exists(mds_pkgcfg.confile)) {
+      error("mds_pkgcfg.confile is not exist")
+    }
+    defines += [ "CONFIG_MDS_CONFIG_FILE=\"" + mds_pkgcfg.confile + "\"" ]
+  }
+}
+
 static_library("mds") {
   complete_static_lib = true
   public_deps = [
-    "components/:mds_components",
     "device/:mds_device",
     "kernel/:mds_kernel",
+    "subsys/:mds_subsys",
   ]
 }

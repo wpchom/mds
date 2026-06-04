@@ -13,7 +13,7 @@
 #define __MDS_KERNEL_H__
 
 /* Include ----------------------------------------------------------------- */
-#include "mds_sys.h"
+#include "mds/sys.h"
 
 #ifdef __cplusplus
 extern "C" {

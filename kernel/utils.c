@@ -10,7 +10,7 @@
  * See the Mulan PSL v2 for more details.
  **/
 /* Include ----------------------------------------------------------------- */
-#include "mds_utils.h"
+#include "mds/utils.h"
 
 /* SkipList ---------------------------------------------------------------- */
 void MDS_SkipListInitNode(MDS_DListNode_t node[], size_t size)
@@ -118,8 +118,8 @@ MDS_TreeNode_t *MDS_TreeRemoveNode(MDS_TreeNode_t *node)
     return (node);
 }
 
-size_t MDS_TreeForeachNode(const MDS_TreeNode_t *tree,
-                           void (*func)(const MDS_TreeNode_t *, MDS_Arg_t), MDS_Arg_t arg)
+size_t MDS_TreeForeachNode(const MDS_TreeNode_t *tree, void (*func)(const MDS_TreeNode_t *, void *),
+                           void *arg)
 {
     if (tree == NULL) {
         return (0);

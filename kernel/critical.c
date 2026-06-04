@@ -10,7 +10,7 @@
  * See the Mulan PSL v2 for more details.
  **/
 /* Include ----------------------------------------------------------------- */
-#include "mds_sys.h"
+#include "mds/sys.h"
 
 /* Variable ---------------------------------------------------------------- */
 static MDS_SpinLock_t g_sysSpinLock;

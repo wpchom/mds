@@ -10,11 +10,12 @@
  * See the Mulan PSL v2 for more details.
  **/
 /* Include ----------------------------------------------------------------- */
-#include "mds_sys.h"
+#include "mds/sys.h"
 
 /* Define ------------------------------------------------------------------ */
 MDS_LOG_MODULE_DEFINE(default, CONFIG_MDS_LOG_BUILD_LEVEL);
 
+#if (defined(CONFIG_MDS_KERNEL_THREAD_PRIORITY_MAX) && (CONFIG_MDS_KERNEL_THREAD_PRIORITY_MAX != 0))
 #ifndef CONFIG_MDS_LOG_MSGQUEUE_NUMS
 #define CONFIG_MDS_LOG_MSGQUEUE_NUMS 0
 #endif
@@ -29,6 +30,7 @@ MDS_LOG_MODULE_DEFINE(default, CONFIG_MDS_LOG_BUILD_LEVEL);
 
 #ifndef CONFIG_MDS_LOG_THREAD_TICKS
 #define CONFIG_MDS_LOG_THREAD_TICKS 32
+#endif
 #endif
 
 /* Variable ---------------------------------------------------------------- */
@@ -247,7 +249,7 @@ void MDS_PanicPrintf(size_t va_cnt, const char *fmt, ...)
 {
     MDS_Tick_t tick = MDS_ClockGetTickCount();
 
-#if (defined(CONFIG_MDS_LOG_ENABLE) && (CONFIG_MDS_LOG_ENABLE != 0))
+#if (defined(CONFIG_MDS_LOG_ENABLE) && (CONFIG_MDS_LOG_ENABLE > 0))
     const MDS_LOG_Module_t *module = &(__LOG_MODULE_HANDLE(default));
     va_list va_args;
 

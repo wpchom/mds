@@ -1,0 +1,5 @@
+source_set("mds_subsys_cpp") {
+  sources = [ "crt.cpp" ]
+
+  public_configs = [ "../:mds_subsys_cfg" ]
+}

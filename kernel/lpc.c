@@ -10,14 +10,13 @@
  * See the Mulan PSL v2 for more details.
  **/
 /* Include ----------------------------------------------------------------- */
-#include "mds_sys.h"
-#include "mds_lpc.h"
+#include "mds/lpc.h"
 
 /* Define  ----------------------------------------------------------------- */
 MDS_LOG_MODULE_DECLARE(kernel, CONFIG_MDS_KERNEL_LOG_LEVEL);
 
 #ifndef CONFIG_MDS_LPC_THREAD_IDLE
-#define CONFIG_MDS_LPC_THREAD_IDLE 1
+#define CONFIG_MDS_LPC_THREAD_IDLE 0
 #endif
 
 /* Typedef ----------------------------------------------------------------- */

@@ -1,0 +1,19 @@
+declare_args() {
+  mds_subsys_fs_pkgcfg = {
+    littlefs = false
+  }
+}
+
+source_set("mds_subsys_fs") {
+  sources = [ "fs.c" ]
+
+  defines = []
+  deps = []
+
+  if (defined(mds_subsys_fs_pkgcfg.littlefs) &&
+      mds_subsys_fs_pkgcfg.littlefs) {
+    deps += [ "littlefs/:fs_littlefs" ]
+  }
+
+  public_configs = [ "../:mds_subsys_cfg" ]
+}

@@ -1,25 +1,18 @@
-config("mds_device_cfg") {
-  include_dirs = [
-    "../include/kernel",
-    "../include/device",
-  ]
-}
-
 source_set("mds_device") {
   sources = [
-    "dev_adc.c",
-    "dev_dsi.c",
-    "dev_gpio.c",
-    "dev_i2c.c",
-    "dev_i2s.c",
-    "dev_led.c",
-    "dev_rtc.c",
-    "dev_spi.c",
-    "dev_storage.c",
-    "dev_timer.c",
-    "dev_uart.c",
-    "dev_xspi.c",
+    "adc.c",
+    "dsi.c",
+    "gpio.c",
+    "i2c.c",
+    "i2s.c",
+    "led.c",
+    "rtc.c",
+    "spi.c",
+    "storage.c",
+    "timer.c",
+    "uart.c",
+    "xspi.c",
   ]
 
-  public_configs = [ ":mds_device_cfg" ]
+  public_configs = [ "../:mds_cfg" ]
 }

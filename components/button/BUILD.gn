@@ -1,5 +1,0 @@
-source_set("mds_component_button") {
-  sources = [ "mds_button.c" ]
-
-  public_configs = [ "../:mds_component_cfg" ]
-}

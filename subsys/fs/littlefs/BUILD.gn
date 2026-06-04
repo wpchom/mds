@@ -1,0 +1,8 @@
+pkgcfgs("littlefs") {
+}
+
+source_set("fs_littlefs") {
+  sources = [ "littlefs_ops.c" ]
+
+  configs = [ ":littlefs" ]
+}
