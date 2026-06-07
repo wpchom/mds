@@ -31,12 +31,11 @@
 #endif
 
 #define BOOT_LZMA_HEADER_SIZE (LZMA_PROPS_SIZE + sizeof(uint64_t))
-#define BOOT_LZMA_ALIGN_SIZE  sizeof(size_t)
-#define BOOT_LZMA_ALIGN(x)    ((x + BOOT_LZMA_ALIGN_SIZE - 1) & (~(BOOT_LZMA_ALIGN_SIZE - (1ULL))))
+#define BOOT_LZMA_ALIGN_UP(x) ((x + sizeof(size_t) - 1) & (~(sizeof(size_t) - 1)))
 
 /* Variable ---------------------------------------------------------------- */
-static uint8_t g_lzmaReadBuff[BOOT_LZMA_ALIGN(CONFIG_MDS_BOOT_LZMA_READ_SIZE)];
-static uint8_t g_lzmaWriteBuff[BOOT_LZMA_ALIGN(CONFIG_MDS_BOOT_LZMA_WRITE_SIZE)];
+static uint8_t g_lzmaReadBuff[BOOT_LZMA_ALIGN_UP(CONFIG_MDS_BOOT_LZMA_READ_SIZE)];
+static uint8_t g_lzmaWriteBuff[BOOT_LZMA_ALIGN_UP(CONFIG_MDS_BOOT_LZMA_WRITE_SIZE)];
 
 #if (defined(CONFIG_MDS_BOOT_LZMA_ALLOC) && (CONFIG_MDS_BOOT_LZMA_ALLOC != 0))
 extern const ISzAlloc CONFIG_MDS_BOOT_LZMA_ALLOC;

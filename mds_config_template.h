@@ -13,12 +13,22 @@
 
 /* Init */
 #ifndef CONFIG_MDS_INIT_SECTION
-#define CONFIG_MDS_INIT_SECTION ".sorts.mdsInit."
+#define CONFIG_MDS_INIT_SECTION ".init.mds."
 #endif
 
 /* Sysmem */
+#ifndef CONFIG_MDS_SYSMEM_HEAP_SECTION
+#define CONFIG_MDS_SYSMEM_HEAP_SECTION ".noinit.sysheap."
+#endif
+
+#ifndef CONFIG_MDS_SYSMEM_HEAP_SIZE
+#define CONFIG_MDS_SYSMEM_HEAP_SIZE 0
+#endif
+
+#if (defined(CONFIG_MDS_SYSMEM_HEAP_SIZE) && (CONFIG_MDS_SYSMEM_HEAP_SIZE > 0))
 #ifndef CONFIG_MDS_SYSMEM_HEAP_OPS
 #define CONFIG_MDS_SYSMEM_HEAP_OPS MDS_MEMHEAP_OPS_LLFF
+#endif
 #endif
 
 /* Clock */

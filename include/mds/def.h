@@ -53,8 +53,12 @@ extern "C" {
 #define VALUE_RANGE(val, min, max) (((val) <= (min)) ? (min) : (((val) >= (max)) ? (max) : (val)))
 #endif
 
-#ifndef VALUE_ALIGN
-#define VALUE_ALIGN(val, align) ((val) & (~((align) - (1ULL))))
+#ifndef VALUE_ALIGN_UP
+#define VALUE_ALIGN_UP(val, align) (((val) + ((align) - (1))) & (~((align) - (1))))
+#endif
+
+#ifndef VALUE_ALIGN_DOWN
+#define VALUE_ALIGN_DOWN(val, align) ((val) & (~((align) - (1))))
 #endif
 
 #ifndef INT_TYPE_MAX

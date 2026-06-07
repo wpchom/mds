@@ -101,7 +101,7 @@ MDS_Err_t MDS_EventWait(MDS_Event_t *event, MDS_Mask_t wait, MDS_EventOpt_t opt,
               "which value:%" PRIxPTR " mask:%" PRIxPTR " opt:%" PRIx32,
               thread, event, event->value.mask, wait.mask, (uint32_t)opt);
 
-    MDS_HOOK_CALL(KERNEL, event, (event, MDS_KERNEL_TRACE_EVENT_TRY_ACQUIRE, err, timeout));
+    MDS_HOOK_CALL(KERNEL, event, (event, MDS_KERNEL_TRACE_EVENT_TRY_ACQUIRE, err, timeout, wait));
 
     MDS_Lock_t lock = MDS_CriticalLock(&(event->spinlock));
 
@@ -130,7 +130,7 @@ MDS_Err_t MDS_EventWait(MDS_Event_t *event, MDS_Mask_t wait, MDS_EventOpt_t opt,
 
     MDS_CriticalRestore(&(event->spinlock), lock);
 
-    MDS_HOOK_CALL(KERNEL, event, (event, MDS_KERNEL_TRACE_EVENT_HAS_ACQUIRE, err, timeout));
+    MDS_HOOK_CALL(KERNEL, event, (event, MDS_KERNEL_TRACE_EVENT_HAS_ACQUIRE, err, timeout, wait));
 
     if (reSchedule) {
         MDS_KernelSchedulerCheck();
@@ -155,7 +155,7 @@ MDS_Err_t MDS_EventSet(MDS_Event_t *event, MDS_Mask_t set)
               event->value.mask, set.mask);
 
     MDS_HOOK_CALL(KERNEL, event,
-                  (event, MDS_KERNEL_TRACE_EVENT_HAS_SET, err, MDS_TIMEOUT_TICKS(mask)));
+                  (event, MDS_KERNEL_TRACE_EVENT_HAS_SET, err, MDS_TIMEOUT_NOWAIT, set));
 
     MDS_Lock_t lock = MDS_CriticalLock(&(event->spinlock));
 
@@ -205,7 +205,7 @@ MDS_Err_t MDS_EventClr(MDS_Event_t *event, MDS_Mask_t clr)
               event->value.mask, clr.mask);
 
     MDS_HOOK_CALL(KERNEL, event,
-                  (event, MDS_KERNEL_TRACE_EVENT_HAS_CLR, err, (MDS_Timeout_t) {.ticks = mask}));
+                  (event, MDS_KERNEL_TRACE_EVENT_HAS_CLR, err, MDS_TIMEOUT_NOWAIT, clr));
 
     MDS_Lock_t lock = MDS_CriticalLock(&(event->spinlock));
     event->value.mask &= ~(clr.mask);

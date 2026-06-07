@@ -26,27 +26,6 @@ extern "C" {
 #define MDS_RETURN_ADDRESS() __builtin_return_address(0)
 #endif
 
-#if defined(__IAR_SYSTEMS_ICC__)
-static inline void MDS_SysMemHeapAddress(void **begin, void **limit)
-{
-#pragma section(".heap")
-    const uintptr_t __HeapBase[] = __section_start(".heap");
-    const uintptr_t __HeapLimit[] = __section_end(".heap");
-
-    *begin = (void *)(uintptr_t)__HeapBase;
-    *limit = (void *)(uintptr_t)__HeapLimit;
-}
-#else
-static inline void MDS_SysMemHeapAddress(void **begin, void **limit)
-{
-    extern uint8_t __HeapBase[];
-    extern uint8_t __HeapLimit[];
-
-    *begin = (void *)(uintptr_t)__HeapBase;
-    *limit = (void *)(uintptr_t)__HeapLimit;
-}
-#endif
-
 /* Argument ---------------------------------------------------------------- */
 #define __ARGUMENT_PASSBY(x) x
 #define __ARGUMENT_STR(x)    #x

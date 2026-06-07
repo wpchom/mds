@@ -27,11 +27,21 @@ extern "C" {
 #endif
 
 #ifndef CONFIG_MDS_INIT_SECTION
-#define CONFIG_MDS_INIT_SECTION ".sorts.mdsInit."
+#define CONFIG_MDS_INIT_SECTION ".init.mds."
 #endif
 
+#ifndef CONFIG_MDS_SYSMEM_HEAP_SECTION
+#define CONFIG_MDS_SYSMEM_HEAP_SECTION ".noinit.sysheap."
+#endif
+
+#ifndef CONFIG_MDS_SYSMEM_HEAP_SIZE
+#define CONFIG_MDS_SYSMEM_HEAP_SIZE 0
+#endif
+
+#if (defined(CONFIG_MDS_SYSMEM_HEAP_SIZE) && (CONFIG_MDS_SYSMEM_HEAP_SIZE > 0))
 #ifndef CONFIG_MDS_SYSMEM_HEAP_OPS
 #define CONFIG_MDS_SYSMEM_HEAP_OPS MDS_MEMHEAP_OPS_LLFF
+#endif
 #endif
 
 #ifndef CONFIG_MDS_CLOCK_TICK_FREQ_HZ
@@ -621,11 +631,11 @@ typedef enum MDS_KERNEL_Trace {
     MDS_KERNEL_TRACE_MEMPOOL_TRY_ALLOC,
     MDS_KERNEL_TRACE_MEMPOOL_HAS_ALLOC,
     MDS_KERNEL_TRACE_MEMPOOL_HAS_FREE,
-
 } MDS_KERNEL_Trace_t;
 
 typedef struct MDS_HOOK_Kernel {
-    void (*scheduler)(const MDS_Thread_t *toThread, const MDS_Thread_t *fromThread);
+    void (*scheduler)(MDS_KERNEL_Trace_t id, const MDS_Thread_t *toThread,
+                      const MDS_Thread_t *fromThread);
     void (*thread)(const MDS_Thread_t *thread, MDS_KERNEL_Trace_t id);
     void (*timer)(const MDS_Timer_t *timer, MDS_KERNEL_Trace_t id);
     void (*memheap)(const MDS_MemHeap_t *memheap, MDS_KERNEL_Trace_t id, void *free_begin,
@@ -635,7 +645,7 @@ typedef struct MDS_HOOK_Kernel {
     void (*mutex)(const MDS_Mutex_t *mutex, MDS_KERNEL_Trace_t id, MDS_Err_t err,
                   MDS_Timeout_t timeout);
     void (*event)(const MDS_Event_t *event, MDS_KERNEL_Trace_t id, MDS_Err_t err,
-                  MDS_Timeout_t timeout);
+                  MDS_Timeout_t timeout, MDS_Mask_t mask);
     void (*msgqueue)(const MDS_MsgQueue_t *msgqueue, MDS_KERNEL_Trace_t id, MDS_Err_t err,
                      MDS_Timeout_t timeout);
     void (*mempool)(const MDS_MemPool_t *mempool, MDS_KERNEL_Trace_t id, MDS_Err_t err,

@@ -159,7 +159,10 @@ void MDS_MemHeapStatus(MDS_MemHeap_t *memheap, MDS_MemHeapSize_t *size)
 }
 
 /* SysMem ------------------------------------------------------------------ */
-#if (defined(CONFIG_MDS_SYSMEM_HEAP_OPS) && (CONFIG_MDS_SYSMEM_HEAP_OPS > 0))
+#if ((defined(CONFIG_MDS_SYSMEM_HEAP_SIZE) && (CONFIG_MDS_SYSMEM_HEAP_SIZE > 0)) &&                \
+     (defined(CONFIG_MDS_SYSMEM_HEAP_OPS) && (CONFIG_MDS_SYSMEM_HEAP_OPS > 0)))
+static __attribute__((
+    section(CONFIG_MDS_SYSMEM_HEAP_SECTION))) uint8_t g_sysHeapMem[CONFIG_MDS_SYSMEM_HEAP_SIZE];
 static struct {
     MDS_MemHeap_t memheap;
     MDS_SpinLock_t spinlock;
@@ -176,13 +179,8 @@ static MDS_Err_t MDS_SysMemInit(void)
             break;
         }
 
-        void *begin = NULL, *limit = NULL;
-        MDS_SysMemHeapAddress(&begin, &limit);
-        if ((begin != NULL) && (limit != NULL)) {
-            size_t size = (uintptr_t)limit - (uintptr_t)begin;
-            err =
-                MDS_MemHeapInit(&(g_sysHeap.memheap), "sysmem", begin, size, &MDS_SYSMEM_HEAP_OPS);
-        }
+        err = MDS_MemHeapInit(&(g_sysHeap.memheap), "sysheap", g_sysHeapMem,
+                              CONFIG_MDS_SYSMEM_HEAP_SIZE, &MDS_SYSMEM_HEAP_OPS);
 
         if (!MDS_ErrIsSame(err, MDS_EOK)) {
             MDS_LOG_E("[memory] SysMemInit failed");
@@ -229,7 +227,6 @@ void *MDS_SysMemRealloc(void *ptr, size_t size)
     return (MDS_MemHeapRealloc(&(g_sysHeap.memheap), ptr, size));
 }
 #else
-
 void MDS_SysMemFree(void *ptr)
 {
     UNUSED(ptr);

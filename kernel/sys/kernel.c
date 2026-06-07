@@ -104,7 +104,8 @@ void MDS_KernelSchedulerCheck(void)
                           toThread->entry, toThread->stackPoint);
             }
 
-            MDS_HOOK_CALL(KERNEL, scheduler, (toThread, currThread));
+            MDS_HOOK_CALL(KERNEL, scheduler,
+                          (MDS_KERNEL_TRACE_SCHEDULER_SWITCH, toThread, currThread));
 
             // cpuInfo
             g_sysCurrThread = toThread;

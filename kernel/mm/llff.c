@@ -25,7 +25,7 @@ typedef struct MemHeapLLFF_Node {
 static const uintptr_t MDS_MEMHEAP_LLFF_BASE = (UINTPTR_MAX ^ 1U);
 static const uintptr_t MDS_MEMHEAP_LLFF_USED = (1U);
 static const size_t MDS_MEMHEAP_LLFF_MINSIZE =
-    VALUE_ALIGN(sizeof(MemHeapLLFF_Node_t) + MDS_SYSMEM_ALIGN_SIZE - 1, MDS_SYSMEM_ALIGN_SIZE);
+    VALUE_ALIGN_UP(sizeof(MemHeapLLFF_Node_t), MDS_SYSMEM_ALIGN_SIZE);
 
 /* Function ---------------------------------------------------------------- */
 static bool MemHeapLLFF_NodeIsUsed(MemHeapLLFF_Node_t *node)
@@ -77,9 +77,8 @@ static void MemHeapLLFF_RelistFree(MDS_MemHeap_t *memheap, MemHeapLLFF_Node_t *n
 
 static MDS_Err_t MDS_MemHeapLLFF_Setup(MDS_MemHeap_t *memheap, void *heapBase, size_t heapSize)
 {
-    uintptr_t alignBegin =
-        VALUE_ALIGN((uintptr_t)heapBase + MDS_SYSMEM_ALIGN_SIZE - 1, MDS_SYSMEM_ALIGN_SIZE);
-    uintptr_t alignLimit = VALUE_ALIGN((uintptr_t)heapBase + heapSize, MDS_SYSMEM_ALIGN_SIZE);
+    uintptr_t alignBegin = VALUE_ALIGN_UP((uintptr_t)heapBase, MDS_SYSMEM_ALIGN_SIZE);
+    uintptr_t alignLimit = VALUE_ALIGN_DOWN((uintptr_t)heapBase + heapSize, MDS_SYSMEM_ALIGN_SIZE);
     if ((alignLimit - alignBegin) < (sizeof(MemHeapLLFF_Node_t) + sizeof(MemHeapLLFF_Node_t))) {
         return (MDS_ENOMEM);
     }
@@ -197,7 +196,7 @@ static MemHeapLLFF_Node_t *MemHeapLLFF_NodeAlloc(MDS_MemHeap_t *memheap, size_t 
 
 static void *MDS_MemHeapLLFF_Alloc(MDS_MemHeap_t *memheap, size_t size)
 {
-    size_t alignSize = VALUE_ALIGN(size + MDS_SYSMEM_ALIGN_SIZE - 1, MDS_SYSMEM_ALIGN_SIZE);
+    size_t alignSize = VALUE_ALIGN_UP(size, MDS_SYSMEM_ALIGN_SIZE);
     size_t totalSize = MemHeapLLFF_Size(memheap);
     if ((alignSize == 0) || (alignSize > totalSize)) {
         MDS_LOG_E("[memory] memheap(%p) alloc size:%" PRIuPTR " error of total:%" PRIuPTR, memheap,
@@ -280,7 +279,7 @@ static MemHeapLLFF_Node_t *MemHeapLLFF_NodeRealloc(MDS_MemHeap_t *memheap, MemHe
 
 static void *MDS_MemHeapLLFF_Realloc(MDS_MemHeap_t *memheap, void *ptr, size_t size)
 {
-    size_t alignSize = VALUE_ALIGN(size + MDS_SYSMEM_ALIGN_SIZE - 1, MDS_SYSMEM_ALIGN_SIZE);
+    size_t alignSize = VALUE_ALIGN_UP(size, MDS_SYSMEM_ALIGN_SIZE);
     size_t totalSize = MemHeapLLFF_Size(memheap);
     if ((!MemHeapLLFF_IsPtrInside(memheap, ptr)) || (alignSize > totalSize)) {
         MDS_LOG_E("[memory] memheap(%p) realloc ptr(%p) size:%" PRIuPTR " error of total:%" PRIuPTR,

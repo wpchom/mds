@@ -44,7 +44,7 @@ MDS_Err_t MDS_MsgQueueInit(MDS_MsgQueue_t *msgQueue, const char *name, void *que
     MDS_Err_t err = MDS_ObjectInit(&(msgQueue->object), MDS_OBJECT_TYPE_MSGQUEUE, name);
     if (MDS_ErrIsSame(err, MDS_EOK)) {
         msgQueue->queBuff = queBuff;
-        msgQueue->msgSize = VALUE_ALIGN(msgSize + MDS_SYSMEM_ALIGN_SIZE - 1, MDS_SYSMEM_ALIGN_SIZE);
+        msgQueue->msgSize = VALUE_ALIGN_UP(msgSize, MDS_SYSMEM_ALIGN_SIZE);
         MDS_MsgQueueListInit(msgQueue,
                              bufSize / (msgQueue->msgSize + sizeof(MDS_MsgQueueHeader_t)));
         MDS_KernelWaitQueueInit(&(msgQueue->queueRecv));
@@ -81,7 +81,7 @@ MDS_MsgQueue_t *MDS_MsgQueueCreate(const char *name, size_t msgSize, size_t msgN
         (MDS_MsgQueue_t *)MDS_ObjectCreate(sizeof(MDS_MsgQueue_t), MDS_OBJECT_TYPE_MSGQUEUE, name);
 
     if (msgQueue != NULL) {
-        msgQueue->msgSize = VALUE_ALIGN(msgSize + MDS_SYSMEM_ALIGN_SIZE - 1, MDS_SYSMEM_ALIGN_SIZE);
+        msgQueue->msgSize = VALUE_ALIGN_UP(msgSize, MDS_SYSMEM_ALIGN_SIZE);
         msgQueue->queBuff =
             MDS_SysMemAlloc((msgQueue->msgSize + sizeof(MDS_MsgQueueHeader_t)) * msgNums);
         if (msgQueue->queBuff == NULL) {
@@ -355,12 +355,12 @@ MDS_Err_t MDS_MsgQueueUrgentMsg(MDS_MsgQueue_t *msgQueue, const MDS_MsgList_t *m
 
     MDS_CriticalRestore(&(msgQueue->spinlock), lock);
 
-    MDS_HOOK_CALL(KERNEL, msgqueue,
-                  (msgQueue, MDS_KERNEL_TRACE_MSGQUEUE_HAS_SEND, err, MDS_TIMEOUT_NOWAIT));
-
     if (msg == NULL) {
         return (MDS_ERANGE);
     }
+
+    MDS_HOOK_CALL(KERNEL, msgqueue,
+                  (msgQueue, MDS_KERNEL_TRACE_MSGQUEUE_HAS_SEND, MDS_EOK, MDS_TIMEOUT_NOWAIT));
 
     MDS_MsgListCopyBuff(msg + 1, msgQueue->msgSize, msgList);
 

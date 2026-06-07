@@ -193,7 +193,7 @@ void MDS_CoreInterruptRestore(MDS_Lock_t lock)
 /* CoreThread -------------------------------------------------------------- */
 void *MDS_CoreThreadStackInit(void *stackBase, size_t stackSize, void *entry, void *arg, void *exit)
 {
-    uintptr_t sp = VALUE_ALIGN((uintptr_t)(stackBase) + stackSize, sizeof(uint64_t));
+    uintptr_t sp = VALUE_ALIGN_DOWN((uintptr_t)(stackBase) + stackSize, sizeof(uint64_t));
     struct StackFrame *stack = (struct StackFrame *)(sp - sizeof(struct StackFrame));
 
     memset(stackBase, '@', stackSize);
@@ -221,15 +221,32 @@ bool MDS_CoreThreadStackCheck(MDS_Thread_t *thread)
 {
     MDS_ASSERT(thread != NULL);
 
-    if (((*(uint8_t *)(thread->stackBase)) != '@') ||
+    static const union {
+        uint32_t val;
+        uint8_t chr[sizeof(uint32_t)];
+    } check = {.chr = {'@', '@', '@', '@'}};
+    const uintptr_t stackLimit = (uintptr_t)(thread->stackBase) + thread->stackSize;
+
+    if ((*((uint32_t *)thread->stackBase) != check.val) ||
         ((uintptr_t)(thread->stackPoint) <= (uintptr_t)(thread->stackBase)) ||
-        ((uintptr_t)(thread->stackPoint) >
-         ((uintptr_t)(thread->stackBase) + (uintptr_t)(thread->stackSize)))) {
+        ((uintptr_t)(thread->stackPoint) >= (uintptr_t)stackLimit)) {
         return (false);
     }
 
 #if (defined(CONFIG_MDS_KERNEL_STATS_ENABLE) && (CONFIG_MDS_KERNEL_STATS_ENABLE != 0))
-    // TODO: add stack level check
+    if (thread->stackWater == NULL) {
+        thread->stackWater = (void*)stackLimit;
+    }
+
+    void *p = thread->stackBase;
+    while ((uintptr_t)p < (uintptr_t)(thread->stackWater)) {
+        if (*((uint32_t *)p) != check.val) {
+            break;
+        }
+        p += sizeof(check);
+    }
+
+    thread->stackWater = p;
 #endif
 
     return (true);

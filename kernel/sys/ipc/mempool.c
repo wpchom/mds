@@ -43,7 +43,7 @@ MDS_Err_t MDS_MemPoolInit(MDS_MemPool_t *memPool, const char *name, void *memBuf
     MDS_Err_t err = MDS_ObjectInit(&(memPool->object), MDS_OBJECT_TYPE_MEMPOOL, name);
     if (MDS_ErrIsSame(err, MDS_EOK)) {
         memPool->memBuff = memBuff;
-        memPool->blkSize = VALUE_ALIGN(blkSize + MDS_SYSMEM_ALIGN_SIZE - 1, MDS_SYSMEM_ALIGN_SIZE);
+        memPool->blkSize = VALUE_ALIGN_UP(blkSize, MDS_SYSMEM_ALIGN_SIZE);
         MDS_MemPoolListInit(memPool,
                             bufSize / (memPool->blkSize + sizeof(union MDS_MemPoolHeader)));
         MDS_KernelWaitQueueInit(&(memPool->queueWait));
@@ -78,7 +78,7 @@ MDS_MemPool_t *MDS_MemPoolCreate(const char *name, size_t blkSize, size_t blkNum
         (MDS_MemPool_t *)MDS_ObjectCreate(sizeof(MDS_MemPool_t), MDS_OBJECT_TYPE_MEMPOOL, name);
 
     if (memPool != NULL) {
-        memPool->blkSize = VALUE_ALIGN(blkSize + MDS_SYSMEM_ALIGN_SIZE - 1, MDS_SYSMEM_ALIGN_SIZE);
+        memPool->blkSize = VALUE_ALIGN_UP(blkSize, MDS_SYSMEM_ALIGN_SIZE);
         memPool->memBuff =
             MDS_SysMemAlloc((memPool->blkSize + sizeof(union MDS_MemPoolHeader)) * blkNums);
         if (memPool->memBuff == NULL) {

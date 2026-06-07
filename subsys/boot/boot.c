@@ -16,7 +16,7 @@
 
 /* Define ------------------------------------------------------------------ */
 #ifndef CONFIG_MDS_BOOT_SWAP_SECTION
-#define CONFIG_MDS_BOOT_SWAP_SECTION ".bootSwap"
+#define CONFIG_MDS_BOOT_SWAP_SECTION ".boot"
 #endif
 
 #ifndef CONFIG_MDS_BOOT_UPGRADE_RETRY

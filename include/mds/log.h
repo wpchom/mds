@@ -204,18 +204,22 @@ __attribute__((format(printf, 2, 3))) void MDS_PanicPrintf(size_t va_cnt, const 
 
 /* Hook -------------------------------------------------------------------- */
 #define MDS_HOOK_DECLARE(_MODULE, _TYPE)                                                           \
-    MDS_COND_CODE_1(CONFIG_MDS_HOOK_ENABLE_##_MODULE, (extern const _TYPE G_MDS_HOOK_##_MODULE), ())
+    MDS_COND_CODE_1(CONFIG_MDS_HOOK_ENABLE_##_MODULE, (extern _TYPE G_MDS_HOOK_##_MODULE), ())
 
 #define MDS_HOOK_DEFINE(_MODULE, _TYPE, ...)                                                       \
     MDS_COND_CODE_1(CONFIG_MDS_HOOK_ENABLE_##_MODULE,                                              \
-                    (const _TYPE G_MDS_HOOK_##_MODULE = {__DEBRACKET __VA_ARGS__}), ())
+                    (_TYPE G_MDS_HOOK_##_MODULE = {__DEBRACKET __VA_ARGS__}), ())
 
 #define MDS_HOOK_CALL(_MODULE, _func, ...)                                                         \
     MDS_COND_CODE_1(CONFIG_MDS_HOOK_ENABLE_##_MODULE, (do {                                        \
-                        if ((G_MDS_HOOK_##_MODULE._func) != NULL) {                                \
-                            G_MDS_HOOK_##_MODULE._func(__DEBRACKET __VA_ARGS__);                   \
-                        }                                                                          \
+                    if ((G_MDS_HOOK_##_MODULE._func) != NULL) {                                    \
+                        G_MDS_HOOK_##_MODULE._func(__DEBRACKET __VA_ARGS__);                       \
+                    }                                                                              \
                     } while (0)),                                                                  \
+                    ())
+
+#define MDS_HOOK_REGISTER(_MODULE, _func, ...)                                                     \
+    MDS_COND_CODE_1(CONFIG_MDS_HOOK_ENABLE_##_MODULE, (G_MDS_HOOK_##_MODULE._func = __VA_ARGS__),  \
                     ())
 
 /* Compress ---------------------------------------------------------------- */

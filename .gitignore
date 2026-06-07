@@ -10,4 +10,5 @@ build/
 
 # agents
 AGENTS.md
+.kilo/
 .qoder/
