@@ -443,6 +443,6 @@ __attribute__((naked, noreturn)) void HardFault_Handler(void)
     __asm volatile("b           .");
 }
 
-__attribute((noreturn, alias("HardFault_Handler"))) void MemManage_Handler(void);
-__attribute((noreturn, alias("HardFault_Handler"))) void BusFault_Handler(void);
-__attribute((noreturn, alias("HardFault_Handler"))) void UsageFault_Handler(void);
+__attribute__((noreturn, alias("HardFault_Handler"))) void MemManage_Handler(void);
+__attribute__((noreturn, alias("HardFault_Handler"))) void BusFault_Handler(void);
+__attribute__((noreturn, alias("HardFault_Handler"))) void UsageFault_Handler(void);

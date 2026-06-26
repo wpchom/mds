@@ -10,5 +10,8 @@ build/
 
 # agents
 AGENTS.md
+.claude/
+.opencode/
 .kilo/
 .qoder/
+.codegraph/

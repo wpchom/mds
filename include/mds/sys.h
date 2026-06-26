@@ -409,7 +409,7 @@ size_t MDS_SemaphoreGetValue(const MDS_Semaphore_t *semaphore, size_t *max);
 /* Condition --------------------------------------------------------------- */
 typedef MDS_Semaphore_t MDS_Condition_t;
 
-MDS_Err_t MDS_ConditionInit(MDS_Condition_t *condition, const char *name);
+MDS_Err_t MDS_ConditionInit(MDS_Condition_t *condition, const char *name, size_t max);
 MDS_Err_t MDS_ConditionDeInit(MDS_Condition_t *condition);
 MDS_Condition_t *MDS_ConditionCreate(const char *name);
 MDS_Err_t MDS_ConditionDestroy(MDS_Condition_t *condition);

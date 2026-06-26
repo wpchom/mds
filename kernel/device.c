@@ -51,7 +51,7 @@ static bool MDS_DeviceIsBusy(MDS_Device_t *device)
         return (false);
     }
 
-    if ((((MDS_DevPeriph_t *)(nextdev))->mount != (void *)(device))) {
+    if (((MDS_DevPeriph_t *)(nextdev))->mount != (void *)(device)) {
         return (false);
     }
 
@@ -98,6 +98,10 @@ MDS_Err_t MDS_DevModuleDeInit(MDS_DevModule_t *module)
     if ((module->driver != NULL) && (module->driver->control != NULL)) {
         err = module->driver->control(&(module->device), MDS_DEVICE_CMD_DEINIT, MDS_ARG_WITH(NULL));
     }
+
+    MDS_LOG_D("[device] module(%p) deinit driver(%p) handle(%p) err(%d)", module, module->driver,
+              module->handle.ptr, err.errno);
+
     if (MDS_ErrIsSame(err, MDS_EOK)) {
         MDS_ObjectDeInit(&(module->device.object));
     }
@@ -111,12 +115,18 @@ MDS_DevModule_t *MDS_DevModuleCreate(size_t typesz, const char *name, const MDS_
     MDS_Err_t err = MDS_EOK;
     MDS_DevModule_t *module =
         (MDS_DevModule_t *)MDS_ObjectCreate(typesz, MDS_OBJECT_TYPE_DEVICE, name);
-    if (module != NULL) {
+
+    do {
+        if (module == NULL) {
+            err = MDS_ENOMEM;
+            break;
+        }
+
         module->device.flag.mask = MDS_DEVICE_FLAG_MODULE;
         module->driver = driver;
 
         if ((driver == NULL) || (driver->control == NULL)) {
-            return (module);
+            break;
         }
 
         size_t handlesz = 0;
@@ -125,15 +135,21 @@ MDS_DevModule_t *MDS_DevModuleCreate(size_t typesz, const char *name, const MDS_
             module->handle.ptr = MDS_SysMemCalloc(1, handlesz);
             if (module->handle.ptr == NULL) {
                 err = MDS_ENOMEM;
+                break;
             }
         }
-        if (MDS_ErrIsSame(err, MDS_EOK)) {
-            err = driver->control(&(module->device), MDS_DEVICE_CMD_INIT, init);
-        }
-        if (!MDS_ErrIsSame(err, MDS_EOK)) {
+
+        err = driver->control(&(module->device), MDS_DEVICE_CMD_INIT, init);
+    } while (0);
+
+    if (!MDS_ErrIsSame(err, MDS_EOK)) {
+        if (module->handle.ptr != NULL) {
             MDS_SysMemFree(module->handle.ptr);
+        }
+        if (module != NULL) {
             MDS_ObjectDestroy(&(module->device.object));
         }
+        module = NULL;
     }
 
     MDS_LOG_D("[device] module(%p) create driver(%p) err(%d)", module, driver, err.errno);
@@ -155,6 +171,9 @@ MDS_Err_t MDS_DevModuleDestroy(MDS_DevModule_t *module)
     if ((module->driver != NULL) && (module->driver->control != NULL)) {
         err = module->driver->control(&(module->device), MDS_DEVICE_CMD_DEINIT, MDS_ARG_WITH(NULL));
     }
+
+    MDS_LOG_D("[device] module(%p) destroy driver(%p) err(%d)", module, module->driver, err.errno);
+
     if (MDS_ErrIsSame(err, MDS_EOK)) {
         MDS_SysMemFree(module->handle.ptr);
         MDS_ObjectDestroy(&(module->device.object));
@@ -188,6 +207,9 @@ MDS_Err_t MDS_DevAdaptrInit(MDS_DevAdaptr_t *adaptr, const char *name,
         }
     }
 
+    MDS_LOG_D("[device] adaptr(%p) init driver(%p) handle(%p) err(%d)", adaptr, driver, handle.ptr,
+              err.errno);
+
     return (err);
 }
 
@@ -205,6 +227,10 @@ MDS_Err_t MDS_DevAdaptrDeInit(MDS_DevAdaptr_t *adaptr)
     if ((adaptr->driver != NULL) && (adaptr->driver->control != NULL)) {
         err = adaptr->driver->control(&(adaptr->device), MDS_DEVICE_CMD_DEINIT, MDS_ARG_WITH(NULL));
     }
+
+    MDS_LOG_D("[device] adaptr(%p) deinit driver(%p) handle(%p) err(%d)", adaptr, adaptr->driver,
+              adaptr->handle.ptr, err.errno);
+
     if (MDS_ErrIsSame(err, MDS_EOK)) {
         MDS_MutexDeInit(&(adaptr->mutex));
         MDS_ObjectDeInit(&(adaptr->device.object));
@@ -216,14 +242,21 @@ MDS_Err_t MDS_DevAdaptrDeInit(MDS_DevAdaptr_t *adaptr)
 MDS_DevAdaptr_t *MDS_DevAdaptrCreate(size_t typesz, const char *name, const MDS_DevDriver_t *driver,
                                      MDS_Arg_t init)
 {
+    MDS_Err_t err = MDS_EOK;
     MDS_DevAdaptr_t *adaptr =
         (MDS_DevAdaptr_t *)MDS_ObjectCreate(typesz, MDS_OBJECT_TYPE_DEVICE, name);
-    if (adaptr != NULL) {
+
+    do {
+        if (adaptr == NULL) {
+            err = MDS_ENOMEM;
+            break;
+        }
+
         adaptr->device.flag.mask = MDS_DEVICE_FLAG_ADAPTR;
         adaptr->driver = driver;
 
         if ((driver == NULL) || (driver->control == NULL)) {
-            return (adaptr);
+            break;
         }
 
         size_t handlesz = 0;
@@ -231,24 +264,34 @@ MDS_DevAdaptr_t *MDS_DevAdaptrCreate(size_t typesz, const char *name, const MDS_
         if (handlesz > 0) {
             adaptr->handle.ptr = MDS_SysMemCalloc(1, handlesz);
             if (adaptr->handle.ptr == NULL) {
-                MDS_ObjectDestroy(&(adaptr->device.object));
-                return (NULL);
+                err = MDS_ENOMEM;
+                break;
             }
         }
 
-        MDS_Err_t err = MDS_MutexInit(&(adaptr->mutex), name);
+        err = MDS_MutexInit(&(adaptr->mutex), name);
         if (MDS_ErrIsSame(err, MDS_EOK)) {
             err = driver->control(&(adaptr->device), MDS_DEVICE_CMD_INIT, init);
-            if (MDS_ErrIsSame(err, MDS_EOK)) {
-                return (adaptr);
+            if (!MDS_ErrIsSame(err, MDS_EOK)) {
+                MDS_MutexDeInit(&(adaptr->mutex));
+                break;
             }
-            MDS_MutexDeInit(&(adaptr->mutex));
         }
-        MDS_SysMemFree(adaptr->handle.ptr);
-        MDS_ObjectDestroy(&(adaptr->device.object));
+    } while (0);
+
+    if (!MDS_ErrIsSame(err, MDS_EOK)) {
+        if (adaptr->handle.ptr != NULL) {
+            MDS_SysMemFree(adaptr->handle.ptr);
+        }
+        if (adaptr != NULL) {
+            MDS_ObjectDestroy(&(adaptr->device.object));
+        }
+        adaptr = NULL;
     }
 
-    return (NULL);
+    MDS_LOG_D("[device] adaptr(%p) create driver(%p) err(%d)", adaptr, driver, err.errno);
+
+    return (adaptr);
 }
 
 MDS_Err_t MDS_DevAdaptrDestroy(MDS_DevAdaptr_t *adaptr)
@@ -265,6 +308,9 @@ MDS_Err_t MDS_DevAdaptrDestroy(MDS_DevAdaptr_t *adaptr)
     if ((adaptr->driver != NULL) && (adaptr->driver->control != NULL)) {
         err = adaptr->driver->control(&(adaptr->device), MDS_DEVICE_CMD_DEINIT, MDS_ARG_WITH(NULL));
     }
+
+    MDS_LOG_D("[device] adaptr(%p) destroy driver(%p) err(%d)", adaptr, adaptr->driver, err.errno);
+
     if (MDS_ErrIsSame(err, MDS_EOK)) {
         MDS_SysMemFree(adaptr->handle.ptr);
         MDS_MutexDeInit(&(adaptr->mutex));
@@ -309,6 +355,8 @@ MDS_Err_t MDS_DevPeriphInit(MDS_DevPeriph_t *periph, const char *name, MDS_DevAd
         MDS_CriticalRestore(&(objInfo->spinlock), lock);
     }
 
+    MDS_LOG_D("[device] periph(%p) init adaptr(%p) err(%d)", periph, adaptr, err.errno);
+
     return (err);
 }
 
@@ -319,6 +367,9 @@ MDS_Err_t MDS_DevPeriphDeInit(MDS_DevPeriph_t *periph)
     MDS_ASSERT(!MDS_ObjectIsCreated(&(periph->device.object)));
 
     MDS_Err_t err = MDS_DevPeriphClose(periph);
+
+    MDS_LOG_D("[device] periph(%p) deinit adaptr(%p) err(%d)", periph, periph->mount, err.errno);
+
     if (MDS_ErrIsSame(err, MDS_EOK)) {
         MDS_ObjectDeInit(&(periph->device.object));
     }
@@ -344,6 +395,8 @@ MDS_DevPeriph_t *MDS_DevPeriphCreate(size_t typesz, const char *name, MDS_DevAda
         MDS_CriticalRestore(&(objInfo->spinlock), lock);
     }
 
+    MDS_LOG_D("[device] periph(%p) create adaptr(%p)", periph, adaptr);
+
     return (periph);
 }
 
@@ -354,6 +407,9 @@ MDS_Err_t MDS_DevPeriphDestroy(MDS_DevPeriph_t *periph)
     MDS_ASSERT(MDS_ObjectIsCreated(&(periph->device.object)));
 
     MDS_Err_t err = MDS_DevPeriphClose(periph);
+
+    MDS_LOG_D("[device] periph(%p) destroy adaptr(%p) err(%d)", periph, periph->mount, err.errno);
+
     if (MDS_ErrIsSame(err, MDS_EOK)) {
         MDS_ObjectDestroy(&(periph->device.object));
     }
@@ -479,11 +535,9 @@ bool MDS_DeviceIsPeriph(const MDS_Device_t *device)
             MDS_DEVICE_FLAG_PERIPH);
 }
 
-const MDS_DevProbeId_t *MDS_DeviceGetId(const MDS_Device_t *device)
+MDS_Err_t MDS_DeviceGetId(const MDS_Device_t *device, MDS_DevProbeId_t *id)
 {
     MDS_ASSERT(device != NULL);
-
-    const MDS_DevProbeId_t *id = NULL;
 
     if (device->hook != NULL) {
         device->hook(device, MDS_DEVICE_CMD_GETID);
@@ -492,41 +546,45 @@ const MDS_DevProbeId_t *MDS_DeviceGetId(const MDS_Device_t *device)
     if ((device->flag.mask & (MDS_DEVICE_FLAG_MODULE | MDS_DEVICE_FLAG_ADAPTR)) != 0U) {
         MDS_DevModule_t *module = CONTAINER_OF(device, MDS_DevModule_t, device);
         if ((module->driver != NULL) && (module->driver->control != NULL)) {
-            module->driver->control(&(module->device), MDS_DEVICE_CMD_GETID, MDS_ARG_WITH(&id));
+            return (
+                module->driver->control(&(module->device), MDS_DEVICE_CMD_GETID, MDS_ARG_WITH(id)));
         }
     }
 
-    return (id);
+    return (MDS_ENODEV);
 }
 
-MDS_Device_t *MDS_DeviceProbeDrivers(const MDS_DevDriver_t **driver, MDS_Device_t *device,
-                                     const MDS_DevProbeTable_t drvList[], size_t drvSize)
+const MDS_DevDriver_t *MDS_DeviceProbeDrivers(const MDS_Device_t *periph,
+                                              const MDS_DevProbeTable_t drvList[], size_t drvSize,
+                                              MDS_Arg_t arg)
 {
-    MDS_ASSERT(device != NULL);
+    MDS_ASSERT(periph != NULL);
 
-    if (device->hook != NULL) {
-        device->hook(device, MDS_DEVICE_CMD_PROBE);
+    if (periph->hook != NULL) {
+        periph->hook(periph, MDS_DEVICE_CMD_PROBE);
     }
 
+    const MDS_DevDriver_t *driver = NULL;
     for (size_t idx = 0; idx < drvSize; idx++) {
         if ((drvList[idx].driver == NULL) || (drvList[idx].driver->control == NULL)) {
             continue;
         }
+
         MDS_Err_t err =
-            drvList[idx].driver->control(device, MDS_DEVICE_CMD_PROBE, MDS_ARG_WITH(device));
+            drvList[idx].driver->control(NULL, MDS_DEVICE_CMD_PROBE, MDS_ARG_WITH(periph));
         if (!MDS_ErrIsSame(err, MDS_EOK)) {
             continue;
         }
-        if (driver != NULL) {
-            *driver = drvList[idx].driver;
-        }
         if (drvList[idx].callback != NULL) {
-            return (drvList[idx].callback(device, drvList[idx].driver));
+            err = drvList[idx].callback(arg, periph, drvList[idx].driver);
         }
-        break;
+        if (MDS_ErrIsSame(err, MDS_EOK)) {
+            driver = drvList[idx].driver;
+            break;
+        }
     }
 
-    return (NULL);
+    return (driver);
 }
 
 MDS_Err_t MDS_DevModuleDump(const MDS_Device_t *device, MDS_DevDumpData_t *dump)

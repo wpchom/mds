@@ -16,11 +16,11 @@
 MDS_LOG_MODULE_DECLARE(kernel, CONFIG_MDS_KERNEL_LOG_LEVEL);
 
 /* Function ---------------------------------------------------------------- */
-MDS_Err_t MDS_ConditionInit(MDS_Condition_t *condition, const char *name)
+MDS_Err_t MDS_ConditionInit(MDS_Condition_t *condition, const char *name, size_t max)
 {
     MDS_ASSERT(condition != NULL);
 
-    return (MDS_SemaphoreInit(condition, name, 0, -1));
+    return (MDS_SemaphoreInit(condition, name, 0, max));
 }
 
 MDS_Err_t MDS_ConditionDeInit(MDS_Condition_t *condition)

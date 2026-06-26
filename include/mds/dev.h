@@ -23,12 +23,12 @@ extern "C" {
 typedef int MDS_DevCmd_t;
 enum MDS_DEVICE_Cmd {
     MDS_DEVICE_CMD_HANDLESZ = 0,
+    MDS_DEVICE_CMD_PROBE,
     MDS_DEVICE_CMD_GETID,
     MDS_DEVICE_CMD_INIT,
     MDS_DEVICE_CMD_DEINIT,
     MDS_DEVICE_CMD_OPEN,
     MDS_DEVICE_CMD_CLOSE,
-    MDS_DEVICE_CMD_PROBE,
     MDS_DEVICE_CMD_DUMP,
 
     MDS_DEVICE_CMD_DRIVER,
@@ -78,7 +78,7 @@ typedef struct MDS_DevProbeId {
 
 typedef struct MDS_DevProbeTable {
     const MDS_DevDriver_t *driver;
-    MDS_Device_t *(*callback)(const MDS_Device_t *device, const MDS_DevDriver_t *driver);
+    MDS_Err_t (*callback)(MDS_Arg_t arg, const MDS_Device_t *periph, const MDS_DevDriver_t *driver);
 } MDS_DevProbeTable_t;
 
 typedef struct MDS_DevDumpData {
@@ -120,10 +120,11 @@ MDS_DevPeriph_t *MDS_DevPeriphOpenForce(MDS_DevPeriph_t *periph);
 bool MDS_DevPeriphIsAccessable(MDS_DevPeriph_t *periph);
 
 bool MDS_DeviceIsPeriph(const MDS_Device_t *device);
-const MDS_DevProbeId_t *MDS_DeviceGetId(const MDS_Device_t *device);
+MDS_Err_t MDS_DeviceGetId(const MDS_Device_t *device, MDS_DevProbeId_t *id);
+const MDS_DevDriver_t *MDS_DeviceProbeDrivers(const MDS_Device_t *periph,
+                                              const MDS_DevProbeTable_t drvList[], size_t drvSize,
+                                              MDS_Arg_t arg);
 MDS_Err_t MDS_DevModuleDump(const MDS_Device_t *device, MDS_DevDumpData_t *dump);
-MDS_Device_t *MDS_DeviceProbeDrivers(const MDS_DevDriver_t **driver, MDS_Device_t *device,
-                                     const MDS_DevProbeTable_t drvList[], size_t drvSize);
 
 /* Define ------------------------------------------------------------------ */
 #define MDS_DEVICE_HANDLE(x) ((MDS_DevHandle_t) {x})

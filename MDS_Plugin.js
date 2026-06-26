@@ -230,7 +230,7 @@ function updateThread(nodeAddr) {
     var entrySym = resolveSymbol(entry);
 
     Threads.add(
-        toHex(nodeAddr),                // Thread address
+        resolveSymbol(nodeAddr),        // Thread address
         name,                           // Name
         entrySym,                       // Entry
         getThreadState(state),          // State
@@ -301,27 +301,28 @@ function updateDevice(nodeAddr) {
     var ownerStr = "";
 
     if ((flagMask & DEV_FLAG_MODULE) != 0) {
-        var modPfx = "(MDS_DevModule_t *)" + nodeAddr;
+        var modPfx = "((MDS_DevModule_t *)" + nodeAddr + ")";
         var driverAddr = Debug.evaluate(modPfx + "->driver");
         var handleAddr = Debug.evaluate(modPfx + "->handle.ptr");
         driverStr = resolveSymbol(driverAddr);
-        handleStr = toHex(handleAddr);
+        handleStr = resolveSymbol(handleAddr);
     } else if ((flagMask & DEV_FLAG_ADAPTR) != 0) {
-        var adpPfx = "(MDS_DevAdaptr_t *)" + nodeAddr;
+        var adpPfx = "((MDS_DevAdaptr_t *)" + nodeAddr + ")";
         var driverAddr = Debug.evaluate(adpPfx + "->driver");
         var handleAddr = Debug.evaluate(adpPfx + "->handle.ptr");
         var ownerAddr = Debug.evaluate(adpPfx + "->owner");
         driverStr = resolveSymbol(driverAddr);
-        handleStr = toHex(handleAddr);
-        ownerStr = toHex(ownerAddr);
+        handleStr = resolveSymbol(handleAddr);
+        ownerStr = resolveSymbol(ownerAddr);
     } else if ((flagMask & DEV_FLAG_PERIPH) != 0) {
-        var perPfx = "(MDS_DevPeriph_t *)" + nodeAddr;
+        var perPfx = "((MDS_DevPeriph_t *)" + nodeAddr + ")";
         var mountAddr = Debug.evaluate(perPfx + "->mount");
-        ownerStr = toHex(mountAddr);
+        ownerStr = resolveSymbol(mountAddr);
     }
 
     Threads.add2(MDS_Object.DEVICE.label,
-        toHex(nodeAddr), name, getDeviceType(flagMask),
+        resolveSymbol(nodeAddr), name,
+        getDeviceType(flagMask),
         driverStr, handleStr, ownerStr);
 }
 
@@ -330,10 +331,10 @@ function updateWorkQueue(nodeAddr) {
     var pfx = "(MDS_WorkQueue_t *)" + nodeAddr;
 
     var name = Debug.evaluate("(char*)(" + pfx + ")->object.name");
-    var thread = Debug.evaluate(pfx + "->thread");
+    var thread = Debug.evaluate("(" + pfx + ")->thread");
 
     Threads.add2(MDS_Object.WORKQUEUE.label,
-        toHex(nodeAddr), name, toHex(thread));
+        resolveSymbol(nodeAddr), name, resolveSymbol(thread));
 }
 
 /* WorkNode ---------------------------------------------------------------- */
@@ -341,15 +342,15 @@ function updateWorkNode(nodeAddr) {
     var pfx = "(MDS_WorkNode_t *)" + nodeAddr;
 
     var name = Debug.evaluate("(char*)(" + pfx + ")->object.name");
-    var queue = Debug.evaluate(pfx + "->queue");
-    var entry = Debug.evaluate(pfx + "->entry");
-    var arg = Debug.evaluate(pfx + "->arg.ptr");
-    var tickout = Debug.evaluate(pfx + "->tickout");
-    var tperiod = Debug.evaluate(pfx + "->tperiod");
+    var queue = Debug.evaluate("(" + pfx + ")->queue");
+    var entry = Debug.evaluate("(" + pfx + ")->entry");
+    var arg = Debug.evaluate("(" + pfx + ")->arg.ptr");
+    var tickout = Debug.evaluate("(" + pfx + ")->tickout");
+    var tperiod = Debug.evaluate("(" + pfx + ")->tperiod");
 
     Threads.add2(MDS_Object.WORKNODE.label,
-        toHex(nodeAddr), name,
-        toHex(queue),
+        resolveSymbol(nodeAddr), name,
+        resolveSymbol(queue),
         resolveSymbol(entry),
         resolveSymbol(arg),
         "" + tickout,
@@ -367,7 +368,7 @@ function updateSemaphore(nodeAddr) {
     var waitList = getWaitThreadList("&((" + pfx + ")->queueWait.list)");
 
     Threads.add2(MDS_Object.SEMAPHORE.label,
-        toHex(nodeAddr), name,
+        resolveSymbol(nodeAddr), name,
         "" + value, "" + max,
         waitList);
 }
@@ -379,14 +380,14 @@ function updateMutex(nodeAddr) {
     var name = Debug.evaluate("(char*)(" + pfx + ")->object.name");
     var value = Debug.evaluate("(" + pfx + ")->value");
     var nest = Debug.evaluate("(" + pfx + ")->nest");
-    var owner = Debug.evaluate(pfx + "->owner");
+    var owner = Debug.evaluate("(" + pfx + ")->owner");
 
     var waitList = getWaitThreadList("&((" + pfx + ")->queueWait.list)");
 
     Threads.add2(MDS_Object.MUTEX.label,
-        toHex(nodeAddr), name,
+        resolveSymbol(nodeAddr), name,
         "" + value, "" + nest,
-        toHex(owner),
+        resolveSymbol(owner),
         waitList);
 }
 
@@ -400,8 +401,8 @@ function updateEvent(nodeAddr) {
     var waitList = getWaitThreadList("&((" + pfx + ")->queueWait.list)");
 
     Threads.add2(MDS_Object.EVENT.label,
-        toHex(nodeAddr), name,
-        toHex(value),
+        resolveSymbol(nodeAddr), name,
+        resolveSymbol(value),
         waitList);
 }
 
@@ -410,12 +411,12 @@ function updateMsgQueue(nodeAddr) {
     var pfx = "(MDS_MsgQueue_t *)" + nodeAddr;
 
     var name = Debug.evaluate("(char*)(" + pfx + ")->object.name");
-    var queBuff = Debug.evaluate(pfx + "->queBuff");
-    var msgSize = Debug.evaluate(pfx + "->msgSize");
+    var queBuff = Debug.evaluate("(" + pfx + ")->queBuff");
+    var msgSize = Debug.evaluate("(" + pfx + ")->msgSize");
 
     // Count free blocks via lfree linked list
     var freeCount = 0;
-    var lfree = Debug.evaluate(pfx + "->lfree");
+    var lfree = Debug.evaluate("(" + pfx + ")->lfree");
     for (var i = 0; (i < OBJECT_MAX_ITER) && (lfree != undefined) && (lfree != 0); i++) {
         freeCount++;
         lfree = Debug.evaluate("((MDS_MsgQueueHeader_t *)" + lfree + ")->next");
@@ -423,7 +424,7 @@ function updateMsgQueue(nodeAddr) {
 
     // Count used blocks via lhead linked list
     var usedCount = 0;
-    var lhead = Debug.evaluate(pfx + "->lhead");
+    var lhead = Debug.evaluate("(" + pfx + ")->lhead");
     for (var i = 0; (i < OBJECT_MAX_ITER) && (lhead != undefined) && (lhead != 0); i++) {
         usedCount++;
         lhead = Debug.evaluate("((MDS_MsgQueueHeader_t *)" + lhead + ")->next");
@@ -434,8 +435,9 @@ function updateMsgQueue(nodeAddr) {
     var sendList = getWaitThreadList("&((" + pfx + ")->queueSend.list)");
 
     Threads.add2(MDS_Object.MSGQUEUE.label,
-        toHex(nodeAddr), name,
-        toHex(queBuff), "" + msgSize,
+        resolveSymbol(nodeAddr), name,
+        resolveSymbol(queBuff),
+        "" + msgSize,
         "" + freeCount + "/" + (freeCount + usedCount),
         recvList, sendList);
 }
@@ -445,16 +447,15 @@ function updateMemPool(nodeAddr) {
     var pfx = "(MDS_MemPool_t *)" + nodeAddr;
 
     var name = Debug.evaluate("(char*)(" + pfx + ")->object.name");
-    var memBuff = Debug.evaluate(pfx + "->memBuff");
-    var blkSize = Debug.evaluate(pfx + "->blkSize");
+    var memBuff = Debug.evaluate("(" + pfx + ")->memBuff");
+    var blkSize = Debug.evaluate("(" + pfx + ")->blkSize");
 
     // Count free blocks via lfree singly-linked list.
     // union MDS_MemPoolHeader { .next; .memPool; }
     // The free list is a stack: lfree -> ... -> memBuff (sentinel).
     // Terminate when lfree == NULL or lfree == memBuff.
     var freeCount = 0;
-    var lfree = Debug.evaluate(pfx + "->lfree");
-
+    var lfree = Debug.evaluate("(" + pfx + ")->lfree");
     for (var i = 0; i < OBJECT_MAX_ITER; i++) {
         if ((lfree == undefined) || (lfree == 0) || (lfree == memBuff)) {
             break;
@@ -463,12 +464,23 @@ function updateMemPool(nodeAddr) {
         lfree = Debug.evaluate("((union MDS_MemPoolHeader *)" + lfree + ")->next");
     }
 
+    var usedCount = 0;
+    var lhead = Debug.evaluate("(" + pfx + ")->lhead");
+    for (var i = 0; i < OBJECT_MAX_ITER; i++) {
+        if ((lhead == undefined) || (lhead == 0)) {
+            break;
+        }
+        usedCount++;
+        lhead = Debug.evaluate("((union MDS_MemPoolHeader *)" + lhead + ")->next");
+    }
+
     var waitList = getWaitThreadList("&((" + pfx + ")->queueWait.list)");
 
     Threads.add2(MDS_Object.MEMPOOL.label,
-        toHex(nodeAddr), name,
-        toHex(memBuff), "" + blkSize,
-        "" + freeCount,
+        resolveSymbol(nodeAddr), name,
+        resolveSymbol(memBuff),
+        "" + blkSize,
+        "" + freeCount + "/" + (freeCount + usedCount),
         waitList);
 }
 
@@ -477,12 +489,25 @@ function updateMemHeap(nodeAddr) {
     var pfx = "(MDS_MemHeap_t *)" + nodeAddr;
 
     var name = Debug.evaluate("(char*)(" + pfx + ")->object.name");
-    var begin = Debug.evaluate(pfx + "->begin");
-    var limit = Debug.evaluate(pfx + "->limit");
+    var ops = Debug.evaluate("(uintptr_t)(" + pfx + ")->ops");
+
+    var memsize = 0;
+    var memused = 0;
+
+    var llff = Debug.evaluate("(uintptr_t)(&G_MDS_MEMHEAP_OPS_LLFF)");
+    if (ops == llff) {
+        var limit = Debug.evaluate("(uintptr_t)(" + pfx + ")->limit");
+        var nlimit = Debug.evaluate("(uintptr_t)(&((MemHeapLLFF_Node_t*)" + limit + ")->next) + sizeof(uintptr_t)");
+        var nbegin = Debug.evaluate("(uintptr_t)(((MemHeapLLFF_Node_t*)" + limit + ")->next)");
+        var nfree = Debug.evaluate("(uintptr_t)(((MemHeapLLFF_Node_t*)" + limit + ")->prev)");
+
+        memsize = nlimit - nbegin;
+        memused = memsize - (nlimit - nfree);
+    }
 
     Threads.add2(MDS_Object.MEMHEAP.label,
-        toHex(nodeAddr), name,
-        toHex(begin), toHex(limit));
+        resolveSymbol(nodeAddr), name,
+        "" + memused + "/" + memsize);
 }
 
 /*********************************************************************
@@ -528,11 +553,11 @@ function init() {
         Threads.setColumns2(MDS_Object.EVENT.label,
             "Event", "Name", "Value", "WaitingThreads");
         Threads.setColumns2(MDS_Object.MSGQUEUE.label,
-            "MsgQueue", "Name", "QueBuff", "MsgSize", "Free", "Recvers", "Senders");
+            "MsgQueue", "Name", "QueBuff", "MsgSize", "Count", "Recvers", "Senders");
         Threads.setColumns2(MDS_Object.MEMPOOL.label,
-            "MemPool", "Name", "MemBuff", "BlkSize", "Free", "WaitingThreads");
+            "MemPool", "Name", "MemBuff", "BlkSize", "Count", "WaitingThreads");
         Threads.setColumns2(MDS_Object.MEMHEAP.label,
-            "MemHeap", "Name", "Begin", "Limit");
+            "MemHeap", "Name", "Size");
     }
 }
 

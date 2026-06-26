@@ -1,6 +1,7 @@
 source_set("mds_device") {
   sources = [
     "adc.c",
+    "display.c",
     "dsi.c",
     "gpio.c",
     "i2c.c",

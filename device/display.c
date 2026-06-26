@@ -54,7 +54,5 @@ MDS_Err_t DEV_DISPLAY_DeviceFlush(DEV_DISPLAY_Device_t *display, const DEV_DISPL
     MDS_ASSERT(display->driver != NULL);
     MDS_ASSERT(display->driver->flush != NULL);
 
-    MDS_Err_t err = display->driver->flush(display, area, map);
-
-    return (err);
+    return (display->driver->flush(display, area, map));
 }

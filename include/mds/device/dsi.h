@@ -14,6 +14,7 @@
 
 /* Include ----------------------------------------------------------------- */
 #include "mds/dev.h"
+#include "mds/utils.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -21,12 +22,11 @@ extern "C" {
 
 /* Typedef ----------------------------------------------------------------- */
 enum DEV_DSI_Cmd {
-    DEV_DSI_CMD_PHY_INIT = MDS_DEVICE_CMD_DRIVER,
+    DEV_DSI_CMD_REFRESH = MDS_DEVICE_CMD_DRIVER,
     DEV_DSI_CMD_ENTER_ULPM,
     DEV_DSI_CMD_EXIT_ULPM,
     DEV_DSI_CMD_ENTER_ULPM_DATA,
     DEV_DSI_CMD_EXIT_ULPM_DATA,
-    DEV_DSI_CMD_REFRESH,
 };
 
 typedef enum DEV_DSI_DataLane {
@@ -49,12 +49,21 @@ typedef struct DEV_DSI_PhyTiming {
     uint32_t nsStopWait;
 } DEV_DSI_PhyTiming_t;
 
-typedef struct DEV_DSI_PhyConfig {
-    uint32_t bitRateHz;
+typedef struct DEV_DSI_Config {
+    uint32_t laneKClk;   // bps / per lane
+    uint32_t escapeKClk; // byte * kHz
     DEV_DSI_DataLane_t dataLane;
     DEV_DSI_AutoClkLaneCtrl_t autoClkLaneCtrl;
+    MDS_Mask_t lpCmdFlags;
     DEV_DSI_PhyTiming_t phyTiming;
-} DEV_DSI_PhyConfig_t;
+} DEV_DSI_Config_t;
+
+typedef enum DEV_DSI_VirtualChannel {
+    DEV_DSI_VIRTUAL_CHANNEL_0 = 0,
+    DEV_DSI_VIRTUAL_CHANNEL_1 = 1,
+    DEV_DSI_VIRTUAL_CHANNEL_2 = 2,
+    DEV_DSI_VIRTUAL_CHANNEL_3 = 3,
+} __attribute__((packed)) DEV_DSI_VirtualChannel_t;
 
 typedef enum DEV_DSI_WorkMode {
     DEV_DSI_WORKMODE_VIDEO,   // Video mode
@@ -96,13 +105,14 @@ enum DEV_DSI_VideoLowPower {
 
 enum DEV_DSI_LpCmdConfig {
     DEV_DSI_LP_DCS_SHORT_READ_P0 = 0x0001U,
-    DEV_DSI_LP_DCS_SHORT_WRITE_P0 = 0x0002U,
-    DEV_DSI_LP_DCS_SHORT_WRITE_P1 = 0x0004U,
-    DEV_DSI_LP_DCS_LONG_WRITE = 0x0008U,
+    DEV_DSI_LP_DCS_SHORT_READ_P1 = 0x0002U,
+    DEV_DSI_LP_DCS_SHORT_WRITE_P0 = 0x0004U,
+    DEV_DSI_LP_DCS_SHORT_WRITE_P1 = 0x0008U,
+    DEV_DSI_LP_DCS_LONG_WRITE = 0x0010U,
 
-    DEV_DSI_LP_GEN_SHORT_READ_P0 = 0x0010U,
-    DEV_DSI_LP_GEN_SHORT_READ_P1 = 0x0020U,
-    DEV_DSI_LP_GEN_SHORT_READ_P2 = 0x0040U,
+    DEV_DSI_LP_GEN_SHORT_READ_P0 = 0x0020U,
+    DEV_DSI_LP_GEN_SHORT_READ_P1 = 0x0040U,
+    DEV_DSI_LP_GEN_SHORT_READ_P2 = 0x0080U,
     DEV_DSI_LP_GEN_SHORT_WRITE_P0 = 0x0100U,
     DEV_DSI_LP_GEN_SHORT_WRITE_P1 = 0x0200U,
     DEV_DSI_LP_GEN_SHORT_WRITE_P2 = 0x0400U,
@@ -111,22 +121,6 @@ enum DEV_DSI_LpCmdConfig {
     DEV_DSI_LP_MAX_READPKT = 0x4000U,
     DEV_DSI_LP_ACK_REQUEST = 0x8000U,
 };
-
-typedef enum DEV_DSI_DataType {
-    DEV_DSI_DCS_SHORT_PKT_READ_P0 = 0x06,  // DCS Short Read, 0 Param
-    DEV_DSI_DCS_SHORT_PKT_READ_P1 = 0x16,  // DCS Short Read, 1 Param
-    DEV_DSI_DCS_SHORT_PKT_WRITE_P0 = 0x05, // DCS Short Write, 0 Param
-    DEV_DSI_DCS_SHORT_PKT_WRITE_P1 = 0x15, // DCS Short Write, 1 Param
-    DEV_DSI_DCS_LONG_PKT_WRITE = 0x39,     // DCS Long Write
-
-    DEV_DSI_GEN_SHORT_PKT_READ_P0 = 0x04,  // Generic Read, 0 Param
-    DEV_DSI_GEN_SHORT_PKT_READ_P1 = 0x14,  // Generic Read, 1 Param
-    DEV_DSI_GEN_SHORT_PKT_READ_P2 = 0x24,  // Generic Read, 2 Param
-    DEV_DSI_GEN_SHORT_PKT_WRITE_P0 = 0x03, // Generic Short Write, 0 Param
-    DEV_DSI_GEN_SHORT_PKT_WRITE_P1 = 0x13, // Generic Short Write, 1 Param
-    DEV_DSI_GEN_SHORT_PKT_WRITE_P2 = 0x23, // Generic Short Write, 2 Param
-    DEV_DSI_GEN_LONG_PKT_WRITE = 0x29,     // Generic Long Write
-} __attribute__((packed)) DEV_DSI_DataType_t;
 
 typedef struct DEV_DSI_VideoConfig {
     DEV_DSI_ColorCoding_t colorCoding;
@@ -179,38 +173,46 @@ typedef struct DEV_DSI_CommandConfig {
     DEV_DSI_EdgePolarity_t vsyncEdgePolar;
 } DEV_DSI_CommandConfig_t;
 
-typedef struct DEV_DSI_Config {
-    uint8_t virtualChannel;
-    DEV_DSI_WorkMode_t workMode;
-
-    MDS_Mask_t lpCmdFlags;
-    union {
-        DEV_DSI_VideoConfig_t vidCfg;
-        DEV_DSI_CommandConfig_t cmdCfg;
-    };
-} DEV_DSI_Config_t;
+typedef union DEV_DSI_WorkModeConfig {
+    DEV_DSI_VideoConfig_t vidCfg;
+    DEV_DSI_CommandConfig_t cmdCfg;
+} DEV_DSI_WorkModeConfig_t;
 
 typedef struct DEV_DSI_Object {
     MDS_Timeout_t timeout;
-    // uint32_t usHsTx;
-    // uint32_t usLpRx;
-    // uint32_t usHsRead;
-    // uint32_t usLpRead;
-    // uint32_t usHsWrite;
-    // uint32_t usLpWrite;
-    // uint32_t usBta;
-    // bool modeHsWritePresp;
+    DEV_DSI_WorkMode_t workMode;
+    DEV_DSI_WorkModeConfig_t modeCfg;
 } DEV_DSI_Object_t;
+
+typedef enum DEV_DSI_DataType {
+    DEV_DSI_DCS_SHORT_PKT_READ_P0 = 0x06, // DCS Short Read, 0 Param
+    DEV_DSI_DCS_SHORT_PKT_READ_P1 = 0x16, // DCS Short Read, 1 Param
+    DEV_DSI_GEN_SHORT_PKT_READ_P0 = 0x04, // Generic Read, 0 Param
+    DEV_DSI_GEN_SHORT_PKT_READ_P1 = 0x14, // Generic Read, 1 Param
+    DEV_DSI_GEN_SHORT_PKT_READ_P2 = 0x24, // Generic Read, 2 Param
+
+    DEV_DSI_DCS_SHORT_PKT_WRITE_P0 = 0x05, // DCS Short Write, 0 Param
+    DEV_DSI_DCS_SHORT_PKT_WRITE_P1 = 0x15, // DCS Short Write, 1 Param
+    DEV_DSI_GEN_SHORT_PKT_WRITE_P0 = 0x03, // Generic Short Write, 0 Param
+    DEV_DSI_GEN_SHORT_PKT_WRITE_P1 = 0x13, // Generic Short Write, 1 Param
+    DEV_DSI_GEN_SHORT_PKT_WRITE_P2 = 0x23, // Generic Short Write, 2 Param
+
+    DEV_DSI_DCS_LONG_PKT_WRITE = 0x39, // DCS Long Write
+    DEV_DSI_GEN_LONG_PKT_WRITE = 0x29, // Generic Long Write
+} __attribute__((packed)) DEV_DSI_DataType_t;
 
 typedef struct DEV_DSI_Adaptr DEV_DSI_Adaptr_t;
 typedef struct DEV_DSI_Periph DEV_DSI_Periph_t;
 
 typedef struct DEV_DSI_Driver {
     MDS_Err_t (*control)(const DEV_DSI_Adaptr_t *dsi, MDS_DevCmd_t cmd, MDS_Arg_t arg);
-    MDS_Err_t (*write)(const DEV_DSI_Periph_t *periph, DEV_DSI_DataType_t type, const uint8_t *tx,
-                       size_t nums);
-    MDS_Err_t (*read)(const DEV_DSI_Periph_t *periph, DEV_DSI_DataType_t type, const uint8_t *tx,
-                      uint8_t *rx, size_t nums);
+    MDS_Err_t (*workmode)(const DEV_DSI_Periph_t *periph, DEV_DSI_VirtualChannel_t vc,
+                          DEV_DSI_WorkMode_t mode, const DEV_DSI_WorkModeConfig_t *modeCfg);
+    MDS_Err_t (*write)(const DEV_DSI_Periph_t *periph, DEV_DSI_VirtualChannel_t vc,
+                       DEV_DSI_DataType_t type, uint8_t cmd, const uint8_t *arg, size_t len);
+    MDS_Err_t (*read)(const DEV_DSI_Periph_t *periph, DEV_DSI_VirtualChannel_t vc,
+                      DEV_DSI_DataType_t type, uint8_t cmd, const uint8_t *arg, uint8_t *rx,
+                      size_t size);
 } DEV_DSI_Driver_t;
 
 struct DEV_DSI_Adaptr {
@@ -219,8 +221,6 @@ struct DEV_DSI_Adaptr {
     const DEV_DSI_Driver_t *driver;
     const DEV_DSI_Periph_t *owner;
     const MDS_Mutex_t mutex;
-
-    DEV_DSI_PhyConfig_t phyCfg;
 };
 
 struct DEV_DSI_Periph {
@@ -240,6 +240,11 @@ DEV_DSI_Adaptr_t *DEV_DSI_AdaptrCreate(const char *name, const DEV_DSI_Driver_t 
                                        MDS_Arg_t init);
 MDS_Err_t DEV_DSI_AdaptrDestroy(DEV_DSI_Adaptr_t *dsi);
 
+MDS_Err_t DEV_DSI_AdaptrEnterULPM(DEV_DSI_Adaptr_t *dsi);
+MDS_Err_t DEV_DSI_AdaptrExitULPM(DEV_DSI_Adaptr_t *dsi);
+MDS_Err_t DEV_DSI_AdaptrEnterULPMData(DEV_DSI_Adaptr_t *dsi);
+MDS_Err_t DEV_DSI_AdaptrExitULPMData(DEV_DSI_Adaptr_t *dsi);
+
 MDS_Err_t DEV_DSI_PeriphInit(DEV_DSI_Periph_t *periph, const char *name, DEV_DSI_Adaptr_t *dsi);
 MDS_Err_t DEV_DSI_PeriphDeInit(DEV_DSI_Periph_t *periph);
 DEV_DSI_Periph_t *DEV_DSI_PeriphCreate(const char *name, DEV_DSI_Adaptr_t *dsi);
@@ -249,16 +254,46 @@ MDS_Err_t DEV_DSI_PeriphOpen(DEV_DSI_Periph_t *periph, MDS_Timeout_t timeout);
 MDS_Err_t DEV_DSI_PeriphClose(DEV_DSI_Periph_t *periph);
 
 MDS_Err_t DEV_DSI_PeriphRefresh(DEV_DSI_Periph_t *periph);
-MDS_Err_t DEV_DSI_PeriphWrite(DEV_DSI_Periph_t *periph, DEV_DSI_DataType_t type, const uint8_t *tx,
-                              size_t nums);
-MDS_Err_t DEV_DSI_PeriphRead(DEV_DSI_Periph_t *periph, DEV_DSI_DataType_t type, const uint8_t *tx,
-                             uint8_t *rx, size_t nums);
+MDS_Err_t DEV_DSI_PeriphWorkModeConfig(DEV_DSI_Periph_t *periph, DEV_DSI_VirtualChannel_t vc,
+                                       DEV_DSI_WorkMode_t workMode,
+                                       const DEV_DSI_WorkModeConfig_t *modeCfg);
 
-MDS_Err_t DEV_DSI_AdaptrPhyInit(DEV_DSI_Adaptr_t *dsi, const DEV_DSI_PhyConfig_t *phyCfg);
-MDS_Err_t DEV_DSI_AdaptrEnterULPM(DEV_DSI_Adaptr_t *dsi);
-MDS_Err_t DEV_DSI_AdaptrExitULPM(DEV_DSI_Adaptr_t *dsi);
-MDS_Err_t DEV_DSI_AdaptrEnterULPMData(DEV_DSI_Adaptr_t *dsi);
-MDS_Err_t DEV_DSI_AdaptrExitULPMData(DEV_DSI_Adaptr_t *dsi);
+MDS_Err_t DEV_DSI_PeriphWriteDcs(DEV_DSI_Periph_t *periph, DEV_DSI_VirtualChannel_t vc, uint8_t cmd,
+                                 const uint8_t *tx, size_t len);
+MDS_Err_t DEV_DSI_PeriphReadDcs(DEV_DSI_Periph_t *periph, DEV_DSI_VirtualChannel_t vc, uint8_t cmd,
+                                const uint8_t *tx, size_t len, uint8_t *rx, size_t size);
+MDS_Err_t DEV_DSI_PeriphWriteGen(DEV_DSI_Periph_t *periph, DEV_DSI_VirtualChannel_t vc,
+                                 const uint8_t *tx, size_t len);
+MDS_Err_t DEV_DSI_PeriphReadGen(DEV_DSI_Periph_t *periph, DEV_DSI_VirtualChannel_t vc,
+                                const uint8_t *tx, size_t len, uint8_t *rx, size_t size);
+
+typedef struct DEV_DSI_Command {
+    uint8_t cmd;
+    uint32_t len : 24;
+    const uint8_t *arg;
+} DEV_DSI_Command_t;
+
+#define DEV_DSI_DSC_CMD(_cmd, ...)                                                                 \
+    ((DEV_DSI_Command_t) {                                                                         \
+        .cmd = (_cmd),                                                                             \
+        .len = MDS_ARGUMENT_NUMS(__VA_ARGS__),                                                     \
+        .arg = (const uint8_t[]) {__VA_ARGS__},                                                    \
+    })
+
+#define DEV_DSI_GEN_CMD(...)                                                                       \
+    ((DEV_DSI_Command_t) {                                                                         \
+        .len = MDS_ARGUMENT_NUMS(__VA_ARGS__),                                                     \
+        .arg = (const uint8_t[]) {__VA_ARGS__},                                                    \
+    })
+
+MDS_Err_t DEV_DSI_PeriphWriteDcsCmd(DEV_DSI_Periph_t *periph, DEV_DSI_VirtualChannel_t vc,
+                                    const DEV_DSI_Command_t *cmd);
+MDS_Err_t DEV_DSI_PeriphReadDcsCmd(DEV_DSI_Periph_t *periph, DEV_DSI_VirtualChannel_t vc,
+                                   const DEV_DSI_Command_t *cmd, uint8_t *rx, size_t size);
+MDS_Err_t DEV_DSI_PeriphWriteGenCmd(DEV_DSI_Periph_t *periph, DEV_DSI_VirtualChannel_t vc,
+                                    const DEV_DSI_Command_t *cmd);
+MDS_Err_t DEV_DSI_PeriphReadGenCmd(DEV_DSI_Periph_t *periph, DEV_DSI_VirtualChannel_t vc,
+                                   const DEV_DSI_Command_t *cmd, uint8_t *rx, size_t size);
 
 #ifdef __cplusplus
 }

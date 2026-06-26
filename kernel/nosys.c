@@ -122,7 +122,7 @@ void MDS_WorkQueueCheck(MDS_WorkQueue_t *workq, MDS_Lock_t *lock)
 #else
 const uint8_t G_WORKQ_TIMINGWHEEL_TABLE[] = {CONFIG_MDS_TIMER_WHEEL_TABLE};
 const size_t G_WORKQ_TIMINGWHEEL_SHIFT =
-    MDS_ARGUMENT_FOREACH_ARGS(__ARGUMENT_ELEM, (+), 0, CONFIG_MDS_TIMER_WHEEL_TABLE);
+    MDS_ARGUMENT_FOREACH_ARGS(__ARGUMENT_ELEM, +, 0, CONFIG_MDS_TIMER_WHEEL_TABLE);
 static inline void WORKQ_InitWorkQueue(MDS_WorkQueue_t *workq)
 {
     for (size_t i = 0; i < ARRAY_SIZE(workq->wheelList); i++) {
@@ -544,9 +544,9 @@ size_t MDS_SemaphoreGetValue(const MDS_Semaphore_t *semaphore, size_t *max)
 }
 
 /* Condition --------------------------------------------------------------- */
-MDS_Err_t MDS_ConditionInit(MDS_Condition_t *condition, const char *name)
+MDS_Err_t MDS_ConditionInit(MDS_Condition_t *condition, const char *name, size_t max)
 {
-    return (MDS_SemaphoreInit(condition, name, 0, -1));
+    return (MDS_SemaphoreInit(condition, name, 0, max));
 }
 
 MDS_Err_t MDS_ConditionDeInit(MDS_Condition_t *condition)

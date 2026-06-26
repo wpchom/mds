@@ -22,8 +22,8 @@ MDS_Err_t MDS_RwLockInit(MDS_RwLock_t *rwlock, const char *name)
 
     MDS_Err_t err = MDS_MutexInit(&(rwlock->mutex), name);
     if (MDS_ErrIsSame(err, MDS_EOK)) {
-        MDS_ConditionInit(&(rwlock->condRd), name);
-        MDS_ConditionInit(&(rwlock->condWr), name);
+        MDS_ConditionInit(&(rwlock->condRd), name, -1);
+        MDS_ConditionInit(&(rwlock->condWr), name, 1);
         rwlock->readers = 0;
     }
 

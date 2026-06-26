@@ -97,7 +97,14 @@ MDS_Err_t MDS_ObjectDestroy(MDS_Object_t *object)
         return (MDS_EPERM);
     }
 
-    MDS_ObjectDeInit(object);
+    MDS_LOG_D("[object] destory a object:%p type:%u created:%u", object, object->type,
+              object->created);
+
+    MDS_Lock_t lock = MDS_CriticalLock(&(g_objectList[object->type].spinlock));
+    MDS_DListRemoveNode(&(object->node));
+    object->type = MDS_OBJECT_TYPE_NONE;
+    MDS_CriticalRestore(&(g_objectList[object->type].spinlock), lock);
+
     MDS_SysMemFree(object);
 
     return (MDS_EOK);

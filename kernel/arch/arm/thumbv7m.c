@@ -235,7 +235,7 @@ bool MDS_CoreThreadStackCheck(MDS_Thread_t *thread)
 
 #if (defined(CONFIG_MDS_KERNEL_STATS_ENABLE) && (CONFIG_MDS_KERNEL_STATS_ENABLE != 0))
     if (thread->stackWater == NULL) {
-        thread->stackWater = (void*)stackLimit;
+        thread->stackWater = (void *)stackLimit;
     }
 
     void *p = thread->stackBase;
@@ -518,6 +518,6 @@ __attribute__((naked, noreturn)) void HardFault_Handler(void)
     __asm volatile("b           .");
 }
 
-__attribute((noreturn, alias("HardFault_Handler"))) void MemManage_Handler(void);
-__attribute((noreturn, alias("HardFault_Handler"))) void BusFault_Handler(void);
-__attribute((noreturn, alias("HardFault_Handler"))) void UsageFault_Handler(void);
+__attribute__((noreturn, alias("HardFault_Handler"))) void MemManage_Handler(void);
+__attribute__((noreturn, alias("HardFault_Handler"))) void BusFault_Handler(void);
+__attribute__((noreturn, alias("HardFault_Handler"))) void UsageFault_Handler(void);

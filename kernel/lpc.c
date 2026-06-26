@@ -230,7 +230,7 @@ MDS_LPC_Run_t MDS_LPC_Init(const MDS_LPC_ManagerOps_t *ops, MDS_Tick_t threshold
     g_lpcMgr.sleepDefault = sleep;
     g_lpcMgr.runDefault = run;
 
-    MDS_ConditionInit(&(g_lpcMgr.runCond), "lpc");
+    MDS_ConditionInit(&(g_lpcMgr.runCond), "lpc", 1);
     MDS_MutexInit(&(g_lpcMgr.runMutex), "lpc");
 
     if (g_lpcMgr.ops != NULL) {

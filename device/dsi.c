@@ -37,24 +37,6 @@ MDS_Err_t DEV_DSI_AdaptrDestroy(DEV_DSI_Adaptr_t *dsi)
     return (MDS_DevAdaptrDestroy((MDS_DevAdaptr_t *)dsi));
 }
 
-MDS_Err_t DEV_DSI_AdaptrPhyInit(DEV_DSI_Adaptr_t *dsi, const DEV_DSI_PhyConfig_t *phyCfg)
-{
-    MDS_ASSERT(dsi != NULL);
-    MDS_ASSERT(phyCfg != NULL);
-
-    MDS_Err_t err = MDS_EIO;
-
-    if ((dsi->driver != NULL) && (dsi->driver->control != NULL)) {
-        err = dsi->driver->control(dsi, DEV_DSI_CMD_PHY_INIT, MDS_ARG_WITH(phyCfg));
-    }
-
-    if (MDS_ErrIsSame(err, MDS_EOK)) {
-        dsi->phyCfg = *phyCfg;
-    }
-
-    return (err);
-}
-
 MDS_Err_t DEV_DSI_AdaptrEnterULPM(DEV_DSI_Adaptr_t *dsi)
 {
     MDS_ASSERT(dsi != NULL);
@@ -151,8 +133,26 @@ MDS_Err_t DEV_DSI_PeriphRefresh(DEV_DSI_Periph_t *periph)
     return (dsi->driver->control(dsi, DEV_DSI_CMD_REFRESH, MDS_ARG_WITH(NULL)));
 }
 
-MDS_Err_t DEV_DSI_PeriphWrite(DEV_DSI_Periph_t *periph, DEV_DSI_DataType_t type, const uint8_t *tx,
-                              size_t nums)
+MDS_Err_t DEV_DSI_PeriphWorkModeConfig(DEV_DSI_Periph_t *periph, DEV_DSI_VirtualChannel_t vc,
+                                       DEV_DSI_WorkMode_t workMode,
+                                       const DEV_DSI_WorkModeConfig_t *modeCfg)
+{
+    MDS_ASSERT(periph != NULL);
+    MDS_ASSERT(periph->mount != NULL);
+    MDS_ASSERT(periph->mount->driver != NULL);
+    MDS_ASSERT(periph->mount->driver->workmode != NULL);
+
+    const DEV_DSI_Adaptr_t *dsi = (periph->mount);
+
+    if (!MDS_DevPeriphIsAccessable((MDS_DevPeriph_t *)(periph))) {
+        return (MDS_EACCES);
+    }
+
+    return (dsi->driver->workmode(periph, vc, workMode, modeCfg));
+}
+
+MDS_Err_t DEV_DSI_PeriphWriteDcs(DEV_DSI_Periph_t *periph, DEV_DSI_VirtualChannel_t vc, uint8_t cmd,
+                                 const uint8_t *arg, size_t len)
 {
     MDS_ASSERT(periph != NULL);
     MDS_ASSERT(periph->mount != NULL);
@@ -165,11 +165,17 @@ MDS_Err_t DEV_DSI_PeriphWrite(DEV_DSI_Periph_t *periph, DEV_DSI_DataType_t type,
         return (MDS_EACCES);
     }
 
-    return (dsi->driver->write(periph, type, tx, nums));
+    if ((arg == NULL) || (len == 0)) {
+        return (dsi->driver->write(periph, vc, DEV_DSI_DCS_SHORT_PKT_WRITE_P0, cmd, arg, len));
+    } else if (len == sizeof(uint8_t)) {
+        return (dsi->driver->write(periph, vc, DEV_DSI_DCS_SHORT_PKT_WRITE_P1, cmd, arg, len));
+    } else {
+        return (dsi->driver->write(periph, vc, DEV_DSI_DCS_LONG_PKT_WRITE, cmd, arg, len));
+    }
 }
 
-MDS_Err_t DEV_DSI_PeriphRead(DEV_DSI_Periph_t *periph, DEV_DSI_DataType_t type, const uint8_t *tx,
-                             uint8_t *rx, size_t nums)
+MDS_Err_t DEV_DSI_PeriphReadDcs(DEV_DSI_Periph_t *periph, DEV_DSI_VirtualChannel_t vc, uint8_t cmd,
+                                const uint8_t *arg, size_t len, uint8_t *rx, size_t size)
 {
     MDS_ASSERT(periph != NULL);
     MDS_ASSERT(periph->mount != NULL);
@@ -182,5 +188,170 @@ MDS_Err_t DEV_DSI_PeriphRead(DEV_DSI_Periph_t *periph, DEV_DSI_DataType_t type, 
         return (MDS_EACCES);
     }
 
-    return (dsi->driver->read(periph, type, tx, rx, nums));
+    if ((arg == NULL) || (len == 0)) {
+        return (dsi->driver->read(periph, vc, DEV_DSI_DCS_SHORT_PKT_READ_P0, cmd, arg, rx, size));
+    } else if (len == sizeof(uint8_t)) {
+        return (dsi->driver->read(periph, vc, DEV_DSI_DCS_SHORT_PKT_READ_P1, cmd, arg, rx, size));
+    } else {
+        return (MDS_EINVAL);
+    }
+}
+
+MDS_Err_t DEV_DSI_PeriphWriteGen(DEV_DSI_Periph_t *periph, DEV_DSI_VirtualChannel_t vc,
+                                 const uint8_t *tx, size_t len)
+{
+    MDS_ASSERT(periph != NULL);
+    MDS_ASSERT(periph->mount != NULL);
+    MDS_ASSERT(periph->mount->driver != NULL);
+    MDS_ASSERT(periph->mount->driver->write != NULL);
+
+    const DEV_DSI_Adaptr_t *dsi = (periph->mount);
+
+    if (!MDS_DevPeriphIsAccessable((MDS_DevPeriph_t *)(periph))) {
+        return (MDS_EACCES);
+    }
+
+    if ((tx == NULL) || (len == 0)) {
+        return (dsi->driver->write(periph, vc, DEV_DSI_GEN_SHORT_PKT_WRITE_P0, 0, tx, len));
+    } else if (len == sizeof(uint8_t)) {
+        return (dsi->driver->write(periph, vc, DEV_DSI_GEN_SHORT_PKT_WRITE_P1, 0, tx, len));
+    } else if (len == sizeof(uint16_t)) {
+        return (dsi->driver->write(periph, vc, DEV_DSI_GEN_SHORT_PKT_WRITE_P2, 0, tx, len));
+    } else {
+        return (dsi->driver->write(periph, vc, DEV_DSI_GEN_LONG_PKT_WRITE, 0, tx, len));
+    }
+}
+
+MDS_Err_t DEV_DSI_PeriphReadGen(DEV_DSI_Periph_t *periph, DEV_DSI_VirtualChannel_t vc,
+                                const uint8_t *tx, size_t len, uint8_t *rx, size_t size)
+{
+    MDS_ASSERT(periph != NULL);
+    MDS_ASSERT(periph->mount != NULL);
+    MDS_ASSERT(periph->mount->driver != NULL);
+    MDS_ASSERT(periph->mount->driver->read != NULL);
+
+    const DEV_DSI_Adaptr_t *dsi = (periph->mount);
+
+    if (!MDS_DevPeriphIsAccessable((MDS_DevPeriph_t *)(periph))) {
+        return (MDS_EACCES);
+    }
+
+    if ((tx == NULL) || (len == 0)) {
+        return (dsi->driver->read(periph, vc, DEV_DSI_GEN_SHORT_PKT_READ_P0, 0, tx, rx, size));
+    } else if (len == sizeof(uint8_t)) {
+        return (dsi->driver->read(periph, vc, DEV_DSI_GEN_SHORT_PKT_READ_P1, 0, tx, rx, size));
+    } else if (len == sizeof(uint16_t)) {
+        return (dsi->driver->read(periph, vc, DEV_DSI_GEN_SHORT_PKT_READ_P2, 0, tx, rx, size));
+    } else {
+        return (MDS_EINVAL);
+    }
+}
+
+MDS_Err_t DEV_DSI_PeriphWriteDcsCmd(DEV_DSI_Periph_t *periph, DEV_DSI_VirtualChannel_t vc,
+                                    const DEV_DSI_Command_t *cmd)
+{
+    MDS_ASSERT(periph != NULL);
+    MDS_ASSERT(periph->mount != NULL);
+    MDS_ASSERT(periph->mount->driver != NULL);
+    MDS_ASSERT(periph->mount->driver->write != NULL);
+    MDS_ASSERT(cmd != NULL);
+
+    const DEV_DSI_Adaptr_t *dsi = (periph->mount);
+
+    if (!MDS_DevPeriphIsAccessable((MDS_DevPeriph_t *)(periph))) {
+        return (MDS_EACCES);
+    }
+
+    if ((cmd->arg == NULL) || (cmd->len == 0)) {
+        return (dsi->driver->write(periph, vc, DEV_DSI_DCS_SHORT_PKT_WRITE_P0, cmd->cmd, cmd->arg,
+                                   cmd->len));
+    } else if (cmd->len == sizeof(uint8_t)) {
+        return (dsi->driver->write(periph, vc, DEV_DSI_DCS_SHORT_PKT_WRITE_P1, cmd->cmd, cmd->arg,
+                                   cmd->len));
+    } else {
+        return (dsi->driver->write(periph, vc, DEV_DSI_DCS_LONG_PKT_WRITE, cmd->cmd, cmd->arg,
+                                   cmd->len));
+    }
+}
+
+MDS_Err_t DEV_DSI_PeriphReadDcsCmd(DEV_DSI_Periph_t *periph, DEV_DSI_VirtualChannel_t vc,
+                                   const DEV_DSI_Command_t *cmd, uint8_t *rx, size_t size)
+{
+    MDS_ASSERT(periph != NULL);
+    MDS_ASSERT(periph->mount != NULL);
+    MDS_ASSERT(periph->mount->driver != NULL);
+    MDS_ASSERT(periph->mount->driver->read != NULL);
+    MDS_ASSERT(cmd != NULL);
+
+    const DEV_DSI_Adaptr_t *dsi = (periph->mount);
+
+    if (!MDS_DevPeriphIsAccessable((MDS_DevPeriph_t *)(periph))) {
+        return (MDS_EACCES);
+    }
+
+    if ((cmd->arg == NULL) || (cmd->len == 0)) {
+        return (dsi->driver->read(periph, vc, DEV_DSI_DCS_SHORT_PKT_READ_P0, cmd->cmd, cmd->arg, rx,
+                                  size));
+    } else if (cmd->len == sizeof(uint8_t)) {
+        return (dsi->driver->read(periph, vc, DEV_DSI_DCS_SHORT_PKT_READ_P1, cmd->cmd, cmd->arg, rx,
+                                  size));
+    } else {
+        return (MDS_EINVAL);
+    }
+}
+
+MDS_Err_t DEV_DSI_PeriphWriteGenCmd(DEV_DSI_Periph_t *periph, DEV_DSI_VirtualChannel_t vc,
+                                    const DEV_DSI_Command_t *cmd)
+{
+    MDS_ASSERT(periph != NULL);
+    MDS_ASSERT(periph->mount != NULL);
+    MDS_ASSERT(periph->mount->driver != NULL);
+    MDS_ASSERT(periph->mount->driver->write != NULL);
+
+    const DEV_DSI_Adaptr_t *dsi = (periph->mount);
+
+    if (!MDS_DevPeriphIsAccessable((MDS_DevPeriph_t *)(periph))) {
+        return (MDS_EACCES);
+    }
+
+    if ((cmd == NULL) || (cmd->arg == NULL) || (cmd->len == 0)) {
+        return (
+            dsi->driver->write(periph, vc, DEV_DSI_GEN_SHORT_PKT_WRITE_P0, 0, cmd->arg, cmd->len));
+    } else if (cmd->len == sizeof(uint8_t)) {
+        return (
+            dsi->driver->write(periph, vc, DEV_DSI_GEN_SHORT_PKT_WRITE_P1, 0, cmd->arg, cmd->len));
+    } else if (cmd->len == sizeof(uint16_t)) {
+        return (
+            dsi->driver->write(periph, vc, DEV_DSI_GEN_SHORT_PKT_WRITE_P2, 0, cmd->arg, cmd->len));
+    } else {
+        return (dsi->driver->write(periph, vc, DEV_DSI_GEN_LONG_PKT_WRITE, 0, cmd->arg, cmd->len));
+    }
+}
+
+MDS_Err_t DEV_DSI_PeriphReadGenCmd(DEV_DSI_Periph_t *periph, DEV_DSI_VirtualChannel_t vc,
+                                   const DEV_DSI_Command_t *cmd, uint8_t *rx, size_t size)
+{
+    MDS_ASSERT(periph != NULL);
+    MDS_ASSERT(periph->mount != NULL);
+    MDS_ASSERT(periph->mount->driver != NULL);
+    MDS_ASSERT(periph->mount->driver->read != NULL);
+
+    const DEV_DSI_Adaptr_t *dsi = (periph->mount);
+
+    if (!MDS_DevPeriphIsAccessable((MDS_DevPeriph_t *)(periph))) {
+        return (MDS_EACCES);
+    }
+
+    if ((cmd == NULL) || (cmd->arg == NULL) || (cmd->len == 0)) {
+        return (
+            dsi->driver->read(periph, vc, DEV_DSI_GEN_SHORT_PKT_READ_P0, 0, cmd->arg, rx, size));
+    } else if (cmd->len == sizeof(uint8_t)) {
+        return (
+            dsi->driver->read(periph, vc, DEV_DSI_GEN_SHORT_PKT_READ_P1, 0, cmd->arg, rx, size));
+    } else if (cmd->len == sizeof(uint16_t)) {
+        return (
+            dsi->driver->read(periph, vc, DEV_DSI_GEN_SHORT_PKT_READ_P2, 0, cmd->arg, rx, size));
+    } else {
+        return (MDS_EINVAL);
+    }
 }
