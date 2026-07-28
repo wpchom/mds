@@ -408,31 +408,35 @@ static void FMT_PrintInteger(char *buff, size_t size, size_t *pos, const char ch
     if (ch == 'p') {
         value = (uintptr_t)va_arg(*ap, void *);
         args->flags |= FMT_FLAG_ZERO | FMT_FLAG_HASH;
-    } else {
+    } else if ((ch == 'd') || (ch == 'i')) {
         long long tmp = (args->flags & FMT_FLAG_LONG_LONG)
             ? (va_arg(*ap, long long))
             : ((args->flags & FMT_FLAG_LONG) ? (va_arg(*ap, long)) : (va_arg(*ap, int)));
-        if ((ch == 'd') || (ch == 'i')) {
-            if ((args->flags & FMT_FLAG_CHAR) != 0U) {
-                tmp = (char)tmp;
-            } else if ((args->flags & FMT_FLAG_SHORT) != 0U) {
-                tmp = (short)tmp;
-            } else if ((args->flags & (FMT_FLAG_LONG_LONG | FMT_FLAG_LONG)) == 0U) {
-                tmp = (int)tmp;
-            }
-            value =
-                (unsigned long long)((tmp < 0) ? (args->flags |= FMT_FLAG_NEGATIVE, -tmp) : (tmp));
-        } else {
-            if ((args->flags & FMT_FLAG_CHAR) != 0U) {
-                tmp = (unsigned char)tmp;
-            } else if ((args->flags & FMT_FLAG_SHORT) != 0U) {
-                tmp = (unsigned short)tmp;
-            } else if ((args->flags & (FMT_FLAG_LONG_LONG | FMT_FLAG_LONG)) == 0U) {
-                tmp = (unsigned int)tmp;
-            }
-            value = (unsigned long long)(tmp);
-            args->flags &= ~(FMT_FLAG_PLUS | FMT_FLAG_SPACE);
+        if ((args->flags & FMT_FLAG_CHAR) != 0U) {
+            tmp = (char)tmp;
+        } else if ((args->flags & FMT_FLAG_SHORT) != 0U) {
+            tmp = (short)tmp;
+        } else if ((args->flags & (FMT_FLAG_LONG_LONG | FMT_FLAG_LONG)) == 0U) {
+            tmp = (int)tmp;
         }
+        value = (unsigned long long)((tmp < 0) ? (args->flags |= FMT_FLAG_NEGATIVE, -tmp) : (tmp));
+        if ((args->base == MDS_NUM_DEC_BASE) || (value == 0)) {
+            args->flags &= ~FMT_FLAG_HASH;
+        }
+    } else {
+        unsigned long long tmp = (args->flags & FMT_FLAG_LONG_LONG)
+            ? (va_arg(*ap, unsigned long long))
+            : ((args->flags & FMT_FLAG_LONG) ? (va_arg(*ap, unsigned long))
+                                             : (va_arg(*ap, unsigned int)));
+        if ((args->flags & FMT_FLAG_CHAR) != 0U) {
+            tmp = (unsigned char)tmp;
+        } else if ((args->flags & FMT_FLAG_SHORT) != 0U) {
+            tmp = (unsigned short)tmp;
+        } else if ((args->flags & (FMT_FLAG_LONG_LONG | FMT_FLAG_LONG)) == 0U) {
+            tmp = (unsigned int)tmp;
+        }
+        value = tmp;
+        args->flags &= ~(FMT_FLAG_PLUS | FMT_FLAG_SPACE);
         if ((args->base == MDS_NUM_DEC_BASE) || (value == 0)) {
             args->flags &= ~FMT_FLAG_HASH;
         }
@@ -440,7 +444,6 @@ static void FMT_PrintInteger(char *buff, size_t size, size_t *pos, const char ch
 
     FMT_lltoa(buff, size, pos, value, args);
 }
-
 static void FMT_PrintChar(char *buff, size_t size, size_t *pos, va_list *ap, FMT_Args_t *args)
 {
     char ch = (char)va_arg(*ap, int);
