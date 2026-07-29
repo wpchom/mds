@@ -1,5 +1,0 @@
-source_set("mds_subsys_topic") {
-  sources = [ "topic.c" ]
-
-  public_configs = [ "../:mds_subsys_cfg" ]
-}
